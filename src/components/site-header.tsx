@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/creatives", label: "Creatives" },
   { href: "/submit/event", label: "Submit Event" },
   { href: "/submit/creative", label: "Submit Profile" },
+  { href: "/admin/submissions", label: "Admin" },
 ] as const;
 
 export function SiteHeader() {
