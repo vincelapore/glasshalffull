@@ -1,20 +1,14 @@
 import Link from "next/link";
 
+import { MobileNav } from "@/components/mobile-nav";
+import { navLinks } from "@/components/site-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const navLinks = [
-  { href: "/events", label: "Events" },
-  { href: "/creatives", label: "Creatives" },
-  { href: "/submit/event", label: "Submit Event" },
-  { href: "/submit/creative", label: "Submit Profile" },
-  { href: "/admin/submissions", label: "Admin" },
-] as const;
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <header className="relative sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="font-heading text-sm font-semibold tracking-tight">
+        <Link href="/" className="shrink-0 font-heading text-sm font-semibold tracking-tight">
           Glass Half Full
         </Link>
         <nav className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
@@ -28,7 +22,10 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-1">
+          <MobileNav />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

@@ -49,18 +49,18 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
             <ExternalImage
               src={creative.avatarUrl}
               alt={creative.name}
-              className="size-28 rounded-2xl object-cover"
+              className="size-20 shrink-0 rounded-2xl object-cover sm:size-28"
               fallback={
-                <div className="flex size-28 items-center justify-center rounded-2xl bg-muted text-3xl font-medium">
+                <div className="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-muted text-2xl font-medium sm:size-28 sm:text-3xl">
                   {creative.name.slice(0, 1).toUpperCase()}
                 </div>
               }
             />
-            <div className="space-y-3">
+            <div className="min-w-0 space-y-3">
               <Badge variant="outline">
                 {craftCategoryLabels[creative.craftCategory]}
               </Badge>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-tight break-words sm:text-4xl">
                 {creative.name}
               </h1>
             </div>

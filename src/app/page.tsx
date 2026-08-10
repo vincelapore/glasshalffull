@@ -33,7 +33,7 @@ export default async function HomePage() {
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
           Glass Half Full
         </p>
-        <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
+        <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">
           Pouring back into Brisbane&apos;s creative scene.
         </h1>
         <p className="max-w-2xl text-muted-foreground">
