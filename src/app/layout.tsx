@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s · Glass Half Full",
   },
   description:
-    "A discovery hub and community directory for Brisbane's creative scene — music, art, queer, and fashion.",
+    "A discovery hub and community directory for Brisbane's creative scene — DJs, musicians, tattoo artists, visual art, fashion, and more.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,15 +1,25 @@
+import type { Creative } from "@/db/schema";
 import {
   craftCategories,
   eventCategories,
   submissionStatuses,
+  workOpportunityTags,
 } from "@/lib/validations";
 
 export const craftCategoryLabels: Record<(typeof craftCategories)[number], string> =
   {
-    music: "Music",
-    art: "Art",
-    queer: "Queer",
+    dj: "DJ",
+    musician: "Musician",
+    producer: "Producer",
+    tattoo: "Tattoo",
+    visual_art: "Visual art",
+    photography: "Photography",
     fashion: "Fashion",
+    makeup: "Makeup",
+    dance: "Dance",
+    film: "Film & video",
+    design: "Design",
+    queer: "Queer",
     other: "Other",
   };
 
@@ -28,6 +38,42 @@ export const statusLabels: Record<(typeof submissionStatuses)[number], string> =
   approved: "Approved",
   rejected: "Rejected",
 };
+
+export const workOpportunityTagLabels: Record<
+  (typeof workOpportunityTags)[number],
+  string
+> = {
+  paid_work: "Paid work",
+  trade: "Open to trade",
+  portfolio: "Building portfolio",
+};
+
+export function getCreativeWorkTags(
+  creative: Pick<
+    Creative,
+    "openToPaidWork" | "openToTrade" | "buildingPortfolio"
+  >
+) {
+  const tags: (typeof workOpportunityTags)[number][] = [];
+
+  if (creative.openToPaidWork) tags.push("paid_work");
+  if (creative.openToTrade) tags.push("trade");
+  if (creative.buildingPortfolio) tags.push("portfolio");
+
+  return tags;
+}
+
+export function creativeMatchesWorkTag(
+  creative: Pick<
+    Creative,
+    "openToPaidWork" | "openToTrade" | "buildingPortfolio"
+  >,
+  tag: (typeof workOpportunityTags)[number]
+) {
+  if (tag === "paid_work") return creative.openToPaidWork;
+  if (tag === "trade") return creative.openToTrade;
+  return creative.buildingPortfolio;
+}
 
 export function formatDateTime(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value;

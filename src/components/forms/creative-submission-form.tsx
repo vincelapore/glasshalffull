@@ -22,10 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { craftCategoryLabels } from "@/lib/labels";
+import { craftCategoryLabels, workOpportunityTagLabels } from "@/lib/labels";
 import {
   craftCategories,
   creativeSubmissionSchema,
+  workOpportunityTags,
   type CreativeSubmissionInput,
 } from "@/lib/validations";
 
@@ -57,6 +58,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             instagramUrl: "",
             portfolioUrl: "",
             avatarUrl: "",
+            openToPaidWork: false,
+            openToTrade: false,
+            buildingPortfolio: false,
           },
   });
 
@@ -177,6 +181,44 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           </p>
         ) : null}
       </div>
+
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">Open to</legend>
+        <p className="text-sm text-muted-foreground">
+          Optional tags so collaborators and organizers can find you.
+        </p>
+        <div className="space-y-2">
+          {workOpportunityTags.map((tag) => {
+            const fieldName =
+              tag === "paid_work"
+                ? "openToPaidWork"
+                : tag === "trade"
+                  ? "openToTrade"
+                  : "buildingPortfolio";
+
+            return (
+              <Controller
+                key={tag}
+                control={form.control}
+                name={fieldName}
+                render={({ field }) => (
+                  <label
+                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 size-4 rounded border-border accent-foreground"
+                      checked={field.value}
+                      onChange={(event) => field.onChange(event.target.checked)}
+                    />
+                    <span className="text-sm">{workOpportunityTagLabels[tag]}</span>
+                  </label>
+                )}
+              />
+            );
+          })}
+        </div>
+      </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">

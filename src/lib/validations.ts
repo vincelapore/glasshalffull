@@ -1,10 +1,18 @@
 import { z } from "zod";
 
 export const craftCategories = [
-  "music",
-  "art",
-  "queer",
+  "dj",
+  "musician",
+  "producer",
+  "tattoo",
+  "visual_art",
+  "photography",
   "fashion",
+  "makeup",
+  "dance",
+  "film",
+  "design",
+  "queer",
   "other",
 ] as const;
 
@@ -18,6 +26,8 @@ export const eventCategories = [
 ] as const;
 
 export const submissionStatuses = ["pending", "approved", "rejected"] as const;
+
+export const workOpportunityTags = ["paid_work", "trade", "portfolio"] as const;
 
 const optionalUrl = z.union([
   z.literal(""),
@@ -33,6 +43,9 @@ export const creativeSubmissionSchema = z.object({
   instagramUrl: optionalUrl,
   portfolioUrl: optionalUrl,
   avatarUrl: optionalUrl,
+  openToPaidWork: z.boolean(),
+  openToTrade: z.boolean(),
+  buildingPortfolio: z.boolean(),
 });
 
 export const eventSubmissionSchema = z.object({

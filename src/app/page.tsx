@@ -37,8 +37,9 @@ export default async function HomePage() {
           Pouring back into Brisbane&apos;s creative scene.
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          Discover events, meet the artists behind them, and reconnect with the
-          local music, art, queer, and fashion community.
+          Discover events, meet the artists behind them, and reconnect with
+          Brisbane&apos;s DJs, musicians, tattooists, designers, and broader
+          creative community.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button render={<Link href="/events" />}>Browse events</Button>

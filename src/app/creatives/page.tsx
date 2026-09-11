@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,32 +11,66 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ExternalImage } from "@/components/media/external-image";
-import { craftCategoryLabels } from "@/lib/labels";
+import {
+  craftCategoryLabels,
+  creativeMatchesWorkTag,
+  workOpportunityTagLabels,
+} from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
-import { craftCategories } from "@/lib/validations";
+import { craftCategories, workOpportunityTags } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Creatives",
 };
 
-type SearchParams = Promise<{ category?: string }>;
+type SearchParams = Promise<{ category?: string; tag?: string }>;
+
+function buildCreativesHref(options: {
+  category?: string | null;
+  tag?: string | null;
+}) {
+  const params = new URLSearchParams();
+
+  if (options.category) {
+    params.set("category", options.category);
+  }
+
+  if (options.tag) {
+    params.set("tag", options.tag);
+  }
+
+  const query = params.toString();
+  return query ? `/creatives?${query}` : "/creatives";
+}
 
 export default async function CreativesPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { category } = await searchParams;
+  const { category, tag } = await searchParams;
   const activeCategory =
     category && craftCategories.includes(category as (typeof craftCategories)[number])
       ? (category as (typeof craftCategories)[number])
       : null;
+  const activeTag =
+    tag && workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
+      ? (tag as (typeof workOpportunityTags)[number])
+      : null;
 
   const allCreatives = await getApprovedCreatives();
-  const creatives = activeCategory
-    ? allCreatives.filter((creative) => creative.craftCategory === activeCategory)
-    : allCreatives;
+  const creatives = allCreatives.filter((creative) => {
+    if (activeCategory && creative.craftCategory !== activeCategory) {
+      return false;
+    }
+
+    if (activeTag && !creativeMatchesWorkTag(creative, activeTag)) {
+      return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
@@ -46,37 +81,80 @@ export default async function CreativesPage({
         </p>
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-2">
-        <Link
-          href="/creatives"
-          className={cn(
-            "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-            !activeCategory
-              ? "border-foreground bg-foreground text-background"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
-        </Link>
-        {craftCategories.map((cat) => (
+      <div className="mb-6 space-y-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Craft
+        </p>
+        <div className="flex flex-wrap gap-2">
           <Link
-            key={cat}
-            href={`/creatives?category=${cat}`}
+            href={buildCreativesHref({ category: null, tag: activeTag })}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              activeCategory === cat
+              !activeCategory
                 ? "border-foreground bg-foreground text-background"
                 : "border-border text-muted-foreground hover:text-foreground"
             )}
           >
-            {craftCategoryLabels[cat]}
+            All
           </Link>
-        ))}
+          {craftCategories.map((cat) => (
+            <Link
+              key={cat}
+              href={buildCreativesHref({ category: cat, tag: activeTag })}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeCategory === cat
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {craftCategoryLabels[cat]}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-8 space-y-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Open to
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={buildCreativesHref({ category: activeCategory, tag: null })}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              !activeTag
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
+          {workOpportunityTags.map((workTag) => (
+            <Link
+              key={workTag}
+              href={buildCreativesHref({
+                category: activeCategory,
+                tag: workTag,
+              })}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeTag === workTag
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {workOpportunityTagLabels[workTag]}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {creatives.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
-          No approved creatives yet.{" "}
+          {allCreatives.length === 0
+            ? "No approved creatives yet. "
+            : "No creatives match these filters. "}
           <Link href="/submit/creative" className="underline underline-offset-4">
             Submit a profile
           </Link>
@@ -107,9 +185,12 @@ export default async function CreativesPage({
                       <CardTitle className="group-hover:underline group-hover:underline-offset-4">
                         {creative.name}
                       </CardTitle>
-                      <Badge variant="outline">
-                        {craftCategoryLabels[creative.craftCategory]}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge variant="outline">
+                          {craftCategoryLabels[creative.craftCategory]}
+                        </Badge>
+                        <CreativeWorkTags creative={creative} />
+                      </div>
                     </div>
                   </div>
                 </CardHeader>

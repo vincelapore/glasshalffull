@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   pgEnum,
   pgTable,
   text,
@@ -15,10 +16,18 @@ export const submissionStatusEnum = pgEnum("submission_status", [
 ]);
 
 export const craftCategoryEnum = pgEnum("craft_category", [
-  "music",
-  "art",
-  "queer",
+  "dj",
+  "musician",
+  "producer",
+  "tattoo",
+  "visual_art",
+  "photography",
   "fashion",
+  "makeup",
+  "dance",
+  "film",
+  "design",
+  "queer",
   "other",
 ]);
 
@@ -49,6 +58,9 @@ export const creatives = pgTable("creatives", {
   instagramUrl: text("instagram_url"),
   portfolioUrl: text("portfolio_url"),
   avatarUrl: text("avatar_url"),
+  openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
+  openToTrade: boolean("open_to_trade").notNull().default(false),
+  buildingPortfolio: boolean("building_portfolio").notNull().default(false),
   status: submissionStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

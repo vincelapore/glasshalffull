@@ -1,6 +1,6 @@
 # Glass Half Full
 
-A discovery hub and community directory for Brisbane’s creative scene — music, art, queer, and fashion.
+A discovery hub and community directory for Brisbane’s creative scene — DJs, musicians, tattoo artists, visual art, fashion, and more.
 
 Browse upcoming events, meet local creatives, and submit listings for moderation before they go live.
 

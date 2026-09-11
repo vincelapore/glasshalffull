@@ -45,6 +45,9 @@ export async function submitCreativeAction(
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
         avatarUrl: normalizeOptionalUrl(data.avatarUrl),
+        openToPaidWork: data.openToPaidWork,
+        openToTrade: data.openToTrade,
+        buildingPortfolio: data.buildingPortfolio,
         status: "pending",
       })
       .returning({ id: creatives.id });
@@ -226,6 +229,9 @@ export async function updateCreativeAction(
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
         avatarUrl: normalizeOptionalUrl(data.avatarUrl),
+        openToPaidWork: data.openToPaidWork,
+        openToTrade: data.openToTrade,
+        buildingPortfolio: data.buildingPortfolio,
       })
       .where(eq(creatives.id, id))
       .returning({ id: creatives.id });
