@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -61,7 +61,7 @@ export default async function CreativesPage({
 
   const allCreatives = await getApprovedCreatives();
   const creatives = allCreatives.filter((creative) => {
-    if (activeCategory && creative.craftCategory !== activeCategory) {
+    if (activeCategory && !creative.craftCategories.includes(activeCategory)) {
       return false;
     }
 
@@ -186,9 +186,7 @@ export default async function CreativesPage({
                         {creative.name}
                       </CardTitle>
                       <div className="flex flex-wrap gap-1.5">
-                        <Badge variant="outline">
-                          {craftCategoryLabels[creative.craftCategory]}
-                        </Badge>
+                        <CreativeCraftTags creative={creative} />
                         <CreativeWorkTags creative={creative} />
                       </div>
                     </div>

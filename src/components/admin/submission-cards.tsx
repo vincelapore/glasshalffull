@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { DeleteSubmissionButton } from "@/components/admin/delete-submission-button";
 import { ModerationActions } from "@/components/admin/moderation-actions";
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/card";
 import type { Creative, Event } from "@/db/schema";
 import {
-  craftCategoryLabels,
   eventCategoryLabels,
   formatDateTime,
   statusLabels,
@@ -107,7 +107,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
             <div className="space-y-1">
               <CardTitle>{creative.name}</CardTitle>
               <CardDescription>
-                {craftCategoryLabels[creative.craftCategory]}
+                <CreativeCraftTags creative={creative} asText />
               </CardDescription>
               <CreativeWorkTags creative={creative} />
             </div>

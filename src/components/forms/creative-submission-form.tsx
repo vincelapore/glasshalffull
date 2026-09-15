@@ -14,13 +14,6 @@ import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { craftCategoryLabels, workOpportunityTagLabels } from "@/lib/labels";
 import {
@@ -53,7 +46,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         ? props.defaultValues
         : {
             name: "",
-            craftCategory: undefined,
+            craftCategories: [],
             bio: "",
             instagramUrl: "",
             portfolioUrl: "",
@@ -134,36 +127,48 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <Controller
         control={form.control}
-        name="craftCategory"
+        name="craftCategories"
         render={({ field, fieldState }) => (
-          <div className="space-y-2">
-            <Label>Craft category</Label>
-            <Select
-              value={field.value}
-              onValueChange={(value) => {
-                if (value) field.onChange(value);
-              }}
-            >
-              <SelectTrigger
-                className="w-full"
-                aria-invalid={Boolean(fieldState.error)}
-              >
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {craftCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {craftCategoryLabels[category]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium">Craft categories</legend>
+            <p className="text-sm text-muted-foreground">
+              Select every craft that fits — you can pick more than one.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {craftCategories.map((category) => {
+                const checked = field.value?.includes(category) ?? false;
+
+                return (
+                  <label
+                    key={category}
+                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 size-4 rounded border-border accent-foreground"
+                      checked={checked}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...(field.value ?? []), category]
+                          : (field.value ?? []).filter(
+                              (value) => value !== category
+                            );
+                        field.onChange(next);
+                      }}
+                    />
+                    <span className="text-sm">
+                      {craftCategoryLabels[category]}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
             {fieldState.error ? (
               <p className="text-xs text-destructive">
                 {fieldState.error.message}
               </p>
             ) : null}
-          </div>
+          </fieldset>
         )}
       />
 

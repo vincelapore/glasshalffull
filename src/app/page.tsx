@@ -8,9 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
-  craftCategoryLabels,
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
@@ -152,7 +152,7 @@ export default async function HomePage() {
                 />
                 <p className="font-medium">{creative.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {craftCategoryLabels[creative.craftCategory]}
+                  <CreativeCraftTags creative={creative} asText />
                 </p>
               </Link>
             ))}

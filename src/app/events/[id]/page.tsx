@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
-  craftCategoryLabels,
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
@@ -95,7 +95,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                         <p className="font-medium">{creative.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {role.replaceAll("_", " ")} ·{" "}
-                          {craftCategoryLabels[creative.craftCategory]}
+                          <CreativeCraftTags creative={creative} asText />
                         </p>
                       </div>
                     </Link>

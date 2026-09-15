@@ -51,7 +51,7 @@ export default async function EditCreativePage({
         creativeId={creative.id}
         defaultValues={{
           name: creative.name,
-          craftCategory: creative.craftCategory,
+          craftCategories: creative.craftCategories,
           bio: creative.bio ?? "",
           instagramUrl: creative.instagramUrl ?? "",
           portfolioUrl: creative.portfolioUrl ?? "",

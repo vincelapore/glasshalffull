@@ -36,9 +36,9 @@ const optionalUrl = z.union([
 
 export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
-  craftCategory: z.enum(craftCategories, {
-    errorMap: () => ({ message: "Pick a craft category" }),
-  }),
+  craftCategories: z
+    .array(z.enum(craftCategories))
+    .min(1, "Pick at least one craft category"),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
   instagramUrl: optionalUrl,
   portfolioUrl: optionalUrl,

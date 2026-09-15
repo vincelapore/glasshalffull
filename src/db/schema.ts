@@ -53,7 +53,9 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
 export const creatives = pgTable("creatives", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  craftCategory: craftCategoryEnum("craft_category").notNull(),
+  craftCategories: craftCategoryEnum("craft_categories")
+    .array()
+    .notNull(),
   bio: text("bio"),
   instagramUrl: text("instagram_url"),
   portfolioUrl: text("portfolio_url"),

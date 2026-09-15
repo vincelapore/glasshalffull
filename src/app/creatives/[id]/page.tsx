@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
-  craftCategoryLabels,
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
@@ -59,9 +59,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
             />
             <div className="min-w-0 space-y-3">
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline">
-                  {craftCategoryLabels[creative.craftCategory]}
-                </Badge>
+                <CreativeCraftTags creative={creative} />
                 <CreativeWorkTags creative={creative} />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight break-words sm:text-4xl">

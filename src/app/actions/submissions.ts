@@ -40,7 +40,7 @@ export async function submitCreativeAction(
       .insert(creatives)
       .values({
         name: data.name,
-        craftCategory: data.craftCategory,
+        craftCategories: data.craftCategories,
         bio: emptyToNull(data.bio),
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
@@ -224,7 +224,7 @@ export async function updateCreativeAction(
       .update(creatives)
       .set({
         name: data.name,
-        craftCategory: data.craftCategory,
+        craftCategories: data.craftCategories,
         bio: emptyToNull(data.bio),
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
