@@ -19,6 +19,7 @@ Browse upcoming events, meet local creatives, and submit listings for moderation
 | Framework | [Next.js](https://nextjs.org) 16 (App Router) + React 19 |
 | Language | TypeScript |
 | Database | [Neon](https://neon.tech) serverless Postgres |
+| Storage | [Cloudflare R2](https://developers.cloudflare.com/r2/) (photos/flyers) + Neon text keys |
 | ORM | [Drizzle](https://orm.drizzle.team) |
 | UI | [Tailwind CSS](https://tailwindcss.com) 4 + [shadcn/ui](https://ui.shadcn.com) (Base UI) |
 | Forms | React Hook Form + Zod |
@@ -30,6 +31,7 @@ Browse upcoming events, meet local creatives, and submit listings for moderation
 
 - Node.js 20+
 - A [Neon](https://neon.tech) Postgres database (or any Postgres URL Neon’s serverless driver accepts)
+- A Cloudflare R2 API token for the `glasshalffull` bucket (see Photo uploads below)
 
 ### Setup
 
@@ -46,6 +48,16 @@ DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 
 # Admin moderation password for /admin
 ADMIN_PASSWORD=change-me
+
+# Cloudflare R2
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=glasshalffull
+
+# Public media origin — Neon stores object keys only, not full URLs
+# Copy the Public Development URL from R2 → glasshalffull → Settings
+NEXT_PUBLIC_MEDIA_BASE_URL=https://pub-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev
 ```
 
 Push the schema to your database:
@@ -99,8 +111,26 @@ Designed for [Vercel](https://vercel.com) with a Neon database:
 
 1. Create a Neon project and copy the connection string
 2. Deploy the repo to Vercel
-3. Set `DATABASE_URL` and `ADMIN_PASSWORD` in the project environment
+3. Set `DATABASE_URL`, `ADMIN_PASSWORD`, the `R2_*` secrets, and `NEXT_PUBLIC_MEDIA_BASE_URL` in the project environment
 4. Run `npm run db:push` against production (or apply migrations) once before going live
+
+## Photo uploads
+
+Photos and flyers never pass through Next.js. The browser compresses to WebP (720px avatars / 1080px flyers), then PUTs directly to R2 with a short-lived presigned URL. Neon stores only the object key (`avatars/{uuid}.webp` or `flyers/{uuid}.webp`). The public origin is `NEXT_PUBLIC_MEDIA_BASE_URL` so the CDN domain can change without rewriting rows.
+
+Images are rendered with `next/image` `unoptimized` (also set globally in `next.config.ts`) so Vercel Image Optimization is never used.
+
+### Cloudflare checklist
+
+1. **R2 API token** — in the Cloudflare dashboard, create an S3-compatible API token for the `glasshalffull` bucket (`Object Read & Write`). Copy Account ID, Access Key ID, and Secret Access Key into env vars. MCP/bindings cannot mint this token.
+2. **Public development URL** — in the bucket Settings, enable **Public Development URL** (`https://pub-….r2.dev`) and set that value as `NEXT_PUBLIC_MEDIA_BASE_URL`. This endpoint is rate-limited; a custom domain can replace it later without rewriting database rows.
+3. **CORS** — browsers must PUT to the S3 API host. Apply:
+
+```bash
+npx wrangler r2 bucket cors set glasshalffull --file r2-cors.json
+```
+
+Add your production origin to `r2-cors.json` if it is not `https://glasshalffull.space` (Vercel preview URLs need to be listed explicitly). `Cache-Control` must be allowed because the signed PUT includes a one-year immutable cache header.
 
 ## License
 

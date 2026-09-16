@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -24,10 +25,12 @@ export function ExternalImage({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={src}
       alt={alt}
+      unoptimized
+      width={1080}
+      height={1080}
       className={cn(className)}
       onError={() => setBroken(true)}
     />

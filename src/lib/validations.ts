@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { avatarKeyPattern, flyerKeyPattern } from "@/lib/media";
+
 export const craftCategories = [
   "dj",
   "musician",
@@ -42,7 +44,10 @@ export const creativeSubmissionSchema = z.object({
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
   instagramUrl: optionalUrl,
   portfolioUrl: optionalUrl,
-  avatarUrl: optionalUrl,
+  avatarKey: z.union([
+    z.literal(""),
+    z.string().regex(avatarKeyPattern, "Upload a valid photo"),
+  ]),
   openToPaidWork: z.boolean(),
   openToTrade: z.boolean(),
   buildingPortfolio: z.boolean(),
@@ -62,7 +67,10 @@ export const eventSubmissionSchema = z.object({
   }),
   description: z.union([z.literal(""), z.string().trim().max(4000)]),
   ticketLink: optionalUrl,
-  flyerUrl: optionalUrl,
+  flyerKey: z.union([
+    z.literal(""),
+    z.string().regex(flyerKeyPattern, "Upload a valid flyer"),
+  ]),
 });
 
 export type CreativeSubmissionInput = z.infer<typeof creativeSubmissionSchema>;

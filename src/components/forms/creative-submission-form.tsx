@@ -9,13 +9,14 @@ import {
   submitCreativeAction,
   updateCreativeAction,
 } from "@/app/actions/submissions";
-import { ExternalImageUrlField } from "@/components/forms/external-image-url-field";
+import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { craftCategoryLabels, workOpportunityTagLabels } from "@/lib/labels";
+import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   craftCategories,
   creativeSubmissionSchema,
@@ -38,6 +39,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const [pending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
 
   const form = useForm<CreativeSubmissionInput>({
     resolver: zodResolver(creativeSubmissionSchema),
@@ -50,7 +52,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             bio: "",
             instagramUrl: "",
             portfolioUrl: "",
-            avatarUrl: "",
+            avatarKey: "",
             openToPaidWork: false,
             openToTrade: false,
             buildingPortfolio: false,
@@ -60,6 +62,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const resetToForm = () => {
     setSubmitted(false);
     setFormError(null);
+    setPendingPhoto(null);
     form.reset();
   };
 
@@ -67,10 +70,22 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
     setFormError(null);
 
     startTransition(async () => {
+      let avatarKey = values.avatarKey;
+
+      if (pendingPhoto) {
+        const uploaded = await compressAndUploadPhoto(pendingPhoto, "avatar");
+        if (!uploaded.success) {
+          setFormError(uploaded.message);
+          return;
+        }
+        avatarKey = uploaded.key;
+      }
+
+      const payload = { ...values, avatarKey };
       const result =
         mode === "edit" && creativeId
-          ? await updateCreativeAction(creativeId, values)
-          : await submitCreativeAction(values);
+          ? await updateCreativeAction(creativeId, payload)
+          : await submitCreativeAction(payload);
 
       if (!result.success) {
         setFormError(result.message);
@@ -91,6 +106,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       }
 
       form.reset();
+      setPendingPhoto(null);
       setSubmitted(true);
       router.refresh();
     });
@@ -260,15 +276,16 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <Controller
         control={form.control}
-        name="avatarUrl"
+        name="avatarKey"
         render={({ field, fieldState }) => (
-          <ExternalImageUrlField
-            id="avatarUrl"
-            label="Photo URL (optional)"
-            value={field.value}
-            onChange={field.onChange}
+          <PhotoUploadField
+            id="avatarKey"
+            label="Photo (optional)"
+            storedKey={field.value}
+            file={pendingPhoto}
+            onFileChange={setPendingPhoto}
             error={fieldState.error?.message}
-            placeholder="https://…/your-photo.jpg"
+            disabled={pending}
           />
         )}
       />
@@ -282,9 +299,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending
-            ? mode === "edit"
-              ? "Saving…"
-              : "Submitting…"
+            ? "Submitting…"
             : mode === "edit"
               ? "Save changes"
               : "Submit profile"}

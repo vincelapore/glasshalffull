@@ -21,6 +21,7 @@ import {
   formatDateTime,
   statusLabels,
 } from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
 
 function StatusBadge({ status }: { status: Creative["status"] | Event["status"] }) {
   const variant =
@@ -49,7 +50,7 @@ export function EventSubmissionCard({ event }: { event: Event }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <ExternalImage
-          src={event.flyerUrl}
+          src={mediaUrl(event.flyerKey)}
           alt={`${event.title} flyer`}
           className="aspect-video w-full rounded-lg object-cover"
         />
@@ -95,7 +96,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <ExternalImage
-              src={creative.avatarUrl}
+              src={mediaUrl(creative.avatarKey)}
               alt={creative.name}
               className="size-12 rounded-full object-cover"
               fallback={

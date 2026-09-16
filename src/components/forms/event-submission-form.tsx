@@ -9,7 +9,7 @@ import {
   submitEventAction,
   updateEventAction,
 } from "@/app/actions/submissions";
-import { ExternalImageUrlField } from "@/components/forms/external-image-url-field";
+import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { eventCategoryLabels } from "@/lib/labels";
+import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   eventCategories,
   eventSubmissionSchema,
@@ -44,6 +45,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
   const [pending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingFlyer, setPendingFlyer] = useState<File | null>(null);
 
   const form = useForm<EventSubmissionInput>({
     resolver: zodResolver(eventSubmissionSchema),
@@ -54,16 +56,17 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             title: "",
             dateTime: "",
             location: "",
-            category: undefined,
+            category: "" as EventSubmissionInput["category"],
             description: "",
             ticketLink: "",
-            flyerUrl: "",
+            flyerKey: "",
           },
   });
 
   const resetToForm = () => {
     setSubmitted(false);
     setFormError(null);
+    setPendingFlyer(null);
     form.reset();
   };
 
@@ -71,10 +74,22 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
     setFormError(null);
 
     startTransition(async () => {
+      let flyerKey = values.flyerKey;
+
+      if (pendingFlyer) {
+        const uploaded = await compressAndUploadPhoto(pendingFlyer, "flyer");
+        if (!uploaded.success) {
+          setFormError(uploaded.message);
+          return;
+        }
+        flyerKey = uploaded.key;
+      }
+
+      const payload = { ...values, flyerKey };
       const result =
         mode === "edit" && eventId
-          ? await updateEventAction(eventId, values)
-          : await submitEventAction(values);
+          ? await updateEventAction(eventId, payload)
+          : await submitEventAction(payload);
 
       if (!result.success) {
         setFormError(result.message);
@@ -95,6 +110,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       }
 
       form.reset();
+      setPendingFlyer(null);
       setSubmitted(true);
       router.refresh();
     });
@@ -152,7 +168,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={field.value}
+                value={field.value || null}
                 onValueChange={(value) => {
                   if (value) field.onChange(value);
                 }}
@@ -224,15 +240,16 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
 
       <Controller
         control={form.control}
-        name="flyerUrl"
+        name="flyerKey"
         render={({ field, fieldState }) => (
-          <ExternalImageUrlField
-            id="flyerUrl"
-            label="Flyer image URL (optional)"
-            value={field.value}
-            onChange={field.onChange}
+          <PhotoUploadField
+            id="flyerKey"
+            label="Flyer (optional)"
+            storedKey={field.value}
+            file={pendingFlyer}
+            onFileChange={setPendingFlyer}
             error={fieldState.error?.message}
-            placeholder="https://…/flyer.jpg"
+            disabled={pending}
           />
         )}
       />
@@ -246,9 +263,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending
-            ? mode === "edit"
-              ? "Saving…"
-              : "Submitting…"
+            ? "Submitting…"
             : mode === "edit"
               ? "Save changes"
               : "Submit event"}

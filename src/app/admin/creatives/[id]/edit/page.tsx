@@ -55,7 +55,7 @@ export default async function EditCreativePage({
           bio: creative.bio ?? "",
           instagramUrl: creative.instagramUrl ?? "",
           portfolioUrl: creative.portfolioUrl ?? "",
-          avatarUrl: creative.avatarUrl ?? "",
+          avatarKey: creative.avatarKey ?? "",
           openToPaidWork: creative.openToPaidWork,
           openToTrade: creative.openToTrade,
           buildingPortfolio: creative.buildingPortfolio,

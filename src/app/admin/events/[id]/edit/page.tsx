@@ -55,7 +55,7 @@ export default async function EditEventPage({
           category: event.category,
           description: event.description ?? "",
           ticketLink: event.ticketLink ?? "",
-          flyerUrl: event.flyerUrl ?? "",
+          flyerKey: event.flyerKey ?? "",
         }}
       />
     </div>

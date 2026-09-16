@@ -17,6 +17,7 @@ import {
   workOpportunityTagLabels,
 } from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
+import { mediaUrl } from "@/lib/media";
 import { craftCategories, workOpportunityTags } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +173,7 @@ export default async function CreativesPage({
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <ExternalImage
-                      src={creative.avatarUrl}
+                      src={mediaUrl(creative.avatarKey)}
                       alt=""
                       className="size-14 rounded-full object-cover"
                       fallback={

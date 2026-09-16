@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ExternalImage } from "@/components/media/external-image";
 import { eventCategoryLabels, formatDateTime } from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
 import { getApprovedEvents } from "@/lib/queries";
 import { eventCategories } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,7 @@ export default async function EventsPage({
             <Link key={event.id} href={`/events/${event.id}`} className="group">
               <Card className="h-full transition-colors group-hover:bg-muted/30">
                 <ExternalImage
-                  src={event.flyerUrl}
+                  src={mediaUrl(event.flyerKey)}
                   alt=""
                   className="aspect-[4/5] w-full object-cover sm:aspect-video"
                 />

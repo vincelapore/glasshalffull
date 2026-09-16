@@ -10,6 +10,7 @@ import {
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
 import { getEventById, getEventLineup } from "@/lib/queries";
 
 type EventPageProps = {
@@ -82,7 +83,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                       className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:bg-muted/40"
                     >
                       <ExternalImage
-                        src={creative.avatarUrl}
+                        src={mediaUrl(creative.avatarKey)}
                         alt=""
                         className="size-12 rounded-full object-cover"
                         fallback={
@@ -108,12 +109,12 @@ export default async function EventDetailPage({ params }: EventPageProps) {
 
         <div>
           <ExternalImage
-            src={event.flyerUrl}
+            src={mediaUrl(event.flyerKey)}
             alt={`${event.title} flyer`}
             className="w-full rounded-2xl object-cover"
             fallback={
               <div className="flex aspect-[3/4] items-center justify-center rounded-2xl border border-dashed border-border text-sm text-muted-foreground">
-                No flyer linked
+                No flyer
               </div>
             }
           />

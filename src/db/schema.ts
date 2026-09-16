@@ -59,7 +59,7 @@ export const creatives = pgTable("creatives", {
   bio: text("bio"),
   instagramUrl: text("instagram_url"),
   portfolioUrl: text("portfolio_url"),
-  avatarUrl: text("avatar_url"),
+  avatarKey: text("avatar_key"),
   openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
   openToTrade: boolean("open_to_trade").notNull().default(false),
   buildingPortfolio: boolean("building_portfolio").notNull().default(false),
@@ -81,7 +81,7 @@ export const events = pgTable("events", {
   category: eventCategoryEnum("category").notNull(),
   description: text("description"),
   ticketLink: text("ticket_link"),
-  flyerUrl: text("flyer_url"),
+  flyerKey: text("flyer_key"),
   status: submissionStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

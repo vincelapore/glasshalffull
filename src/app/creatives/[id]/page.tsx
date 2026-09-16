@@ -10,6 +10,7 @@ import {
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
 import { getCreativeById, getCreativeUpcomingEvents } from "@/lib/queries";
 
 type CreativePageProps = {
@@ -48,7 +49,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
         <div className="space-y-6">
           <div className="flex items-start gap-4">
             <ExternalImage
-              src={creative.avatarUrl}
+              src={mediaUrl(creative.avatarKey)}
               alt={creative.name}
               className="size-20 shrink-0 rounded-2xl object-cover sm:size-28"
               fallback={

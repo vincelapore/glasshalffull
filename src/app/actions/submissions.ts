@@ -44,7 +44,7 @@ export async function submitCreativeAction(
         bio: emptyToNull(data.bio),
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-        avatarUrl: normalizeOptionalUrl(data.avatarUrl),
+        avatarKey: emptyToNull(data.avatarKey),
         openToPaidWork: data.openToPaidWork,
         openToTrade: data.openToTrade,
         buildingPortfolio: data.buildingPortfolio,
@@ -92,7 +92,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
         category: data.category,
         description: emptyToNull(data.description),
         ticketLink: normalizeOptionalUrl(data.ticketLink),
-        flyerUrl: normalizeOptionalUrl(data.flyerUrl),
+        flyerKey: emptyToNull(data.flyerKey),
         status: "pending",
       })
       .returning({ id: events.id });
@@ -228,7 +228,7 @@ export async function updateCreativeAction(
         bio: emptyToNull(data.bio),
         instagramUrl: normalizeOptionalUrl(data.instagramUrl),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-        avatarUrl: normalizeOptionalUrl(data.avatarUrl),
+        avatarKey: emptyToNull(data.avatarKey),
         openToPaidWork: data.openToPaidWork,
         openToTrade: data.openToTrade,
         buildingPortfolio: data.buildingPortfolio,
@@ -283,7 +283,7 @@ export async function updateEventAction(
         category: data.category,
         description: emptyToNull(data.description),
         ticketLink: normalizeOptionalUrl(data.ticketLink),
-        flyerUrl: normalizeOptionalUrl(data.flyerUrl),
+        flyerKey: emptyToNull(data.flyerKey),
       })
       .where(eq(events.id, id))
       .returning({ id: events.id });

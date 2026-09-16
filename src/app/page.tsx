@@ -14,6 +14,7 @@ import {
   eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
 import {
   getApprovedCreatives,
   getUpcomingApprovedEvents,
@@ -81,7 +82,7 @@ export default async function HomePage() {
               <Link key={event.id} href={`/events/${event.id}`} className="group">
                 <Card className="h-full transition-colors group-hover:bg-muted/30">
                   <ExternalImage
-                    src={event.flyerUrl}
+                    src={mediaUrl(event.flyerKey)}
                     alt=""
                     className="aspect-video w-full object-cover"
                   />
@@ -141,7 +142,7 @@ export default async function HomePage() {
                 className="w-56 shrink-0 rounded-xl border border-border/70 p-4 transition-colors hover:bg-muted/40"
               >
                 <ExternalImage
-                  src={creative.avatarUrl}
+                  src={mediaUrl(creative.avatarKey)}
                   alt=""
                   className="mb-3 size-16 rounded-full object-cover"
                   fallback={
