@@ -50,7 +50,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             name: "",
             craftCategories: [],
             bio: "",
-            instagramUrl: "",
+            instagramHandle: "",
             portfolioUrl: "",
             avatarKey: "",
             openToPaidWork: false,
@@ -124,6 +124,8 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       />
     );
   }
+
+  const instagramHandleField = form.register("instagramHandle");
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -243,17 +245,37 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="instagramUrl">Instagram URL</Label>
-          <Input
-            id="instagramUrl"
-            type="url"
-            placeholder="https://instagram.com/..."
-            {...form.register("instagramUrl")}
-            aria-invalid={Boolean(form.formState.errors.instagramUrl)}
-          />
-          {form.formState.errors.instagramUrl ? (
+          <Label htmlFor="instagramHandle">Instagram handle</Label>
+          <div className="flex h-8 items-center rounded-lg border border-input bg-transparent pl-2.5 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-3 has-[[aria-invalid=true]]:ring-destructive/20 dark:has-[[aria-invalid=true]]:border-destructive/50 dark:has-[[aria-invalid=true]]:ring-destructive/40">
+            <span
+              aria-hidden="true"
+              className="cursor-text select-none text-sm text-muted-foreground"
+              onMouseDown={(event) => {
+                event.preventDefault();
+                document.getElementById("instagramHandle")?.focus();
+              }}
+            >
+              @
+            </span>
+            <Input
+              id="instagramHandle"
+              className="h-full min-w-0 flex-1 border-0 bg-transparent py-1 pr-2.5 pl-0.5 shadow-none focus-visible:border-transparent focus-visible:ring-0 aria-invalid:border-0 aria-invalid:ring-0 dark:bg-transparent dark:aria-invalid:border-0 dark:aria-invalid:ring-0"
+              placeholder="yourhandle"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              {...instagramHandleField}
+              onChange={(event) => {
+                event.target.value = event.target.value.replace(/^@+/, "");
+                instagramHandleField.onChange(event);
+              }}
+              aria-invalid={Boolean(form.formState.errors.instagramHandle)}
+            />
+          </div>
+          {form.formState.errors.instagramHandle ? (
             <p className="text-xs text-destructive">
-              {form.formState.errors.instagramUrl.message}
+              {form.formState.errors.instagramHandle.message}
             </p>
           ) : null}
         </div>

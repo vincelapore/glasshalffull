@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 
 import { db } from "@/db";
 import { creatives, eventLineup, events } from "@/db/schema";
+import { isUuid } from "@/lib/slug";
 import type { submissionStatuses } from "@/lib/validations";
 
 type Status = (typeof submissionStatuses)[number];
@@ -55,6 +56,38 @@ export async function getCreativeById(id: string) {
     .where(eq(creatives.id, id))
     .limit(1);
   return creative ?? null;
+}
+
+export async function getEventBySlug(slug: string) {
+  const [event] = await db
+    .select()
+    .from(events)
+    .where(eq(events.slug, slug))
+    .limit(1);
+  return event ?? null;
+}
+
+export async function getCreativeBySlug(slug: string) {
+  const [creative] = await db
+    .select()
+    .from(creatives)
+    .where(eq(creatives.slug, slug))
+    .limit(1);
+  return creative ?? null;
+}
+
+export async function getEventByParam(param: string) {
+  return (
+    (await getEventBySlug(param)) ??
+    (isUuid(param) ? await getEventById(param) : null)
+  );
+}
+
+export async function getCreativeByParam(param: string) {
+  return (
+    (await getCreativeBySlug(param)) ??
+    (isUuid(param) ? await getCreativeById(param) : null)
+  );
 }
 
 export async function getEventLineup(eventId: string) {

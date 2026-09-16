@@ -4,7 +4,9 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { isAdminAuthenticated } from "@/lib/admin";
-import { emptyToNull } from "@/lib/labels";
+import { emptyToNull, normalizeInstagramHandle } from "@/lib/labels";
+import { creativePath, eventPath } from "@/lib/paths";
+import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
 import {
   creativeSubmissionSchema,
   eventSubmissionSchema,
@@ -40,9 +42,10 @@ export async function submitCreativeAction(
       .insert(creatives)
       .values({
         name: data.name,
+        slug: await uniqueCreativeSlug(data.name),
         craftCategories: data.craftCategories,
         bio: emptyToNull(data.bio),
-        instagramUrl: normalizeOptionalUrl(data.instagramUrl),
+        instagramHandle: normalizeInstagramHandle(data.instagramHandle),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
         avatarKey: emptyToNull(data.avatarKey),
         openToPaidWork: data.openToPaidWork,
@@ -50,7 +53,7 @@ export async function submitCreativeAction(
         buildingPortfolio: data.buildingPortfolio,
         status: "pending",
       })
-      .returning({ id: creatives.id });
+      .returning({ id: creatives.id, slug: creatives.slug });
 
     revalidatePath("/admin/submissions");
     revalidatePath("/creatives");
@@ -87,6 +90,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
       .insert(events)
       .values({
         title: data.title,
+        slug: await uniqueEventSlug(data.title),
         dateTime: new Date(data.dateTime),
         location: data.location,
         category: data.category,
@@ -95,7 +99,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
         flyerKey: emptyToNull(data.flyerKey),
         status: "pending",
       })
-      .returning({ id: events.id });
+      .returning({ id: events.id, slug: events.slug });
 
     revalidatePath("/admin/submissions");
     revalidatePath("/events");
@@ -128,7 +132,7 @@ export async function updateCreativeStatusAction(
       .update(creatives)
       .set({ status })
       .where(eq(creatives.id, id))
-      .returning({ id: creatives.id });
+      .returning({ id: creatives.id, slug: creatives.slug });
 
     if (!updated) {
       return { success: false, message: "Creative not found." };
@@ -136,7 +140,7 @@ export async function updateCreativeStatusAction(
 
     revalidatePath("/admin/submissions");
     revalidatePath("/creatives");
-    revalidatePath(`/creatives/${id}`);
+    revalidatePath(creativePath(updated.slug));
     revalidatePath("/");
 
     return {
@@ -163,7 +167,7 @@ export async function updateEventStatusAction(
       .update(events)
       .set({ status })
       .where(eq(events.id, id))
-      .returning({ id: events.id });
+      .returning({ id: events.id, slug: events.slug });
 
     if (!updated) {
       return { success: false, message: "Event not found." };
@@ -171,7 +175,7 @@ export async function updateEventStatusAction(
 
     revalidatePath("/admin/submissions");
     revalidatePath("/events");
-    revalidatePath(`/events/${id}`);
+    revalidatePath(eventPath(updated.slug));
     revalidatePath("/");
 
     return {
@@ -185,17 +189,17 @@ export async function updateEventStatusAction(
   }
 }
 
-function revalidateCreativePaths(id: string) {
+function revalidateCreativePaths(slug: string) {
   revalidatePath("/admin/submissions");
   revalidatePath("/creatives");
-  revalidatePath(`/creatives/${id}`);
+  revalidatePath(creativePath(slug));
   revalidatePath("/");
 }
 
-function revalidateEventPaths(id: string) {
+function revalidateEventPaths(slug: string) {
   revalidatePath("/admin/submissions");
   revalidatePath("/events");
-  revalidatePath(`/events/${id}`);
+  revalidatePath(eventPath(slug));
   revalidatePath("/");
 }
 
@@ -224,9 +228,10 @@ export async function updateCreativeAction(
       .update(creatives)
       .set({
         name: data.name,
+        slug: await uniqueCreativeSlug(data.name, id),
         craftCategories: data.craftCategories,
         bio: emptyToNull(data.bio),
-        instagramUrl: normalizeOptionalUrl(data.instagramUrl),
+        instagramHandle: normalizeInstagramHandle(data.instagramHandle),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
         avatarKey: emptyToNull(data.avatarKey),
         openToPaidWork: data.openToPaidWork,
@@ -234,13 +239,13 @@ export async function updateCreativeAction(
         buildingPortfolio: data.buildingPortfolio,
       })
       .where(eq(creatives.id, id))
-      .returning({ id: creatives.id });
+      .returning({ id: creatives.id, slug: creatives.slug });
 
     if (!updated) {
       return { success: false, message: "Creative not found." };
     }
 
-    revalidateCreativePaths(updated.id);
+    revalidateCreativePaths(updated.slug);
 
     return {
       success: true,
@@ -278,6 +283,7 @@ export async function updateEventAction(
       .update(events)
       .set({
         title: data.title,
+        slug: await uniqueEventSlug(data.title, id),
         dateTime: new Date(data.dateTime),
         location: data.location,
         category: data.category,
@@ -286,13 +292,13 @@ export async function updateEventAction(
         flyerKey: emptyToNull(data.flyerKey),
       })
       .where(eq(events.id, id))
-      .returning({ id: events.id });
+      .returning({ id: events.id, slug: events.slug });
 
     if (!updated) {
       return { success: false, message: "Event not found." };
     }
 
-    revalidateEventPaths(updated.id);
+    revalidateEventPaths(updated.slug);
 
     return {
       success: true,
@@ -314,13 +320,13 @@ export async function deleteCreativeAction(id: string): Promise<ActionResult> {
     const [deleted] = await db
       .delete(creatives)
       .where(eq(creatives.id, id))
-      .returning({ id: creatives.id });
+      .returning({ id: creatives.id, slug: creatives.slug });
 
     if (!deleted) {
       return { success: false, message: "Creative not found." };
     }
 
-    revalidateCreativePaths(deleted.id);
+    revalidateCreativePaths(deleted.slug);
 
     return {
       success: true,
@@ -342,13 +348,13 @@ export async function deleteEventAction(id: string): Promise<ActionResult> {
     const [deleted] = await db
       .delete(events)
       .where(eq(events.id, id))
-      .returning({ id: events.id });
+      .returning({ id: events.id, slug: events.slug });
 
     if (!deleted) {
       return { success: false, message: "Event not found." };
     }
 
-    revalidateEventPaths(deleted.id);
+    revalidateEventPaths(deleted.slug);
 
     return {
       success: true,

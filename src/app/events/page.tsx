@@ -12,6 +12,7 @@ import {
 import { ExternalImage } from "@/components/media/external-image";
 import { eventCategoryLabels, formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
+import { eventPath } from "@/lib/paths";
 import { getApprovedEvents } from "@/lib/queries";
 import { eventCategories } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,7 @@ export default async function EventsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <Link key={event.id} href={`/events/${event.id}`} className="group">
+            <Link key={event.id} href={eventPath(event.slug)} className="group">
               <Card className="h-full transition-colors group-hover:bg-muted/30">
                 <ExternalImage
                   src={mediaUrl(event.flyerKey)}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,26 +11,31 @@ import {
   formatDateTime,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
-import { getEventById, getEventLineup } from "@/lib/queries";
+import { creativePath, eventPath } from "@/lib/paths";
+import { getEventByParam, getEventLineup } from "@/lib/queries";
 
 type EventPageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: EventPageProps): Promise<Metadata> {
-  const { id } = await params;
-  const event = await getEventById(id);
+  const { slug } = await params;
+  const event = await getEventByParam(slug);
   return { title: event?.title ?? "Event" };
 }
 
 export default async function EventDetailPage({ params }: EventPageProps) {
-  const { id } = await params;
-  const event = await getEventById(id);
+  const { slug } = await params;
+  const event = await getEventByParam(slug);
 
   if (!event) {
     notFound();
+  }
+
+  if (slug !== event.slug) {
+    permanentRedirect(eventPath(event.slug));
   }
 
   const lineup = await getEventLineup(event.id);
@@ -79,7 +84,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                 {lineup.map(({ creative, role }) => (
                   <li key={creative.id}>
                     <Link
-                      href={`/creatives/${creative.id}`}
+                      href={creativePath(creative.slug)}
                       className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:bg-muted/40"
                     >
                       <ExternalImage

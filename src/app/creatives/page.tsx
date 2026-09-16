@@ -18,6 +18,7 @@ import {
 } from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
 import { mediaUrl } from "@/lib/media";
+import { creativePath } from "@/lib/paths";
 import { craftCategories, workOpportunityTags } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
@@ -166,7 +167,7 @@ export default async function CreativesPage({
           {creatives.map((creative) => (
             <Link
               key={creative.id}
-              href={`/creatives/${creative.id}`}
+              href={creativePath(creative.slug)}
               className="group"
             >
               <Card className="h-full transition-colors group-hover:bg-muted/30">

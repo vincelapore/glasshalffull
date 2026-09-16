@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
@@ -9,28 +9,35 @@ import { ExternalImage } from "@/components/media/external-image";
 import {
   eventCategoryLabels,
   formatDateTime,
+  formatInstagramHandle,
+  instagramProfileHref,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
-import { getCreativeById, getCreativeUpcomingEvents } from "@/lib/queries";
+import { creativePath, eventPath } from "@/lib/paths";
+import { getCreativeByParam, getCreativeUpcomingEvents } from "@/lib/queries";
 
 type CreativePageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: CreativePageProps): Promise<Metadata> {
-  const { id } = await params;
-  const creative = await getCreativeById(id);
+  const { slug } = await params;
+  const creative = await getCreativeByParam(slug);
   return { title: creative?.name ?? "Creative" };
 }
 
 export default async function CreativeDetailPage({ params }: CreativePageProps) {
-  const { id } = await params;
-  const creative = await getCreativeById(id);
+  const { slug } = await params;
+  const creative = await getCreativeByParam(slug);
 
   if (!creative) {
     notFound();
+  }
+
+  if (slug !== creative.slug) {
+    permanentRedirect(creativePath(creative.slug));
   }
 
   const upcoming = await getCreativeUpcomingEvents(creative.id);
@@ -76,14 +83,14 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
           ) : null}
 
           <div className="flex flex-wrap gap-4 text-sm">
-            {creative.instagramUrl ? (
+            {creative.instagramHandle ? (
               <a
-                href={creative.instagramUrl}
+                href={instagramProfileHref(creative.instagramHandle)}
                 target="_blank"
                 rel="noreferrer"
                 className="underline-offset-4 hover:underline"
               >
-                Instagram
+                {formatInstagramHandle(creative.instagramHandle)}
               </a>
             ) : null}
             {creative.portfolioUrl ? (
@@ -112,7 +119,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
               {upcoming.map(({ event, role }) => (
                 <li key={event.id}>
                   <Link
-                    href={`/events/${event.id}`}
+                    href={eventPath(event.slug)}
                     className="block rounded-xl border border-border/70 p-4 transition-colors hover:bg-muted/40"
                   >
                     <div className="flex items-start justify-between gap-3">

@@ -108,3 +108,17 @@ export function emptyToNull(value?: string | null) {
   if (!value || value.trim() === "") return null;
   return value.trim();
 }
+
+export function normalizeInstagramHandle(value?: string | null) {
+  const trimmed = emptyToNull(value);
+  if (!trimmed) return null;
+  return trimmed.replace(/^@+/, "");
+}
+
+export function formatInstagramHandle(handle: string) {
+  return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
+export function instagramProfileHref(handle: string) {
+  return `https://instagram.com/${normalizeInstagramHandle(handle) ?? handle}`;
+}

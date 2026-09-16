@@ -19,9 +19,12 @@ import type { Creative, Event } from "@/db/schema";
 import {
   eventCategoryLabels,
   formatDateTime,
+  formatInstagramHandle,
+  instagramProfileHref,
   statusLabels,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
+import { creativePath, eventPath } from "@/lib/paths";
 
 function StatusBadge({ status }: { status: Creative["status"] | Event["status"] }) {
   const variant =
@@ -65,7 +68,7 @@ export function EventSubmissionCard({ event }: { event: Event }) {
       <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href={`/events/${event.id}`}
+            href={eventPath(event.slug)}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             Open public page
@@ -123,14 +126,14 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
           <p className="text-sm text-muted-foreground">No bio provided.</p>
         )}
         <div className="flex flex-wrap gap-3 text-sm">
-          {creative.instagramUrl ? (
+          {creative.instagramHandle ? (
             <a
-              href={creative.instagramUrl}
+              href={instagramProfileHref(creative.instagramHandle)}
               target="_blank"
               rel="noreferrer"
               className="underline-offset-4 hover:underline"
             >
-              Instagram
+              {formatInstagramHandle(creative.instagramHandle)}
             </a>
           ) : null}
           {creative.portfolioUrl ? (
@@ -151,7 +154,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
       <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href={`/creatives/${creative.id}`}
+            href={creativePath(creative.slug)}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             Open public page

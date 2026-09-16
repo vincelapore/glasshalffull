@@ -15,6 +15,7 @@ import {
   formatDateTime,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
+import { creativePath, eventPath } from "@/lib/paths";
 import {
   getApprovedCreatives,
   getUpcomingApprovedEvents,
@@ -79,7 +80,7 @@ export default async function HomePage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featuredEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`} className="group">
+              <Link key={event.id} href={eventPath(event.slug)} className="group">
                 <Card className="h-full transition-colors group-hover:bg-muted/30">
                   <ExternalImage
                     src={mediaUrl(event.flyerKey)}
@@ -138,7 +139,7 @@ export default async function HomePage() {
             {creatives.map((creative) => (
               <Link
                 key={creative.id}
-                href={`/creatives/${creative.id}`}
+                href={creativePath(creative.slug)}
                 className="w-56 shrink-0 rounded-xl border border-border/70 p-4 transition-colors hover:bg-muted/40"
               >
                 <ExternalImage

@@ -36,13 +36,24 @@ const optionalUrl = z.union([
   z.string().trim().url("Enter a valid URL"),
 ]);
 
+const optionalInstagramHandle = z.union([
+  z.literal(""),
+  z
+    .string()
+    .trim()
+    .regex(
+      /^@?[A-Za-z0-9._]{1,30}$/,
+      "Enter a valid Instagram handle"
+    ),
+]);
+
 export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
   craftCategories: z
     .array(z.enum(craftCategories))
     .min(1, "Pick at least one craft category"),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
-  instagramUrl: optionalUrl,
+  instagramHandle: optionalInstagramHandle,
   portfolioUrl: optionalUrl,
   avatarKey: z.union([
     z.literal(""),

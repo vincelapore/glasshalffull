@@ -52,12 +52,13 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
 
 export const creatives = pgTable("creatives", {
   id: uuid("id").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   craftCategories: craftCategoryEnum("craft_categories")
     .array()
     .notNull(),
   bio: text("bio"),
-  instagramUrl: text("instagram_url"),
+  instagramHandle: text("instagram_handle"),
   portfolioUrl: text("portfolio_url"),
   avatarKey: text("avatar_key"),
   openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
@@ -75,6 +76,7 @@ export const creatives = pgTable("creatives", {
 
 export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time", { withTimezone: true }).notNull(),
   location: text("location").notNull(),
