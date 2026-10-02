@@ -1,4 +1,4 @@
-import type { Creative } from "@/db/schema";
+import type { Creative, EventLineup } from "@/db/schema";
 import {
   craftCategories,
   eventCategories,
@@ -46,6 +46,16 @@ export const workOpportunityTagLabels: Record<
   paid_work: "Paid work",
   trade: "Open to trade",
   portfolio: "Building portfolio",
+};
+
+export const lineupRoleLabels: Record<EventLineup["role"], string> = {
+  performer: "Performer",
+  dj: "DJ",
+  host: "Host",
+  organizer: "Organiser",
+  visual_artist: "Visual artist",
+  collaborator: "Collaborator",
+  other: "Other",
 };
 
 export function getCreativeWorkTags(

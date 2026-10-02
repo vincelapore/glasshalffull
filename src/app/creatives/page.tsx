@@ -79,7 +79,7 @@ export default async function CreativesPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Creatives</h1>
         <p className="text-muted-foreground">
-          Artists, organizers, and makers behind the local scene.
+          Artists, organisers, and makers behind the local scene.
         </p>
       </div>
 

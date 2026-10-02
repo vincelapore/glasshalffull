@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import { eventCategoryLabels, formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
@@ -36,7 +36,7 @@ export default async function EventsPage({
 
   const allEvents = await getApprovedEvents();
   const events = activeCategory
-    ? allEvents.filter((event) => event.category === activeCategory)
+    ? allEvents.filter((event) => event.categories.includes(activeCategory))
     : allEvents;
 
   return (
@@ -99,9 +99,7 @@ export default async function EventsPage({
                     <CardTitle className="group-hover:underline group-hover:underline-offset-4">
                       {event.title}
                     </CardTitle>
-                    <Badge variant="outline">
-                      {eventCategoryLabels[event.category]}
-                    </Badge>
+                    <EventCategoryTags event={event} className="justify-end" />
                   </div>
                   <CardDescription>
                     {formatDateTime(event.dateTime)} · {event.location}

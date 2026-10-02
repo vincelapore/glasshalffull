@@ -208,7 +208,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">Open to</legend>
         <p className="text-sm text-muted-foreground">
-          Optional tags so collaborators and organizers can find you.
+          Optional tags so collaborators and organisers can find you.
         </p>
         <div className="space-y-2">
           {workOpportunityTags.map((tag) => {

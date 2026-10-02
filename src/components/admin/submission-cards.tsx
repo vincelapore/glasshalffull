@@ -4,6 +4,7 @@ import { DeleteSubmissionButton } from "@/components/admin/delete-submission-but
 import { ModerationActions } from "@/components/admin/moderation-actions";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
+import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/card";
 import type { Creative, Event } from "@/db/schema";
 import {
-  eventCategoryLabels,
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
@@ -57,10 +57,12 @@ export function EventSubmissionCard({ event }: { event: Event }) {
           alt={`${event.title} flyer`}
           className="aspect-video w-full rounded-lg object-cover"
         />
-        <p className="text-sm text-muted-foreground">
-          {eventCategoryLabels[event.category]}
-          {event.description ? ` — ${event.description}` : null}
-        </p>
+        <div className="space-y-2">
+          <EventCategoryTags event={event} />
+          {event.description ? (
+            <p className="text-sm text-muted-foreground">{event.description}</p>
+          ) : null}
+        </div>
         <p className="text-xs text-muted-foreground">
           Submitted {formatDateTime(event.createdAt)}
         </p>

@@ -80,7 +80,7 @@ export const events = pgTable("events", {
   title: text("title").notNull(),
   dateTime: timestamp("date_time", { withTimezone: true }).notNull(),
   location: text("location").notNull(),
-  category: eventCategoryEnum("category").notNull(),
+  categories: eventCategoryEnum("categories").array().notNull(),
   description: text("description"),
   ticketLink: text("ticket_link"),
   flyerKey: text("flyer_key"),

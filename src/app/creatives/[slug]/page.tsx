@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
+import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
-  eventCategoryLabels,
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
+  lineupRoleLabels,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
@@ -129,12 +129,10 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                           {formatDateTime(event.dateTime)} · {event.location}
                         </p>
                       </div>
-                      <Badge variant="outline">
-                        {eventCategoryLabels[event.category]}
-                      </Badge>
+                      <EventCategoryTags event={event} />
                     </div>
                     <p className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">
-                      {role.replaceAll("_", " ")}
+                      {lineupRoleLabels[role]}
                     </p>
                   </Link>
                 </li>

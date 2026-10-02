@@ -14,13 +14,6 @@ import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { eventCategoryLabels } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
@@ -56,7 +49,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             title: "",
             dateTime: "",
             location: "",
-            category: "" as EventSubmissionInput["category"],
+            categories: [],
             description: "",
             ticketLink: "",
             flyerKey: "",
@@ -160,42 +153,54 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             </p>
           ) : null}
         </div>
-
-        <Controller
-          control={form.control}
-          name="category"
-          render={({ field, fieldState }) => (
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select
-                value={field.value || null}
-                onValueChange={(value) => {
-                  if (value) field.onChange(value);
-                }}
-              >
-                <SelectTrigger
-                  className="w-full"
-                  aria-invalid={Boolean(fieldState.error)}
-                >
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {eventCategoryLabels[category]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {fieldState.error ? (
-                <p className="text-xs text-destructive">
-                  {fieldState.error.message}
-                </p>
-              ) : null}
-            </div>
-          )}
-        />
       </div>
+
+      <Controller
+        control={form.control}
+        name="categories"
+        render={({ field, fieldState }) => (
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium">Categories</legend>
+            <p className="text-sm text-muted-foreground">
+              Select every category that fits — you can pick more than one.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {eventCategories.map((category) => {
+                const checked = field.value?.includes(category) ?? false;
+
+                return (
+                  <label
+                    key={category}
+                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 size-4 rounded border-border accent-foreground"
+                      checked={checked}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...(field.value ?? []), category]
+                          : (field.value ?? []).filter(
+                              (value) => value !== category
+                            );
+                        field.onChange(next);
+                      }}
+                    />
+                    <span className="text-sm">
+                      {eventCategoryLabels[category]}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {fieldState.error ? (
+              <p className="text-xs text-destructive">
+                {fieldState.error.message}
+              </p>
+            ) : null}
+          </fieldset>
+        )}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="location">Location</Label>

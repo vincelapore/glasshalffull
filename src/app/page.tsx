@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,11 +8,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
+import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import {
-  eventCategoryLabels,
-  formatDateTime,
-} from "@/lib/labels";
+import { formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import {
@@ -39,9 +36,8 @@ export default async function HomePage() {
           Pouring back into Brisbane&apos;s creative scene.
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          Discover events, meet the artists behind them, and reconnect with
-          Brisbane&apos;s DJs, musicians, tattooists, designers, and broader
-          creative community.
+          What are you doing this weekend? Don&apos;t know? Have a browse and
+          discover events and local talent all in one place.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button render={<Link href="/events" />}>Browse events</Button>
@@ -90,9 +86,7 @@ export default async function HomePage() {
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle>{event.title}</CardTitle>
-                      <Badge variant="outline">
-                        {eventCategoryLabels[event.category]}
-                      </Badge>
+                      <EventCategoryTags event={event} className="justify-end" />
                     </div>
                     <CardDescription>
                       {formatDateTime(event.dateTime)} · {event.location}

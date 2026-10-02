@@ -52,7 +52,7 @@ export default async function EditEventPage({
           title: event.title,
           dateTime: toDateTimeLocalValue(event.dateTime),
           location: event.location,
-          category: event.category,
+          categories: event.categories,
           description: event.description ?? "",
           ticketLink: event.ticketLink ?? "",
           flyerKey: event.flyerKey ?? "",

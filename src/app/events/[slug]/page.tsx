@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
+import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
-  eventCategoryLabels,
   formatDateTime,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
@@ -52,7 +51,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
       <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <div className="space-y-3">
-            <Badge variant="outline">{eventCategoryLabels[event.category]}</Badge>
+            <EventCategoryTags event={event} />
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {event.title}
             </h1>

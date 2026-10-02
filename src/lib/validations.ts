@@ -73,9 +73,9 @@ export const eventSubmissionSchema = z.object({
       message: "Enter a valid date and time",
     }),
   location: z.string().trim().min(2, "Location is required").max(200),
-  category: z.enum(eventCategories, {
-    errorMap: () => ({ message: "Pick an event category" }),
-  }),
+  categories: z
+    .array(z.enum(eventCategories))
+    .min(1, "Pick at least one event category"),
   description: z.union([z.literal(""), z.string().trim().max(4000)]),
   ticketLink: optionalUrl,
   flyerKey: z.union([
