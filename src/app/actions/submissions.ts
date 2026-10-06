@@ -62,7 +62,7 @@ export async function saveMyProfileAction(
       openToPaidWork: data.openToPaidWork,
       openToTrade: data.openToTrade,
       buildingPortfolio: data.buildingPortfolio,
-      status: "pending" as const,
+      status: "approved" as const,
     };
 
     if (existing[0]) {
@@ -81,7 +81,7 @@ export async function saveMyProfileAction(
       return {
         success: true,
         id: updated.id,
-        message: "Profile saved. It’s in the review queue.",
+        message: "Profile saved. It’s live.",
       };
     }
 
@@ -94,14 +94,13 @@ export async function saveMyProfileAction(
       })
       .returning({ id: creatives.id, slug: creatives.slug });
 
-    revalidatePath("/admin/submissions");
+    revalidateCreativePaths(created.slug);
     revalidatePath("/account");
-    revalidatePath("/creatives");
 
     return {
       success: true,
       id: created.id,
-      message: "Profile saved. It’s in the review queue.",
+      message: "Profile saved. It’s live.",
     };
   } catch (error) {
     console.error("saveMyProfileAction", error);

@@ -2,15 +2,15 @@
 
 A discovery hub and community directory for Brisbane’s creative scene — DJs, musicians, tattoo artists, visual art, fashion, and more.
 
-Browse upcoming events, meet local creatives, and submit listings for moderation before they go live.
+Browse upcoming events, meet local creatives, and submit events for moderation before they go live.
 
 ## Features
 
 - **Events** — upcoming nights with category, location, tickets, and flyer images
-- **Creatives** — artist profiles with craft category, bio, links, and work-opportunity tags
+- **Creatives** — artist profiles with craft category, bio, links, and work-opportunity tags (live on save)
 - **Accounts** — Neon Auth sign-up / sign-in; one editable creative profile per account
 - **Event submissions** — from `/account` (pending until approved)
-- **Admin moderation** — same login; owners manage the admin list, admins review submissions
+- **Admin moderation** — same login; owners manage the admin list, admins review event submissions
 - **Light/dark theme** — dark by default
 
 ## Tech stack

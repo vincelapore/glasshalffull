@@ -93,8 +93,8 @@ export default async function AccountPage() {
           </div>
           <p className="text-sm text-muted-foreground">
             {profile
-              ? "Saving sends changes back to review before they go live."
-              : "Fill this in so the scene can find you. It goes to review before it appears in the directory."}
+              ? "Changes go live as soon as you save."
+              : "Fill this in so the scene can find you. It appears in the directory as soon as you save."}
           </p>
         </div>
         <CreativeSubmissionForm
