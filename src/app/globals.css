@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Nightlife Elegance — design tokens
+  Nightlife Elegance: design tokens
   Theme config lives here (Tailwind CSS v4). There is no tailwind.config.ts;
   @theme maps CSS variables to Tailwind utilities (bg-*, text-*, font-*, etc.).
 */
@@ -61,7 +61,7 @@
   --shadow-glow: var(--shadow-glow);
 }
 
-/* Day mode — cool slate glass, same liquid accent language */
+/* Day mode: cool slate glass, same liquid accent language */
 :root {
   /* Night charcoal approximated for light surfaces */
   --background: oklch(0.97 0.01 250);
@@ -70,7 +70,7 @@
   --card-foreground: oklch(0.18 0.02 260);
   --popover: oklch(1 0 0 / 88%);
   --popover-foreground: oklch(0.18 0.02 260);
-  /* Liquid amber — primary actions */
+  /* Liquid amber: primary actions */
   --primary: oklch(0.72 0.15 70);
   --primary-foreground: oklch(0.18 0.03 60);
   --secondary: oklch(0.93 0.01 250);
@@ -101,14 +101,14 @@
   /* Brand tokens */
   --liquid: oklch(0.72 0.15 70); /* amber */
   --liquid-foreground: oklch(0.18 0.03 60);
-  --glow: oklch(0.62 0.22 300); /* electric violet — use sparingly */
+  --glow: oklch(0.62 0.22 300); /* electric violet; use sparingly */
   --glass: oklch(1 0 0 / 55%);
   --glass-border: oklch(0.2 0.02 260 / 12%);
   --shadow-glass: 0 8px 32px oklch(0.2 0.02 260 / 8%);
   --shadow-glow: 0 0 40px oklch(0.72 0.15 70 / 25%);
 }
 
-/* Nightlife — default brand surface */
+/* Nightlife: default brand surface */
 .dark {
   /* Rich charcoal / midnight slate ≈ #121212 with a cool cast */
   --background: oklch(0.17 0.01 260);
@@ -187,7 +187,7 @@
 }
 
 /*
-  Glassmorphism primitives — apply via className="glass-panel" etc.
+  Glassmorphism primitives: apply via className="glass-panel" etc.
   Prefer these over per-component blur/border stacks.
 */
 @layer utilities {

@@ -93,7 +93,7 @@ export async function saveMyProfileAction(
       return {
         success: true,
         id: updated.id,
-        message: "Profile saved. It’s live.",
+        message: "Profile saved.",
       };
     }
 
@@ -112,7 +112,7 @@ export async function saveMyProfileAction(
     return {
       success: true,
       id: created.id,
-      message: "Profile saved. It’s live.",
+      message: "Profile saved.",
     };
   } catch (error) {
     console.error("saveMyProfileAction", error);
@@ -133,7 +133,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
   if (!profile) {
     return {
       success: false,
-      message: "Save your profile on Account before submitting an event.",
+      message: "Save your profile first, then submit an event.",
     };
   }
 
@@ -183,7 +183,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
     return {
       success: true,
       id: created.id,
-      message: "Event submitted for review. We’ll take a look soon.",
+      message: "Submitted. We’ll review it soon.",
     };
   } catch (error) {
     console.error("submitEventAction", error);

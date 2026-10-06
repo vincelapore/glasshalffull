@@ -77,7 +77,7 @@ export function EventSubmissionCard({
             Organisers
           </p>
           {organisers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No organisers linked.</p>
+            <p className="text-sm text-muted-foreground">No organisers yet.</p>
           ) : (
             <ul className="space-y-2">
               {organisers.map((creative) => (

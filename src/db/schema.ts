@@ -61,7 +61,7 @@ export const creatives = pgTable(
   "creatives",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    /** Neon Auth user id — required for account-owned profiles. */
+    /** Neon Auth user id. Required for account-owned profiles. */
     userId: text("user_id"),
     slug: text("slug").notNull().unique(),
     name: text("name").notNull(),

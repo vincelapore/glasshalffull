@@ -48,7 +48,7 @@ export function PhotoUploadField({
   function takeFile(next: File | undefined) {
     if (!next || disabled) return;
     if (!isAcceptedImage(next)) {
-      setLocalError("Use a JPEG, PNG, or WebP image.");
+      setLocalError("Try a photo (JPG, PNG, or WebP).");
       return;
     }
     setLocalError(null);

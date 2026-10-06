@@ -70,7 +70,7 @@ export function AuthForm(props: AuthFormProps) {
           return;
         }
 
-        // Neon Verify-at-sign-up (verification code) — OTP emailed, no session yet.
+        // Neon Verify-at-sign-up (verification code): OTP emailed, no session yet.
         if (data?.user && !data.user.emailVerified) {
           setEmail(submittedEmail);
           setOtp("");

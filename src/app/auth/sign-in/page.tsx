@@ -37,7 +37,7 @@ export default async function SignInPage({
           Sign in
         </h1>
         <p className="text-muted-foreground">
-          Welcome back. One account for your profile and submissions.
+          Sign in to manage your profile and events.
         </p>
       </div>
       <AuthForm mode="sign-in" next={next} />

@@ -163,9 +163,6 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">City (optional)</legend>
-            <p className="text-sm text-muted-foreground">
-              Where are you situated?
-            </p>
             <div className="grid gap-2 sm:grid-cols-3">
               <label className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30">
                 <input
@@ -213,9 +210,6 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">Craft categories</legend>
-            <p className="text-sm text-muted-foreground">
-              Select every craft that fits — you can pick more than one.
-            </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {craftCategories.map((category) => {
                 const checked = field.value?.includes(category) ?? false;
@@ -271,9 +265,6 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">Open to</legend>
-        <p className="text-sm text-muted-foreground">
-          Optional tags so collaborators and organisers can find you.
-        </p>
         <div className="space-y-2">
           {workOpportunityTags.map((tag) => {
             const fieldName =
@@ -344,7 +335,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           ) : null}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="portfolioUrl">Portfolio URL</Label>
+          <Label htmlFor="portfolioUrl">Website</Label>
           <Input
             id="portfolioUrl"
             type="url"

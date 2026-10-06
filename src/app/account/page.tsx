@@ -91,11 +91,11 @@ export default async function AccountPage() {
               </p>
             ) : null}
           </div>
-          <p className="text-sm text-muted-foreground">
-            {profile
-              ? "Changes go live as soon as you save."
-              : "Fill this in so the scene can find you. It appears in the directory as soon as you save."}
-          </p>
+          {!profile ? (
+            <p className="text-sm text-muted-foreground">
+              So people can find you.
+            </p>
+          ) : null}
         </div>
         <CreativeSubmissionForm
           mode="profile"
@@ -134,7 +134,7 @@ export default async function AccountPage() {
         </div>
         {!profile ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-            Save your profile above first — you’ll be listed as organiser on
+            Save your profile above first. You’ll be listed as organiser on
             events you submit.
           </p>
         ) : events.length === 0 ? (

@@ -231,7 +231,7 @@ export default async function CreativesPage({
       {creatives.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
           {allCreatives.length === 0
-            ? "No approved creatives yet. "
+            ? "No creatives yet. "
             : "No creatives match these filters. "}
           <Link href="/account" className="underline underline-offset-4">
             Add your profile

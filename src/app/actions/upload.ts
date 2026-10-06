@@ -19,7 +19,7 @@ export async function createUploadUrlAction(
   kind: UploadKind
 ): Promise<CreateUploadUrlResult> {
   if (kind !== "avatar" && kind !== "flyer" && kind !== "work") {
-    return { success: false, message: "Invalid upload type." };
+    return { success: false, message: "That file type isn’t supported." };
   }
 
   let ownerUserId: string | undefined;
@@ -38,7 +38,7 @@ export async function createUploadUrlAction(
     console.error("createUploadUrlAction", error);
     return {
       success: false,
-      message: "Could not start the upload. Please try again.",
+      message: "Couldn’t upload. Try again.",
     };
   }
 }

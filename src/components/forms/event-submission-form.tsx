@@ -114,8 +114,8 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
   if (mode === "create" && submitted) {
     return (
       <SubmissionSuccess
-        title="Your event is in the queue."
-        description="Thanks for pouring back in. We’ll review it before it goes live on the directory."
+        title="Thanks. We’ll review it before it goes live."
+        description="You’re listed as the organiser."
         primaryHref="/account"
         primaryLabel="Back to account"
         onSubmitAnother={resetToForm}
@@ -163,9 +163,6 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">City</legend>
-            <p className="text-sm text-muted-foreground">
-              Where is this event happening?
-            </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {cities.map((city) => (
                 <label
@@ -201,9 +198,6 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">Categories</legend>
-            <p className="text-sm text-muted-foreground">
-              Select every category that fits — you can pick more than one.
-            </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {eventCategories.map((category) => {
                 const checked = field.value?.includes(category) ?? false;

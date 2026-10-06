@@ -119,7 +119,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
           </h2>
           {upcoming.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No upcoming linked events yet.
+              No upcoming events yet.
             </p>
           ) : (
             <ul className="space-y-3">

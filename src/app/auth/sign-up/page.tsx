@@ -23,8 +23,8 @@ export default async function SignUpPage() {
           Create account
         </h1>
         <p className="text-muted-foreground">
-          Join Glass Half Full — we&apos;ll email a verification code, then you
-          can keep your creative profile and event submissions in one place.
+          Create an account to add your profile and events. We&apos;ll email a
+          verification code.
         </p>
       </div>
       <AuthForm mode="sign-up" />

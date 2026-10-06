@@ -12,7 +12,7 @@ function parseEmailList(value: string | undefined) {
     .filter(Boolean);
 }
 
-/** Hardcoded plus OWNER_EMAILS — owners manage the admin list. */
+/** Hardcoded plus OWNER_EMAILS. Owners manage the admin list. */
 export function getOwnerEmails() {
   return Array.from(
     new Set([
@@ -22,7 +22,7 @@ export function getOwnerEmails() {
   );
 }
 
-/** Bootstrap seed only — extra admins copied into the table on first check. */
+/** Bootstrap seed only. Extra admins copied into the table on first check. */
 export function getBootstrapAdminEmails() {
   return parseEmailList(process.env.ADMIN_EMAILS);
 }
@@ -125,7 +125,7 @@ export async function requireAdmin() {
   return user;
 }
 
-/** Owners only — manage who can moderate. */
+/** Owners only. Manage who can moderate. */
 export async function requireOwner() {
   const user = await getSessionUser();
   if (!user) {

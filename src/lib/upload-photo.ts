@@ -29,14 +29,14 @@ export async function compressAndUploadPhoto(
   kind: UploadKind
 ): Promise<UploadPhotoResult> {
   if (!isAcceptedImage(file)) {
-    return { success: false, message: "Use a JPEG, PNG, or WebP image." };
+    return { success: false, message: "Try a photo (JPG, PNG, or WebP)." };
   }
 
   const maxBytes = kind === "work" ? MAX_WORK_PHOTO_BYTES : MAX_COMPRESSED_BYTES;
   if (kind === "work" && file.size > MAX_WORK_PHOTO_SOURCE_BYTES) {
     return {
       success: false,
-      message: "That image is too large. Try one under 12 MB.",
+      message: "That photo’s too big. Try one under 12 MB.",
     };
   }
 
@@ -54,7 +54,7 @@ export async function compressAndUploadPhoto(
     if (compressed.size > maxBytes) {
       return {
         success: false,
-        message: "That image is still too large after compression. Try a simpler photo.",
+        message: "That photo’s too big. Try another.",
       };
     }
 
@@ -82,8 +82,7 @@ export async function compressAndUploadPhoto(
     if (error instanceof TypeError) {
       return {
         success: false,
-        message:
-          "The browser could not reach R2. That’s usually a missing CORS policy on the bucket for this site’s origin.",
+        message: "Couldn’t upload. Check your connection and try again.",
       };
     }
     return {

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s · Glass Half Full",
   },
   description:
-    "A discovery hub and community directory for Brisbane's creative scene — DJs, musicians, tattoo artists, visual art, fashion, and more.",
+    "A discovery hub for Brisbane's creative scene: DJs, musicians, tattoo artists, visual art, fashion, and more.",
 };
 
 /** Header reads the Neon Auth session cookie on every page. */

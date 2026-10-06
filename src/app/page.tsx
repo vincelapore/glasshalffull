@@ -79,8 +79,7 @@ export default async function HomePage({
               : "Pouring back into Brisbane's creative scene."}
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          What are you doing this weekend? Don&apos;t know? Have a browse and
-          discover events and local talent all in one place.
+          Find events and local creatives.
         </p>
         <div className="flex flex-wrap gap-2">
           {cities.map((cityOption) => (
@@ -131,8 +130,7 @@ export default async function HomePage({
               Featured Events
             </h2>
             <p className="text-sm text-muted-foreground">
-              Browse to find events that'll tickle your pick-- uhh, fancy. new
-              to do in {cityCopy}.
+              What’s on this weekend {cityCopy}.
             </p>
           </div>
           <Link
@@ -195,7 +193,7 @@ export default async function HomePage({
               Discover Creatives
             </h2>
             <p className="text-sm text-muted-foreground">
-              Faces and crafts {cityCopy}.
+              People making things {cityCopy}.
             </p>
           </div>
           <Link

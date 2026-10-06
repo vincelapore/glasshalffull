@@ -75,7 +75,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             <h2 className="text-xl font-semibold tracking-tight">Lineup</h2>
             {lineup.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Creatives linked to this event will appear here.
+                Lineup coming soon.
               </p>
             ) : (
               <ul className="grid gap-3 sm:grid-cols-2">

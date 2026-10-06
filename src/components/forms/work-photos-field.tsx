@@ -93,7 +93,7 @@ export function WorkPhotosField({
     }
 
     if (rejected) {
-      setLocalError("Use JPEG, PNG, or WebP images under 12 MB.");
+      setLocalError("Try a photo (JPG, PNG, or WebP) under 12 MB.");
     } else {
       setLocalError(null);
     }
@@ -120,8 +120,7 @@ export function WorkPhotosField({
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">Examples of your work</legend>
       <p className="text-sm text-muted-foreground">
-        Up to {MAX_WORK_PHOTOS} photos. They’re compressed in your browser
-        before upload.
+        Up to {MAX_WORK_PHOTOS} photos.
       </p>
       <input
         id="workPhotos"

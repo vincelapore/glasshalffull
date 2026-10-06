@@ -79,7 +79,7 @@ export default async function EventsPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
         <p className="text-muted-foreground">
-          Approved gigs and gatherings
+          Gigs and gatherings
           {activeCity === "all"
             ? " across Brisbane / Meanjin and Melbourne / Naarm."
             : ` in ${cityLabels[activeCity]}.`}
@@ -158,7 +158,7 @@ export default async function EventsPage({
       {events.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
           {allEvents.length === 0
-            ? "No approved events yet. "
+            ? "No events yet. "
             : "No events match these filters. "}
           <Link href="/account/events/new" className="underline underline-offset-4">
             Submit one

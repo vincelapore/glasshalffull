@@ -32,8 +32,8 @@ export default async function AccountSubmitEventPage() {
             Submit an event
           </h1>
           <p className="text-muted-foreground">
-            You’ll be listed as organiser ({profile.name}). Submissions land in
-            review before going live on the directory.
+            You’ll be listed as organiser ({profile.name}). We’ll review it
+            before it goes live.
           </p>
         </div>
         <Button size="sm" variant="outline" render={<Link href="/account" />}>
