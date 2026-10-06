@@ -5,6 +5,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
 
@@ -14,6 +19,8 @@ type AuthFormProps =
 
 type Step = "auth" | "verify";
 
+const OTP_LENGTH = 6;
+
 function isEmailNotVerifiedError(message?: string | null) {
   if (!message) return false;
   return /email not verified/i.test(message);
@@ -22,6 +29,7 @@ function isEmailNotVerifiedError(message?: string | null) {
 export function AuthForm(props: AuthFormProps) {
   const [step, setStep] = useState<Step>("auth");
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -65,6 +73,7 @@ export function AuthForm(props: AuthFormProps) {
         // Neon Verify-at-sign-up (verification code) — OTP emailed, no session yet.
         if (data?.user && !data.user.emailVerified) {
           setEmail(submittedEmail);
+          setOtp("");
           setInfo("Check your email for a verification code.");
           setStep("verify");
           return;
@@ -83,6 +92,7 @@ export function AuthForm(props: AuthFormProps) {
         if (signInError) {
           if (isEmailNotVerifiedError(signInError.message)) {
             setEmail(submittedEmail);
+            setOtp("");
             setInfo(
               "Verify your email before signing in. Enter the code we sent, or request a new one."
             );
@@ -103,29 +113,25 @@ export function AuthForm(props: AuthFormProps) {
     }
   }
 
-  async function onVerify(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function verifyOtp(code: string) {
+    if (!email || code.length !== OTP_LENGTH) {
+      setError("Enter the 6-digit verification code from your email.");
+      return;
+    }
+
     setError(null);
     setInfo(null);
     setPending(true);
 
-    const form = new FormData(event.currentTarget);
-    const otp = String(form.get("otp") ?? "").trim();
-
-    if (!email || !otp) {
-      setError("Enter the verification code from your email.");
-      setPending(false);
-      return;
-    }
-
     try {
       const { data, error: verifyError } = await authClient.emailOtp.verifyEmail({
         email,
-        otp,
+        otp: code,
       });
 
       if (verifyError) {
         setError(verifyError.message || "Could not verify that code.");
+        setOtp("");
         return;
       }
 
@@ -137,12 +143,19 @@ export function AuthForm(props: AuthFormProps) {
 
       setInfo("Email verified. You can sign in now.");
       setStep("auth");
+      setOtp("");
     } catch (err) {
       console.error("AuthForm verify", err);
       setError("Something went wrong. Please try again.");
+      setOtp("");
     } finally {
       setPending(false);
     }
+  }
+
+  async function onVerify(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await verifyOtp(otp);
   }
 
   async function onResend() {
@@ -162,6 +175,7 @@ export function AuthForm(props: AuthFormProps) {
         return;
       }
 
+      setOtp("");
       setInfo("New verification code sent. Check your inbox.");
     } catch (err) {
       console.error("AuthForm resend", err);
@@ -187,17 +201,32 @@ export function AuthForm(props: AuthFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="otp">Verification code</Label>
-          <Input
+          <InputOTP
             id="otp"
-            name="otp"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
+            maxLength={OTP_LENGTH}
+            value={otp}
+            onChange={(value) => {
+              setOtp(value);
+              setError(null);
+              if (value.length === OTP_LENGTH && !pending) {
+                void verifyOtp(value);
+              }
+            }}
+            disabled={pending}
             autoFocus
-            placeholder="6-digit code"
-            className="tracking-[0.2em]"
-          />
+            containerClassName="justify-between gap-2 sm:justify-center sm:gap-2"
+            aria-invalid={Boolean(error)}
+          >
+            <InputOTPGroup className="gap-2">
+              {Array.from({ length: OTP_LENGTH }, (_, index) => (
+                <InputOTPSlot
+                  key={index}
+                  index={index}
+                  className="size-11 rounded-lg border text-base first:rounded-lg last:rounded-lg sm:size-12"
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
         </div>
 
         {error ? (
@@ -211,7 +240,11 @@ export function AuthForm(props: AuthFormProps) {
           </p>
         ) : null}
 
-        <Button type="submit" disabled={pending} className="w-full">
+        <Button
+          type="submit"
+          disabled={pending || otp.length !== OTP_LENGTH}
+          className="w-full"
+        >
           {pending ? "Verifying…" : "Verify email"}
         </Button>
 
@@ -228,6 +261,7 @@ export function AuthForm(props: AuthFormProps) {
             type="button"
             onClick={() => {
               setStep("auth");
+              setOtp("");
               setError(null);
               setInfo(null);
             }}
