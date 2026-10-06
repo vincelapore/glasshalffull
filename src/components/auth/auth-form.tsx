@@ -12,23 +12,37 @@ type AuthFormProps =
   | { mode: "sign-in"; next?: string }
   | { mode: "sign-up"; next?: never };
 
+type Step = "auth" | "verify";
+
+function isEmailNotVerifiedError(message?: string | null) {
+  if (!message) return false;
+  return /email not verified/i.test(message);
+}
+
 export function AuthForm(props: AuthFormProps) {
+  const [step, setStep] = useState<Step>("auth");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const redirectTo =
+    props.mode === "sign-in" && props.next ? props.next : "/account";
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setPending(true);
 
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "").trim();
+    const submittedEmail = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
     const name = String(form.get("name") ?? "").trim();
 
     try {
       if (props.mode === "sign-up") {
-        if (!name || !email || !password) {
+        if (!name || !submittedEmail || !password) {
           setError("Name, email, and password are required.");
           return;
         }
@@ -37,9 +51,9 @@ export function AuthForm(props: AuthFormProps) {
           return;
         }
 
-        const { error: signUpError } = await authClient.signUp.email({
+        const { data, error: signUpError } = await authClient.signUp.email({
           name,
-          email,
+          email: submittedEmail,
           password,
         });
 
@@ -47,31 +61,183 @@ export function AuthForm(props: AuthFormProps) {
           setError(signUpError.message || "Could not create your account.");
           return;
         }
+
+        // Neon Verify-at-sign-up (verification code) — OTP emailed, no session yet.
+        if (data?.user && !data.user.emailVerified) {
+          setEmail(submittedEmail);
+          setInfo("Check your email for a verification code.");
+          setStep("verify");
+          return;
+        }
       } else {
-        if (!email || !password) {
+        if (!submittedEmail || !password) {
           setError("Email and password are required.");
           return;
         }
 
         const { error: signInError } = await authClient.signIn.email({
-          email,
+          email: submittedEmail,
           password,
         });
 
         if (signInError) {
+          if (isEmailNotVerifiedError(signInError.message)) {
+            setEmail(submittedEmail);
+            setInfo(
+              "Verify your email before signing in. Enter the code we sent, or request a new one."
+            );
+            setStep("verify");
+            return;
+          }
           setError(signInError.message || "Could not sign in. Try again.");
           return;
         }
       }
 
-      window.location.assign(
-        props.mode === "sign-in" && props.next ? props.next : "/account"
-      );
+      window.location.assign(redirectTo);
     } catch (err) {
       console.error("AuthForm", err);
       setError("Something went wrong. Please try again.");
+    } finally {
       setPending(false);
     }
+  }
+
+  async function onVerify(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setInfo(null);
+    setPending(true);
+
+    const form = new FormData(event.currentTarget);
+    const otp = String(form.get("otp") ?? "").trim();
+
+    if (!email || !otp) {
+      setError("Enter the verification code from your email.");
+      setPending(false);
+      return;
+    }
+
+    try {
+      const { data, error: verifyError } = await authClient.emailOtp.verifyEmail({
+        email,
+        otp,
+      });
+
+      if (verifyError) {
+        setError(verifyError.message || "Could not verify that code.");
+        return;
+      }
+
+      // token is set when Neon auto-signs-in after verification
+      if (data?.token) {
+        window.location.assign(redirectTo);
+        return;
+      }
+
+      setInfo("Email verified. You can sign in now.");
+      setStep("auth");
+    } catch (err) {
+      console.error("AuthForm verify", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function onResend() {
+    if (!email) return;
+    setError(null);
+    setInfo(null);
+    setPending(true);
+
+    try {
+      const { error: resendError } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: window.location.origin + "/account",
+      });
+
+      if (resendError) {
+        setError(resendError.message || "Could not resend the code.");
+        return;
+      }
+
+      setInfo("New verification code sent. Check your inbox.");
+    } catch (err) {
+      console.error("AuthForm resend", err);
+      setError("Could not resend the code. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (step === "verify") {
+    return (
+      <form onSubmit={onVerify} className="space-y-5">
+        <div className="space-y-2">
+          <h2 className="text-lg font-medium tracking-tight">
+            Verify your email
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Enter the code sent to{" "}
+            <span className="text-foreground">{email}</span>. Codes expire in
+            15 minutes.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="otp">Verification code</Label>
+          <Input
+            id="otp"
+            name="otp"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            autoFocus
+            placeholder="6-digit code"
+            className="tracking-[0.2em]"
+          />
+        </div>
+
+        {error ? (
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+        {info ? (
+          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            {info}
+          </p>
+        ) : null}
+
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? "Verifying…" : "Verify email"}
+        </Button>
+
+        <div className="flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={pending}
+            className="text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+          >
+            Resend code
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStep("auth");
+              setError(null);
+              setInfo(null);
+            }}
+            className="underline-offset-4 hover:underline"
+          >
+            Back
+          </button>
+        </div>
+      </form>
+    );
   }
 
   return (
@@ -99,6 +265,7 @@ export function AuthForm(props: AuthFormProps) {
           required
           autoComplete="email"
           placeholder="you@example.com"
+          defaultValue={email}
         />
       </div>
 
@@ -120,6 +287,11 @@ export function AuthForm(props: AuthFormProps) {
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
+        </p>
+      ) : null}
+      {info ? (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          {info}
         </p>
       ) : null}
 

@@ -10,21 +10,63 @@ import {
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import { cityLabels, formatDateTime } from "@/lib/labels";
+import {
+  cityLabels,
+  formatDateTime,
+  parseCityFilter,
+  type CityFilter,
+} from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import {
   getApprovedCreatives,
   getUpcomingApprovedEvents,
 } from "@/lib/queries";
+import { cities } from "@/lib/validations";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
-  const [featuredEvents, creatives] = await Promise.all([
-    getUpcomingApprovedEvents(6),
-    getApprovedCreatives(8),
+type SearchParams = Promise<{ city?: string }>;
+
+function buildHomeHref(city: CityFilter) {
+  if (city === "meanjin") return "/";
+  return `/?city=${city}`;
+}
+
+function cityBrowseHref(path: "/events" | "/creatives", city: CityFilter) {
+  if (city === "meanjin") return path;
+  return `${path}?city=${city}`;
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { city } = await searchParams;
+  const activeCity = parseCityFilter(city);
+
+  const [upcomingEvents, approvedCreatives] = await Promise.all([
+    getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
+    getApprovedCreatives(activeCity === "all" ? 8 : 16),
   ]);
+
+  const featuredEvents = (
+    activeCity === "all"
+      ? upcomingEvents
+      : upcomingEvents.filter((event) => event.city === activeCity)
+  ).slice(0, 6);
+  const creatives = (
+    activeCity === "all"
+      ? approvedCreatives
+      : approvedCreatives.filter((creative) => creative.city === activeCity)
+  ).slice(0, 8);
+
+  const cityCopy =
+    activeCity === "all"
+      ? "across Brisbane / Meanjin and Melbourne / Naarm"
+      : `in ${cityLabels[activeCity]}`;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-16 sm:px-6">
@@ -33,15 +75,53 @@ export default async function HomePage() {
           Glass Half Full
         </p>
         <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">
-          Pouring back into Brisbane&apos;s creative scene.
+          {activeCity === "naarm"
+            ? "Pouring back into Melbourne's creative scene."
+            : activeCity === "all"
+              ? "Pouring back into the creative scene."
+              : "Pouring back into Brisbane's creative scene."}
         </h1>
         <p className="max-w-2xl text-muted-foreground">
           What are you doing this weekend? Don&apos;t know? Have a browse and
           discover events and local talent all in one place.
         </p>
+        <div className="flex flex-wrap gap-2">
+          {cities.map((cityOption) => (
+            <Link
+              key={cityOption}
+              href={buildHomeHref(cityOption)}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeCity === cityOption
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {cityLabels[cityOption]}
+            </Link>
+          ))}
+          <Link
+            href={buildHomeHref("all")}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              activeCity === "all"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
+        </div>
         <div className="flex flex-wrap gap-3">
-          <Button render={<Link href="/events" />}>Browse events</Button>
-          <Button variant="outline" render={<Link href="/creatives" />}>
+          <Button
+            render={<Link href={cityBrowseHref("/events", activeCity)} />}
+          >
+            Browse events
+          </Button>
+          <Button
+            variant="outline"
+            render={<Link href={cityBrowseHref("/creatives", activeCity)} />}
+          >
             Meet creatives
           </Button>
         </div>
@@ -54,11 +134,11 @@ export default async function HomePage() {
               Featured Events
             </h2>
             <p className="text-sm text-muted-foreground">
-              Upcoming approved nights worth showing up for.
+              Upcoming nights {cityCopy}.
             </p>
           </div>
           <Link
-            href="/events"
+            href={cityBrowseHref("/events", activeCity)}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             View all
@@ -107,11 +187,11 @@ export default async function HomePage() {
               Discover Creatives
             </h2>
             <p className="text-sm text-muted-foreground">
-              Faces and crafts powering the scene.
+              Faces and crafts {cityCopy}.
             </p>
           </div>
           <Link
-            href="/creatives"
+            href={cityBrowseHref("/creatives", activeCity)}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             View all

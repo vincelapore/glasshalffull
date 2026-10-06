@@ -15,7 +15,9 @@ import {
   cityLabels,
   craftCategoryLabels,
   creativeMatchesWorkTag,
+  parseCityFilter,
   workOpportunityTagLabels,
+  type CityFilter,
 } from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
 import { mediaUrl } from "@/lib/media";
@@ -36,11 +38,13 @@ type SearchParams = Promise<{
 function buildCreativesHref(options: {
   category?: string | null;
   tag?: string | null;
-  city?: string | null;
+  city?: CityFilter | null;
 }) {
   const params = new URLSearchParams();
 
-  if (options.city) {
+  if (options.city === "all") {
+    params.set("city", "all");
+  } else if (options.city) {
     params.set("city", options.city);
   }
 
@@ -70,14 +74,11 @@ export default async function CreativesPage({
     tag && workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
       ? (tag as (typeof workOpportunityTags)[number])
       : null;
-  const activeCity =
-    city && cities.includes(city as (typeof cities)[number])
-      ? (city as (typeof cities)[number])
-      : null;
+  const activeCity = parseCityFilter(city);
 
   const allCreatives = await getApprovedCreatives();
   const creatives = allCreatives.filter((creative) => {
-    if (activeCity && creative.city !== activeCity) {
+    if (activeCity !== "all" && creative.city !== activeCity) {
       return false;
     }
 
@@ -97,7 +98,10 @@ export default async function CreativesPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Creatives</h1>
         <p className="text-muted-foreground">
-          Artists, organisers, and makers behind the local scene.
+          Artists, organisers, and makers
+          {activeCity === "all"
+            ? " across the local scene."
+            : ` in ${cityLabels[activeCity]}.`}
         </p>
       </div>
 
@@ -106,21 +110,6 @@ export default async function CreativesPage({
           City
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildCreativesHref({
-              city: null,
-              category: activeCategory,
-              tag: activeTag,
-            })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              !activeCity
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
-          >
-            All
-          </Link>
           {cities.map((cityOption) => (
             <Link
               key={cityOption}
@@ -139,6 +128,21 @@ export default async function CreativesPage({
               {cityLabels[cityOption]}
             </Link>
           ))}
+          <Link
+            href={buildCreativesHref({
+              city: "all",
+              category: activeCategory,
+              tag: activeTag,
+            })}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              activeCity === "all"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
         </div>
       </div>
 

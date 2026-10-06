@@ -8,7 +8,7 @@ Browse upcoming events, meet local creatives, and submit events for moderation b
 
 - **Events** — upcoming nights with category, location, tickets, and flyer images
 - **Creatives** — artist profiles with craft category, bio, links, and work-opportunity tags (live on save)
-- **Accounts** — Neon Auth sign-up / sign-in; one editable creative profile per account
+- **Accounts** — Neon Auth sign-up / sign-in with email verification code; one editable creative profile per account
 - **Event submissions** — from `/account` (pending until approved)
 - **Admin moderation** — same login; owners manage the admin list, admins review event submissions
 - **Light/dark theme** — dark by default

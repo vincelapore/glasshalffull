@@ -30,6 +30,9 @@ export const eventCategories = [
 
 export const cities = ["meanjin", "naarm"] as const;
 
+/** Default city for browse filters (Brisbane / Meanjin). */
+export const DEFAULT_CITY = "meanjin" as const;
+
 export const submissionStatuses = ["pending", "approved", "rejected"] as const;
 
 export const workOpportunityTags = ["paid_work", "trade", "portfolio"] as const;

@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/card";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import { cityLabels, eventCategoryLabels, formatDateTime } from "@/lib/labels";
+import {
+  cityLabels,
+  eventCategoryLabels,
+  formatDateTime,
+  parseCityFilter,
+  type CityFilter,
+} from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { eventPath } from "@/lib/paths";
 import { getApprovedEvents } from "@/lib/queries";
@@ -25,11 +31,13 @@ type SearchParams = Promise<{ category?: string; city?: string }>;
 
 function buildEventsHref(options: {
   category?: string | null;
-  city?: string | null;
+  city?: CityFilter | null;
 }) {
   const params = new URLSearchParams();
 
-  if (options.city) {
+  if (options.city === "all") {
+    params.set("city", "all");
+  } else if (options.city) {
     params.set("city", options.city);
   }
 
@@ -51,14 +59,11 @@ export default async function EventsPage({
     category && eventCategories.includes(category as (typeof eventCategories)[number])
       ? (category as (typeof eventCategories)[number])
       : null;
-  const activeCity =
-    city && cities.includes(city as (typeof cities)[number])
-      ? (city as (typeof cities)[number])
-      : null;
+  const activeCity = parseCityFilter(city);
 
   const allEvents = await getApprovedEvents();
   const events = allEvents.filter((event) => {
-    if (activeCity && event.city !== activeCity) {
+    if (activeCity !== "all" && event.city !== activeCity) {
       return false;
     }
 
@@ -74,7 +79,10 @@ export default async function EventsPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
         <p className="text-muted-foreground">
-          Approved gigs and gatherings across Meanjin and Naarm.
+          Approved gigs and gatherings
+          {activeCity === "all"
+            ? " across Brisbane / Meanjin and Melbourne / Naarm."
+            : ` in ${cityLabels[activeCity]}.`}
         </p>
       </div>
 
@@ -83,17 +91,6 @@ export default async function EventsPage({
           City
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildEventsHref({ city: null, category: activeCategory })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              !activeCity
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
-          >
-            All
-          </Link>
           {cities.map((cityOption) => (
             <Link
               key={cityOption}
@@ -111,6 +108,17 @@ export default async function EventsPage({
               {cityLabels[cityOption]}
             </Link>
           ))}
+          <Link
+            href={buildEventsHref({ city: "all", category: activeCategory })}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              activeCity === "all"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
         </div>
       </div>
 
@@ -149,7 +157,9 @@ export default async function EventsPage({
 
       {events.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
-          No approved events yet.{" "}
+          {allEvents.length === 0
+            ? "No approved events yet. "
+            : "No events match these filters. "}
           <Link href="/account/events/new" className="underline underline-offset-4">
             Submit one
           </Link>

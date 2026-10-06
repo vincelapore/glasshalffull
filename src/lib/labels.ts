@@ -1,11 +1,23 @@
 import type { Creative, EventLineup } from "@/db/schema";
 import {
   cities,
+  DEFAULT_CITY,
   craftCategories,
   eventCategories,
   submissionStatuses,
   workOpportunityTags,
 } from "@/lib/validations";
+
+export type CityFilter = (typeof cities)[number] | "all";
+
+/** Parse `?city=` for browse pages. Missing/invalid → Meanjin; `all` → every city. */
+export function parseCityFilter(city?: string | null): CityFilter {
+  if (city === "all") return "all";
+  if (city && cities.includes(city as (typeof cities)[number])) {
+    return city as (typeof cities)[number];
+  }
+  return DEFAULT_CITY;
+}
 
 export const craftCategoryLabels: Record<(typeof craftCategories)[number], string> =
   {
@@ -36,8 +48,8 @@ export const eventCategoryLabels: Record<(typeof eventCategories)[number], strin
   };
 
 export const cityLabels: Record<(typeof cities)[number], string> = {
-  meanjin: "Meanjin",
-  naarm: "Naarm",
+  meanjin: "Brisbane / Meanjin",
+  naarm: "Melbourne / Naarm",
 };
 
 export const statusLabels: Record<(typeof submissionStatuses)[number], string> = {

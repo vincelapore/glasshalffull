@@ -49,7 +49,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         : {
             title: "",
             dateTime: "",
-            city: undefined,
+            city: "meanjin",
             location: "",
             categories: [],
             description: "",
