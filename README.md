@@ -128,9 +128,9 @@ Designed for [Vercel](https://vercel.com) with a Neon database:
 
 ## Photo uploads
 
-Photos and flyers never pass through Next.js. The browser compresses to WebP (720px avatars / 1080px flyers), then PUTs directly to R2 with a short-lived presigned URL. Neon stores only the object key (`avatars/{uuid}.webp` or `flyers/{uuid}.webp`). The public origin is `NEXT_PUBLIC_MEDIA_BASE_URL` so the CDN domain can change without rewriting rows.
+Photos and flyers never pass through Next.js. The browser compresses to WebP (720px avatars / 1080px flyers / 960px work examples, about 220 KB each, at most 6 per profile), then PUTs directly to R2 with a short-lived presigned URL. Neon stores only the object key (`avatars/{uuid}.webp`, `flyers/{uuid}.webp`, or `work/{userId}/{uuid}.webp`). Removed work photos are deleted from R2. The public origin is `NEXT_PUBLIC_MEDIA_BASE_URL` so the CDN domain can change without rewriting rows.
 
-Images are rendered with `next/image` `unoptimized` (also set globally in `next.config.ts`) so Vercel Image Optimization is never used.
+Avatars and flyers render with `next/image` `unoptimized` (also set globally in `next.config.ts`). Work examples use a plain lazy `<img>` of that single stored file. Vercel Image Optimization is never used. Directory pages do not load work photos.
 
 ### Cloudflare checklist
 

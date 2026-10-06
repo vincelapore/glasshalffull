@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { avatarKeyPattern, flyerKeyPattern } from "@/lib/media";
+import {
+  avatarKeyPattern,
+  flyerKeyPattern,
+  MAX_WORK_PHOTOS,
+  workKeyPattern,
+} from "@/lib/media";
 
 export const craftCategories = [
   "dj",
@@ -66,6 +71,9 @@ export const creativeSubmissionSchema = z.object({
     z.literal(""),
     z.string().regex(avatarKeyPattern, "Upload a valid photo"),
   ]),
+  workPhotoKeys: z
+    .array(z.string().regex(workKeyPattern, "Upload a valid photo"))
+    .max(MAX_WORK_PHOTOS, "You can add up to 6 photos"),
   openToPaidWork: z.boolean(),
   openToTrade: z.boolean(),
   buildingPortfolio: z.boolean(),

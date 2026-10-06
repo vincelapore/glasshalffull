@@ -73,6 +73,8 @@ export const creatives = pgTable(
     instagramHandle: text("instagram_handle"),
     portfolioUrl: text("portfolio_url"),
     avatarKey: text("avatar_key"),
+    /** Ordered work-example object keys. At most 6. Empty on listing queries' rendered output. */
+    workPhotoKeys: text("work_photo_keys").array().notNull().default([]),
     openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
     openToTrade: boolean("open_to_trade").notNull().default(false),
     buildingPortfolio: boolean("building_portfolio").notNull().default(false),

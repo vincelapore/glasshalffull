@@ -6,6 +6,7 @@ import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
+import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
 import {
   cityLabels,
   formatDateTime,
@@ -148,6 +149,8 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
           )}
         </section>
       </div>
+
+      <WorkPhotoGrid name={creative.name} keys={creative.workPhotoKeys} />
     </div>
   );
 }

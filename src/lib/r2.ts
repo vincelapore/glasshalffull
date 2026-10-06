@@ -1,11 +1,11 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import {
   MEDIA_CACHE_CONTROL,
   MEDIA_CONTENT_TYPE,
   PRESIGN_TTL_SECONDS,
-  mediaPrefix,
+  mediaObjectKey,
   mediaUrl,
   type UploadKind,
 } from "@/lib/media";
@@ -32,9 +32,12 @@ function getR2Client() {
   });
 }
 
-export async function createPresignedUpload(kind: UploadKind) {
+export async function createPresignedUpload(
+  kind: UploadKind,
+  ownerUserId?: string
+) {
   const bucket = requiredEnv("R2_BUCKET_NAME");
-  const key = `${mediaPrefix(kind)}/${crypto.randomUUID()}.webp`;
+  const key = mediaObjectKey(kind, ownerUserId);
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: key,
@@ -51,4 +54,22 @@ export async function createPresignedUpload(kind: UploadKind) {
     key,
     publicUrl: mediaUrl(key) ?? "",
   };
+}
+
+/** Deletes are free on R2. Missing keys are ignored. */
+export async function deleteMediaObjects(keys: string[]) {
+  if (keys.length === 0) return;
+
+  const bucket = requiredEnv("R2_BUCKET_NAME");
+  const client = getR2Client();
+  await Promise.all(
+    keys.map((key) =>
+      client.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        })
+      )
+    )
+  );
 }

@@ -9,7 +9,14 @@ import {
   saveMyProfileAction,
   updateCreativeAction,
 } from "@/app/actions/submissions";
+import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
+import {
+  uploadWorkSlots,
+  WorkPhotosField,
+  workSlotsFromKeys,
+  type WorkSlot,
+} from "@/components/forms/work-photos-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +43,7 @@ const emptyProfileValues: CreativeSubmissionInput = {
   instagramHandle: "",
   portfolioUrl: "",
   avatarKey: "",
+  workPhotoKeys: [],
   openToPaidWork: false,
   openToTrade: false,
   buildingPortfolio: false,
@@ -60,6 +68,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+  const [workSlots, setWorkSlots] = useState<WorkSlot[]>(() =>
+    workSlotsFromKeys(props.defaultValues?.workPhotoKeys)
+  );
 
   const form = useForm<CreativeSubmissionInput>({
     resolver: zodResolver(creativeSubmissionSchema),
@@ -82,13 +93,26 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         avatarKey = uploaded.key;
       }
 
-      const payload = { ...values, avatarKey };
+      const workPhotos = await uploadWorkSlots(workSlots);
+      if (!workPhotos.ok) {
+        setFormError(workPhotos.message);
+        return;
+      }
+
+      const payload = {
+        ...values,
+        avatarKey,
+        workPhotoKeys: workPhotos.keys,
+      };
       const result =
         mode === "admin" && creativeId
           ? await updateCreativeAction(creativeId, payload)
           : await saveMyProfileAction(payload);
 
       if (!result.success) {
+        if (workPhotos.fresh.length > 0) {
+          await discardUnusedWorkPhotosAction(workPhotos.fresh);
+        }
         setFormError(result.message);
         if (result.fieldErrors) {
           for (const [field, messages] of Object.entries(result.fieldErrors)) {
@@ -107,6 +131,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       }
 
       setPendingPhoto(null);
+      form.setValue("avatarKey", avatarKey);
+      form.setValue("workPhotoKeys", workPhotos.keys);
+      setWorkSlots(workSlotsFromKeys(workPhotos.keys));
       setSavedMessage(result.message);
       router.refresh();
     });
@@ -347,6 +374,13 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             disabled={pending}
           />
         )}
+      />
+
+      <WorkPhotosField
+        slots={workSlots}
+        onChange={setWorkSlots}
+        error={form.formState.errors.workPhotoKeys?.message}
+        disabled={pending}
       />
 
       {formError ? (

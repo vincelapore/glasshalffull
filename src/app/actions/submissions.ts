@@ -14,6 +14,7 @@ import {
 import { db } from "@/db";
 import { creatives, eventLineup, events } from "@/db/schema";
 import { getCreativeByUserId } from "@/lib/queries";
+import { releaseWorkPhotoKeys, resolveWorkPhotoKeys } from "@/lib/work-photos";
 
 export type ActionResult =
   | { success: true; id: string; message: string }
@@ -51,6 +52,15 @@ export async function saveMyProfileAction(
       .where(eq(creatives.userId, user.id))
       .limit(1);
 
+    const workPhotos = await resolveWorkPhotoKeys({
+      creativeId: existing[0]?.id ?? null,
+      nextKeys: data.workPhotoKeys,
+      actorUserId: user.id,
+    });
+    if (!workPhotos.ok) {
+      return { success: false, message: workPhotos.message };
+    }
+
     const profileValues = {
       name: data.name,
       craftCategories: data.craftCategories,
@@ -59,6 +69,7 @@ export async function saveMyProfileAction(
       instagramHandle: normalizeInstagramHandle(data.instagramHandle),
       portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
       avatarKey: emptyToNull(data.avatarKey),
+      workPhotoKeys: workPhotos.keys,
       openToPaidWork: data.openToPaidWork,
       openToTrade: data.openToTrade,
       buildingPortfolio: data.buildingPortfolio,
@@ -77,6 +88,7 @@ export async function saveMyProfileAction(
 
       revalidateCreativePaths(updated.slug);
       revalidatePath("/account");
+      await releaseWorkPhotoKeys(workPhotos.removed);
 
       return {
         success: true,
@@ -285,8 +297,21 @@ export async function updateCreativeAction(
   }
 
   const data = parsed.data;
+  const actor = await getSessionUser();
+  if (!actor) {
+    return { success: false, message: "Unauthorized" };
+  }
 
   try {
+    const workPhotos = await resolveWorkPhotoKeys({
+      creativeId: id,
+      nextKeys: data.workPhotoKeys,
+      actorUserId: actor.id,
+    });
+    if (!workPhotos.ok) {
+      return { success: false, message: workPhotos.message };
+    }
+
     const [updated] = await db
       .update(creatives)
       .set({
@@ -298,6 +323,7 @@ export async function updateCreativeAction(
         instagramHandle: normalizeInstagramHandle(data.instagramHandle),
         portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
         avatarKey: emptyToNull(data.avatarKey),
+        workPhotoKeys: workPhotos.keys,
         openToPaidWork: data.openToPaidWork,
         openToTrade: data.openToTrade,
         buildingPortfolio: data.buildingPortfolio,
@@ -310,6 +336,7 @@ export async function updateCreativeAction(
     }
 
     revalidateCreativePaths(updated.slug);
+    await releaseWorkPhotoKeys(workPhotos.removed);
 
     return {
       success: true,
@@ -385,13 +412,18 @@ export async function deleteCreativeAction(id: string): Promise<ActionResult> {
     const [deleted] = await db
       .delete(creatives)
       .where(eq(creatives.id, id))
-      .returning({ id: creatives.id, slug: creatives.slug });
+      .returning({
+        id: creatives.id,
+        slug: creatives.slug,
+        workPhotoKeys: creatives.workPhotoKeys,
+      });
 
     if (!deleted) {
       return { success: false, message: "Creative not found." };
     }
 
     revalidateCreativePaths(deleted.slug);
+    await releaseWorkPhotoKeys(deleted.workPhotoKeys);
 
     return {
       success: true,

@@ -18,10 +18,7 @@ import {
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
-import {
-  getApprovedCreatives,
-  getUpcomingApprovedEvents,
-} from "@/lib/queries";
+import { getApprovedCreatives, getUpcomingApprovedEvents } from "@/lib/queries";
 import { cities } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
@@ -94,7 +91,7 @@ export default async function HomePage({
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                 activeCity === cityOption
                   ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground",
               )}
             >
               {cityLabels[cityOption]}
@@ -106,7 +103,7 @@ export default async function HomePage({
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               activeCity === "all"
                 ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
             )}
           >
             All
@@ -134,7 +131,8 @@ export default async function HomePage({
               Featured Events
             </h2>
             <p className="text-sm text-muted-foreground">
-              Upcoming nights {cityCopy}.
+              Browse to find events that'll tickle your pick-- uhh, fancy. new
+              to do in {cityCopy}.
             </p>
           </div>
           <Link
@@ -148,7 +146,10 @@ export default async function HomePage({
         {featuredEvents.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
             No upcoming events yet.{" "}
-            <Link href="/account/events/new" className="underline underline-offset-4">
+            <Link
+              href="/account/events/new"
+              className="underline underline-offset-4"
+            >
               Submit one
             </Link>
             .
@@ -156,7 +157,11 @@ export default async function HomePage({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featuredEvents.map((event) => (
-              <Link key={event.id} href={eventPath(event.slug)} className="group">
+              <Link
+                key={event.id}
+                href={eventPath(event.slug)}
+                className="group"
+              >
                 <Card className="h-full transition-colors group-hover:bg-muted/30">
                   <ExternalImage
                     src={mediaUrl(event.flyerKey)}
@@ -166,11 +171,14 @@ export default async function HomePage({
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle>{event.title}</CardTitle>
-                      <EventCategoryTags event={event} className="justify-end" />
+                      <EventCategoryTags
+                        event={event}
+                        className="justify-end"
+                      />
                     </div>
                     <CardDescription>
-                      {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
-                      {event.location}
+                      {formatDateTime(event.dateTime)} ·{" "}
+                      {cityLabels[event.city]} · {event.location}
                     </CardDescription>
                   </CardHeader>
                 </Card>

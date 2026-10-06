@@ -109,6 +109,7 @@ export default async function AccountPage() {
                   instagramHandle: profile.instagramHandle ?? "",
                   portfolioUrl: profile.portfolioUrl ?? "",
                   avatarKey: profile.avatarKey ?? "",
+                  workPhotoKeys: profile.workPhotoKeys,
                   openToPaidWork: profile.openToPaidWork,
                   openToTrade: profile.openToTrade,
                   buildingPortfolio: profile.buildingPortfolio,

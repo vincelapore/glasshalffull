@@ -5,8 +5,12 @@ import imageCompression from "browser-image-compression";
 import { createUploadUrlAction } from "@/app/actions/upload";
 import {
   MAX_COMPRESSED_BYTES,
+  MAX_WORK_PHOTO_BYTES,
+  MAX_WORK_PHOTO_SOURCE_BYTES,
   MEDIA_CACHE_CONTROL,
   MEDIA_CONTENT_TYPE,
+  WORK_PHOTO_MAX_EDGE,
+  WORK_PHOTO_QUALITY,
   type UploadKind,
 } from "@/lib/media";
 
@@ -28,18 +32,26 @@ export async function compressAndUploadPhoto(
     return { success: false, message: "Use a JPEG, PNG, or WebP image." };
   }
 
+  const maxBytes = kind === "work" ? MAX_WORK_PHOTO_BYTES : MAX_COMPRESSED_BYTES;
+  if (kind === "work" && file.size > MAX_WORK_PHOTO_SOURCE_BYTES) {
+    return {
+      success: false,
+      message: "That image is too large. Try one under 12 MB.",
+    };
+  }
+
   try {
     // Compress in the browser (resize + WebP) so the file never hits Next.js
     // and we stay within Vercel/R2 free-tier egress and function limits.
     const compressed = await imageCompression(file, {
-      maxSizeMB: MAX_COMPRESSED_BYTES / (1024 * 1024),
-      maxWidthOrHeight: kind === "avatar" ? 720 : 1080,
+      maxSizeMB: maxBytes / (1024 * 1024),
+      maxWidthOrHeight: kind === "avatar" ? 720 : kind === "work" ? WORK_PHOTO_MAX_EDGE : 1080,
       useWebWorker: true,
       fileType: MEDIA_CONTENT_TYPE,
-      initialQuality: 0.8,
+      initialQuality: kind === "work" ? WORK_PHOTO_QUALITY : 0.8,
     });
 
-    if (compressed.size > MAX_COMPRESSED_BYTES) {
+    if (compressed.size > maxBytes) {
       return {
         success: false,
         message: "That image is still too large after compression. Try a simpler photo.",

@@ -30,9 +30,26 @@ export async function getUpcomingApprovedEvents(limit = 6) {
     .limit(limit);
 }
 
+/** Directory cards. Work-photo keys stay off this query so listings don't pull them. */
+const creativeCardColumns = {
+  id: creatives.id,
+  slug: creatives.slug,
+  name: creatives.name,
+  craftCategories: creatives.craftCategories,
+  city: creatives.city,
+  bio: creatives.bio,
+  instagramHandle: creatives.instagramHandle,
+  portfolioUrl: creatives.portfolioUrl,
+  avatarKey: creatives.avatarKey,
+  openToPaidWork: creatives.openToPaidWork,
+  openToTrade: creatives.openToTrade,
+  buildingPortfolio: creatives.buildingPortfolio,
+  status: creatives.status,
+};
+
 export async function getApprovedCreatives(limit?: number) {
   const query = db
-    .select()
+    .select(creativeCardColumns)
     .from(creatives)
     .where(eq(creatives.status, "approved"))
     .orderBy(asc(creatives.name));
