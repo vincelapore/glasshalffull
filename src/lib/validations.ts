@@ -21,11 +21,14 @@ export const craftCategories = [
 export const eventCategories = [
   "music",
   "art",
+  "theatre",
   "queer",
   "fashion",
   "community",
   "other",
 ] as const;
+
+export const cities = ["meanjin", "naarm"] as const;
 
 export const submissionStatuses = ["pending", "approved", "rejected"] as const;
 
@@ -52,6 +55,7 @@ export const creativeSubmissionSchema = z.object({
   craftCategories: z
     .array(z.enum(craftCategories))
     .min(1, "Pick at least one craft category"),
+  city: z.union([z.literal(""), z.enum(cities)]),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
   instagramHandle: optionalInstagramHandle,
   portfolioUrl: optionalUrl,
@@ -72,6 +76,9 @@ export const eventSubmissionSchema = z.object({
     .refine((value) => !Number.isNaN(Date.parse(value)), {
       message: "Enter a valid date and time",
     }),
+  city: z.enum(cities, {
+    errorMap: () => ({ message: "Pick a city" }),
+  }),
   location: z.string().trim().min(2, "Location is required").max(200),
   categories: z
     .array(z.enum(eventCategories))

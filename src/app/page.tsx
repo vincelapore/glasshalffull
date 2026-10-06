@@ -10,7 +10,7 @@ import {
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import { formatDateTime } from "@/lib/labels";
+import { cityLabels, formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import {
@@ -89,7 +89,8 @@ export default async function HomePage() {
                       <EventCategoryTags event={event} className="justify-end" />
                     </div>
                     <CardDescription>
-                      {formatDateTime(event.dateTime)} · {event.location}
+                      {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
+                      {event.location}
                     </CardDescription>
                   </CardHeader>
                 </Card>
@@ -149,6 +150,7 @@ export default async function HomePage() {
                 <p className="font-medium">{creative.name}</p>
                 <p className="text-sm text-muted-foreground">
                   <CreativeCraftTags creative={creative} asText />
+                  {creative.city ? ` · ${cityLabels[creative.city]}` : null}
                 </p>
               </Link>
             ))}

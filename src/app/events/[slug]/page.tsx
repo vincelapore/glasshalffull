@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import {
-  formatDateTime,
-} from "@/lib/labels";
+import { cityLabels, formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import { getEventByParam, getEventLineup } from "@/lib/queries";
@@ -56,7 +54,8 @@ export default async function EventDetailPage({ params }: EventPageProps) {
               {event.title}
             </h1>
             <p className="text-muted-foreground">
-              {formatDateTime(event.dateTime)} · {event.location}
+              {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
+              {event.location}
             </p>
           </div>
 

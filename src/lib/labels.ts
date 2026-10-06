@@ -1,5 +1,6 @@
 import type { Creative, EventLineup } from "@/db/schema";
 import {
+  cities,
   craftCategories,
   eventCategories,
   submissionStatuses,
@@ -27,11 +28,17 @@ export const eventCategoryLabels: Record<(typeof eventCategories)[number], strin
   {
     music: "Music",
     art: "Art",
+    theatre: "Theatre",
     queer: "Queer",
     fashion: "Fashion",
     community: "Community",
     other: "Other",
   };
+
+export const cityLabels: Record<(typeof cities)[number], string> = {
+  meanjin: "Meanjin",
+  naarm: "Naarm",
+};
 
 export const statusLabels: Record<(typeof submissionStatuses)[number], string> = {
   pending: "Pending",

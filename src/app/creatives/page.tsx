@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { ExternalImage } from "@/components/media/external-image";
 import {
+  cityLabels,
   craftCategoryLabels,
   creativeMatchesWorkTag,
   workOpportunityTagLabels,
@@ -19,20 +20,29 @@ import {
 import { getApprovedCreatives } from "@/lib/queries";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
-import { craftCategories, workOpportunityTags } from "@/lib/validations";
+import { cities, craftCategories, workOpportunityTags } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Creatives",
 };
 
-type SearchParams = Promise<{ category?: string; tag?: string }>;
+type SearchParams = Promise<{
+  category?: string;
+  tag?: string;
+  city?: string;
+}>;
 
 function buildCreativesHref(options: {
   category?: string | null;
   tag?: string | null;
+  city?: string | null;
 }) {
   const params = new URLSearchParams();
+
+  if (options.city) {
+    params.set("city", options.city);
+  }
 
   if (options.category) {
     params.set("category", options.category);
@@ -51,7 +61,7 @@ export default async function CreativesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { category, tag } = await searchParams;
+  const { category, tag, city } = await searchParams;
   const activeCategory =
     category && craftCategories.includes(category as (typeof craftCategories)[number])
       ? (category as (typeof craftCategories)[number])
@@ -60,9 +70,17 @@ export default async function CreativesPage({
     tag && workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
       ? (tag as (typeof workOpportunityTags)[number])
       : null;
+  const activeCity =
+    city && cities.includes(city as (typeof cities)[number])
+      ? (city as (typeof cities)[number])
+      : null;
 
   const allCreatives = await getApprovedCreatives();
   const creatives = allCreatives.filter((creative) => {
+    if (activeCity && creative.city !== activeCity) {
+      return false;
+    }
+
     if (activeCategory && !creative.craftCategories.includes(activeCategory)) {
       return false;
     }
@@ -85,11 +103,56 @@ export default async function CreativesPage({
 
       <div className="mb-6 space-y-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          City
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={buildCreativesHref({
+              city: null,
+              category: activeCategory,
+              tag: activeTag,
+            })}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              !activeCity
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
+          {cities.map((cityOption) => (
+            <Link
+              key={cityOption}
+              href={buildCreativesHref({
+                city: cityOption,
+                category: activeCategory,
+                tag: activeTag,
+              })}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeCity === cityOption
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {cityLabels[cityOption]}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-6 space-y-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Craft
         </p>
         <div className="flex flex-wrap gap-2">
           <Link
-            href={buildCreativesHref({ category: null, tag: activeTag })}
+            href={buildCreativesHref({
+              city: activeCity,
+              category: null,
+              tag: activeTag,
+            })}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               !activeCategory
@@ -102,7 +165,11 @@ export default async function CreativesPage({
           {craftCategories.map((cat) => (
             <Link
               key={cat}
-              href={buildCreativesHref({ category: cat, tag: activeTag })}
+              href={buildCreativesHref({
+                city: activeCity,
+                category: cat,
+                tag: activeTag,
+              })}
               className={cn(
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                 activeCategory === cat
@@ -122,7 +189,11 @@ export default async function CreativesPage({
         </p>
         <div className="flex flex-wrap gap-2">
           <Link
-            href={buildCreativesHref({ category: activeCategory, tag: null })}
+            href={buildCreativesHref({
+              city: activeCity,
+              category: activeCategory,
+              tag: null,
+            })}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               !activeTag
@@ -136,6 +207,7 @@ export default async function CreativesPage({
             <Link
               key={workTag}
               href={buildCreativesHref({
+                city: activeCity,
                 category: activeCategory,
                 tag: workTag,
               })}
@@ -187,6 +259,11 @@ export default async function CreativesPage({
                       <CardTitle className="group-hover:underline group-hover:underline-offset-4">
                         {creative.name}
                       </CardTitle>
+                      {creative.city ? (
+                        <p className="text-sm text-muted-foreground">
+                          {cityLabels[creative.city]}
+                        </p>
+                      ) : null}
                       <div className="flex flex-wrap gap-1.5">
                         <CreativeCraftTags creative={creative} />
                         <CreativeWorkTags creative={creative} />

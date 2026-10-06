@@ -10,70 +10,141 @@ import {
 } from "@/components/ui/card";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import { eventCategoryLabels, formatDateTime } from "@/lib/labels";
+import { cityLabels, eventCategoryLabels, formatDateTime } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { eventPath } from "@/lib/paths";
 import { getApprovedEvents } from "@/lib/queries";
-import { eventCategories } from "@/lib/validations";
+import { cities, eventCategories } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Events",
 };
 
-type SearchParams = Promise<{ category?: string }>;
+type SearchParams = Promise<{ category?: string; city?: string }>;
+
+function buildEventsHref(options: {
+  category?: string | null;
+  city?: string | null;
+}) {
+  const params = new URLSearchParams();
+
+  if (options.city) {
+    params.set("city", options.city);
+  }
+
+  if (options.category) {
+    params.set("category", options.category);
+  }
+
+  const query = params.toString();
+  return query ? `/events?${query}` : "/events";
+}
 
 export default async function EventsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { category } = await searchParams;
+  const { category, city } = await searchParams;
   const activeCategory =
     category && eventCategories.includes(category as (typeof eventCategories)[number])
       ? (category as (typeof eventCategories)[number])
       : null;
+  const activeCity =
+    city && cities.includes(city as (typeof cities)[number])
+      ? (city as (typeof cities)[number])
+      : null;
 
   const allEvents = await getApprovedEvents();
-  const events = activeCategory
-    ? allEvents.filter((event) => event.categories.includes(activeCategory))
-    : allEvents;
+  const events = allEvents.filter((event) => {
+    if (activeCity && event.city !== activeCity) {
+      return false;
+    }
+
+    if (activeCategory && !event.categories.includes(activeCategory)) {
+      return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
         <p className="text-muted-foreground">
-          Approved gigs and gatherings across Brisbane&apos;s creative scene.
+          Approved gigs and gatherings across Meanjin and Naarm.
         </p>
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-2">
-        <Link
-          href="/events"
-          className={cn(
-            "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-            !activeCategory
-              ? "border-foreground bg-foreground text-background"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
-        </Link>
-        {eventCategories.map((cat) => (
+      <div className="mb-4 space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          City
+        </p>
+        <div className="flex flex-wrap gap-2">
           <Link
-            key={cat}
-            href={`/events?category=${cat}`}
+            href={buildEventsHref({ city: null, category: activeCategory })}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              activeCategory === cat
+              !activeCity
                 ? "border-foreground bg-foreground text-background"
                 : "border-border text-muted-foreground hover:text-foreground"
             )}
           >
-            {eventCategoryLabels[cat]}
+            All
           </Link>
-        ))}
+          {cities.map((cityOption) => (
+            <Link
+              key={cityOption}
+              href={buildEventsHref({
+                city: cityOption,
+                category: activeCategory,
+              })}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeCity === cityOption
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {cityLabels[cityOption]}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-8 space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Category
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={buildEventsHref({ city: activeCity, category: null })}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              !activeCategory
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </Link>
+          {eventCategories.map((cat) => (
+            <Link
+              key={cat}
+              href={buildEventsHref({ city: activeCity, category: cat })}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                activeCategory === cat
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {eventCategoryLabels[cat]}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {events.length === 0 ? (
@@ -102,7 +173,8 @@ export default async function EventsPage({
                     <EventCategoryTags event={event} className="justify-end" />
                   </div>
                   <CardDescription>
-                    {formatDateTime(event.dateTime)} · {event.location}
+                    {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
+                    {event.location}
                   </CardDescription>
                 </CardHeader>
                 {event.description ? (

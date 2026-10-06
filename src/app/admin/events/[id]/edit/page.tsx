@@ -51,6 +51,7 @@ export default async function EditEventPage({
         defaultValues={{
           title: event.title,
           dateTime: toDateTimeLocalValue(event.dateTime),
+          city: event.city,
           location: event.location,
           categories: event.categories,
           description: event.description ?? "",

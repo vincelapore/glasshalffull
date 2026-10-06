@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { eventCategoryLabels } from "@/lib/labels";
+import { cityLabels, eventCategoryLabels } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
+  cities,
   eventCategories,
   eventSubmissionSchema,
   type EventSubmissionInput,
@@ -48,6 +49,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         : {
             title: "",
             dateTime: "",
+            city: undefined,
             location: "",
             categories: [],
             description: "",
@@ -154,6 +156,44 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           ) : null}
         </div>
       </div>
+
+      <Controller
+        control={form.control}
+        name="city"
+        render={({ field, fieldState }) => (
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium">City</legend>
+            <p className="text-sm text-muted-foreground">
+              Where is this event happening?
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {cities.map((city) => (
+                <label
+                  key={city}
+                  className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                >
+                  <input
+                    type="radio"
+                    className="mt-0.5 size-4 border-border accent-foreground"
+                    name={field.name}
+                    value={city}
+                    checked={field.value === city}
+                    onChange={() => field.onChange(city)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                  />
+                  <span className="text-sm">{cityLabels[city]}</span>
+                </label>
+              ))}
+            </div>
+            {fieldState.error ? (
+              <p className="text-xs text-destructive">
+                {fieldState.error.message}
+              </p>
+            ) : null}
+          </fieldset>
+        )}
+      />
 
       <Controller
         control={form.control}

@@ -7,6 +7,7 @@ import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
+  cityLabels,
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
@@ -73,6 +74,11 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
               <h1 className="text-3xl font-semibold tracking-tight break-words sm:text-4xl">
                 {creative.name}
               </h1>
+              {creative.city ? (
+                <p className="text-muted-foreground">
+                  {cityLabels[creative.city]}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -88,7 +94,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                 href={instagramProfileHref(creative.instagramHandle)}
                 target="_blank"
                 rel="noreferrer"
-                className="underline-offset-4 hover:underline"
+                className="underline underline-offset-4 transition-colors hover:text-primary"
               >
                 {formatInstagramHandle(creative.instagramHandle)}
               </a>
@@ -98,7 +104,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                 href={creative.portfolioUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="underline-offset-4 hover:underline"
+                className="underline underline-offset-4 transition-colors hover:text-primary"
               >
                 Portfolio
               </a>
@@ -126,7 +132,8 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                       <div>
                         <p className="font-medium">{event.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDateTime(event.dateTime)} · {event.location}
+                          {formatDateTime(event.dateTime)} ·{" "}
+                          {cityLabels[event.city]} · {event.location}
                         </p>
                       </div>
                       <EventCategoryTags event={event} />

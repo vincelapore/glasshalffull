@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import type { Creative, Event } from "@/db/schema";
 import {
+  cityLabels,
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
@@ -45,7 +46,8 @@ export function EventSubmissionCard({ event }: { event: Event }) {
           <div className="space-y-1">
             <CardTitle>{event.title}</CardTitle>
             <CardDescription>
-              {formatDateTime(event.dateTime)} · {event.location}
+              {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
+              {event.location}
             </CardDescription>
           </div>
           <StatusBadge status={event.status} />
@@ -114,6 +116,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
               <CardTitle>{creative.name}</CardTitle>
               <CardDescription>
                 <CreativeCraftTags creative={creative} asText />
+                {creative.city ? ` · ${cityLabels[creative.city]}` : null}
               </CardDescription>
               <CreativeWorkTags creative={creative} />
             </div>

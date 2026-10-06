@@ -34,11 +34,14 @@ export const craftCategoryEnum = pgEnum("craft_category", [
 export const eventCategoryEnum = pgEnum("event_category", [
   "music",
   "art",
+  "theatre",
   "queer",
   "fashion",
   "community",
   "other",
 ]);
+
+export const cityEnum = pgEnum("city", ["meanjin", "naarm"]);
 
 export const lineupRoleEnum = pgEnum("lineup_role", [
   "performer",
@@ -57,6 +60,7 @@ export const creatives = pgTable("creatives", {
   craftCategories: craftCategoryEnum("craft_categories")
     .array()
     .notNull(),
+  city: cityEnum("city"),
   bio: text("bio"),
   instagramHandle: text("instagram_handle"),
   portfolioUrl: text("portfolio_url"),
@@ -79,6 +83,7 @@ export const events = pgTable("events", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time", { withTimezone: true }).notNull(),
+  city: cityEnum("city").notNull().default("meanjin"),
   location: text("location").notNull(),
   categories: eventCategoryEnum("categories").array().notNull(),
   description: text("description"),
