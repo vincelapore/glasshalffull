@@ -6,11 +6,10 @@ import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import {
-  submitCreativeAction,
+  saveMyProfileAction,
   updateCreativeAction,
 } from "@/app/actions/submissions";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
-import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,51 +28,47 @@ import {
   type CreativeSubmissionInput,
 } from "@/lib/validations";
 
+const emptyProfileValues: CreativeSubmissionInput = {
+  name: "",
+  craftCategories: [],
+  city: "",
+  bio: "",
+  instagramHandle: "",
+  portfolioUrl: "",
+  avatarKey: "",
+  openToPaidWork: false,
+  openToTrade: false,
+  buildingPortfolio: false,
+};
+
 type CreativeSubmissionFormProps =
-  | { mode?: "create"; creativeId?: never; defaultValues?: never }
   | {
-      mode: "edit";
+      mode: "profile";
+      defaultValues?: CreativeSubmissionInput;
+    }
+  | {
+      mode: "admin";
       creativeId: string;
       defaultValues: CreativeSubmissionInput;
     };
 
 export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
-  const mode = props.mode ?? "create";
-  const creativeId = mode === "edit" ? props.creativeId : null;
+  const mode = props.mode;
+  const creativeId = mode === "admin" ? props.creativeId : null;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [submitted, setSubmitted] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
 
   const form = useForm<CreativeSubmissionInput>({
     resolver: zodResolver(creativeSubmissionSchema),
-    defaultValues:
-      mode === "edit"
-        ? props.defaultValues
-        : {
-            name: "",
-            craftCategories: [],
-            city: "",
-            bio: "",
-            instagramHandle: "",
-            portfolioUrl: "",
-            avatarKey: "",
-            openToPaidWork: false,
-            openToTrade: false,
-            buildingPortfolio: false,
-          },
+    defaultValues: props.defaultValues ?? emptyProfileValues,
   });
-
-  const resetToForm = () => {
-    setSubmitted(false);
-    setFormError(null);
-    setPendingPhoto(null);
-    form.reset();
-  };
 
   const onSubmit = form.handleSubmit((values) => {
     setFormError(null);
+    setSavedMessage(null);
 
     startTransition(async () => {
       let avatarKey = values.avatarKey;
@@ -89,9 +84,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       const payload = { ...values, avatarKey };
       const result =
-        mode === "edit" && creativeId
+        mode === "admin" && creativeId
           ? await updateCreativeAction(creativeId, payload)
-          : await submitCreativeAction(payload);
+          : await saveMyProfileAction(payload);
 
       if (!result.success) {
         setFormError(result.message);
@@ -105,31 +100,17 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         return;
       }
 
-      if (mode === "edit") {
+      if (mode === "admin") {
         router.push("/admin/submissions");
         router.refresh();
         return;
       }
 
-      form.reset();
       setPendingPhoto(null);
-      setSubmitted(true);
+      setSavedMessage(result.message);
       router.refresh();
     });
   });
-
-  if (mode === "create" && submitted) {
-    return (
-      <SubmissionSuccess
-        title="Your profile is in the queue."
-        description="Thanks for pouring back in. We’ll review it before it appears in the creative directory."
-        primaryHref="/creatives"
-        primaryLabel="Browse creatives"
-        onSubmitAnother={resetToForm}
-        submitAnotherLabel="Submit another profile"
-      />
-    );
-  }
 
   const instagramHandleField = form.register("instagramHandle");
 
@@ -374,15 +355,17 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         </p>
       ) : null}
 
+      {savedMessage ? (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          {savedMessage}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          {pending
-            ? "Submitting…"
-            : mode === "edit"
-              ? "Save changes"
-              : "Submit profile"}
+          {pending ? "Saving…" : "Save profile"}
         </Button>
-        {mode === "edit" ? (
+        {mode === "admin" ? (
           <Button
             type="button"
             variant="outline"

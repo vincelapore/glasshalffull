@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
-import { logoutAdminAction } from "@/app/actions/admin-auth";
+import { signOutAction } from "@/app/actions/auth";
 import {
   CreativeSubmissionCard,
   EventSubmissionCard,
 } from "@/components/admin/submission-cards";
 import { Button } from "@/components/ui/button";
-import { isAdminAuthenticated } from "@/lib/admin";
+import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { getSubmissions } from "@/lib/queries";
 import { submissionStatuses } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Submissions",
+  title: "Moderation",
 };
+
+export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
   status?: string;
@@ -42,9 +43,8 @@ export default async function AdminSubmissionsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
-  }
+  const user = await requireAdmin();
+  const owner = await isOwnerEmail(user.email);
 
   const params = await searchParams;
   const status = isStatusFilter(params.status) ? params.status : "pending";
@@ -61,16 +61,34 @@ export default async function AdminSubmissionsPage({
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Submissions</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Moderation</h1>
           <p className="text-muted-foreground">
             Review, edit, approve, reject, or delete community submissions.
           </p>
         </div>
-        <form action={logoutAdminAction}>
-          <Button type="submit" variant="outline" size="sm">
-            Sign out
+        <div className="flex flex-wrap gap-2">
+          {owner ? (
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link href="/admin/team" />}
+            >
+              Team
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href="/account" />}
+          >
+            Account
           </Button>
-        </form>
+          <form action={signOutAction}>
+            <Button type="submit" variant="outline" size="sm">
+              Sign out
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="mb-8 flex flex-col gap-4">
@@ -124,8 +142,12 @@ export default async function AdminSubmissionsPage({
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {type !== "creatives"
-            ? events.map((event) => (
-                <EventSubmissionCard key={event.id} event={event} />
+            ? events.map(({ event, organisers }) => (
+                <EventSubmissionCard
+                  key={event.id}
+                  event={event}
+                  organisers={organisers}
+                />
               ))
             : null}
           {type !== "events"

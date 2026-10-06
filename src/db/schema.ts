@@ -7,6 +7,7 @@ import {
   timestamp,
   uuid,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const submissionStatusEnum = pgEnum("submission_status", [
@@ -43,6 +44,8 @@ export const eventCategoryEnum = pgEnum("event_category", [
 
 export const cityEnum = pgEnum("city", ["meanjin", "naarm"]);
 
+export const staffRoleEnum = pgEnum("staff_role", ["owner", "admin"]);
+
 export const lineupRoleEnum = pgEnum("lineup_role", [
   "performer",
   "dj",
@@ -53,33 +56,42 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
   "other",
 ]);
 
-export const creatives = pgTable("creatives", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  craftCategories: craftCategoryEnum("craft_categories")
-    .array()
-    .notNull(),
-  city: cityEnum("city"),
-  bio: text("bio"),
-  instagramHandle: text("instagram_handle"),
-  portfolioUrl: text("portfolio_url"),
-  avatarKey: text("avatar_key"),
-  openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
-  openToTrade: boolean("open_to_trade").notNull().default(false),
-  buildingPortfolio: boolean("building_portfolio").notNull().default(false),
-  status: submissionStatusEnum("status").notNull().default("pending"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+/** One public creative profile per Neon Auth account (unique userId). */
+export const creatives = pgTable(
+  "creatives",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    /** Neon Auth user id — required for account-owned profiles. */
+    userId: text("user_id"),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    craftCategories: craftCategoryEnum("craft_categories")
+      .array()
+      .notNull(),
+    city: cityEnum("city"),
+    bio: text("bio"),
+    instagramHandle: text("instagram_handle"),
+    portfolioUrl: text("portfolio_url"),
+    avatarKey: text("avatar_key"),
+    openToPaidWork: boolean("open_to_paid_work").notNull().default(false),
+    openToTrade: boolean("open_to_trade").notNull().default(false),
+    buildingPortfolio: boolean("building_portfolio").notNull().default(false),
+    status: submissionStatusEnum("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [uniqueIndex("creatives_user_id_unique").on(table.userId)]
+);
 
 export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
+  /** Neon Auth user id of the account that submitted the event. */
+  submittedByUserId: text("submitted_by_user_id"),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time", { withTimezone: true }).notNull(),
@@ -97,6 +109,18 @@ export const events = pgTable("events", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
+});
+
+/**
+ * Site staff. Owners manage who is an admin. Admins moderate submissions only.
+ */
+export const admins = pgTable("admins", {
+  email: text("email").primaryKey(),
+  role: staffRoleEnum("role").notNull().default("admin"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  createdByEmail: text("created_by_email"),
 });
 
 export const eventLineup = pgTable(
@@ -138,3 +162,5 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type EventLineup = typeof eventLineup.$inferSelect;
 export type NewEventLineup = typeof eventLineup.$inferInsert;
+export type Admin = typeof admins.$inferSelect;
+export type NewAdmin = typeof admins.$inferInsert;

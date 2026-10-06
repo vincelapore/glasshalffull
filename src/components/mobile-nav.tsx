@@ -5,10 +5,16 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { navLinks } from "@/components/site-nav";
+import type { NavLink } from "@/components/site-nav";
 
-export function MobileNav() {
+type MobileNavProps = {
+  links: NavLink[];
+  signedIn: boolean;
+};
+
+export function MobileNav({ links, signedIn }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const panelId = useId();
@@ -47,7 +53,7 @@ export function MobileNav() {
           className="absolute inset-x-0 top-full border-b border-border/60 bg-background/95 px-4 py-3 shadow-md backdrop-blur-md sm:px-6"
         >
           <ul className="mx-auto flex max-w-6xl flex-col gap-1">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
@@ -58,6 +64,35 @@ export function MobileNav() {
                 </Link>
               </li>
             ))}
+            <li className="mt-2 border-t border-border/60 pt-2">
+              {signedIn ? (
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <Link
+                    href="/auth/sign-in"
+                    className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    onClick={() => setOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/auth/sign-up"
+                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+                    onClick={() => setOpen(false)}
+                  >
+                    Join
+                  </Link>
+                </div>
+              )}
+            </li>
           </ul>
         </nav>
       ) : null}

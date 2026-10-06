@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { Button } from "@/components/ui/button";
-import { isAdminAuthenticated } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin";
 import { getCreativeById } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Edit Creative",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function EditCreativePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   const { id } = await params;
   const creative = await getCreativeById(id);
@@ -47,7 +47,7 @@ export default async function EditCreativePage({
         </Button>
       </div>
       <CreativeSubmissionForm
-        mode="edit"
+        mode="admin"
         creativeId={creative.id}
         defaultValues={{
           name: creative.name,

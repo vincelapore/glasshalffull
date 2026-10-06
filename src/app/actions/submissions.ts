@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import { isAdminAuthenticated } from "@/lib/admin";
+import { getSessionUser, isAdminAuthenticated } from "@/lib/admin";
 import { emptyToNull, normalizeInstagramHandle } from "@/lib/labels";
 import { creativePath, eventPath } from "@/lib/paths";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
@@ -12,7 +12,8 @@ import {
   eventSubmissionSchema,
 } from "@/lib/validations";
 import { db } from "@/db";
-import { creatives, events } from "@/db/schema";
+import { creatives, eventLineup, events } from "@/db/schema";
+import { getCreativeByUserId } from "@/lib/queries";
 
 export type ActionResult =
   | { success: true; id: string; message: string }
@@ -22,9 +23,15 @@ function normalizeOptionalUrl(value?: string) {
   return emptyToNull(value);
 }
 
-export async function submitCreativeAction(
+/** Create or update the signed-in user's single creative profile. */
+export async function saveMyProfileAction(
   input: unknown
 ): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, message: "Sign in to edit your profile." };
+  }
+
   const parsed = creativeSubmissionSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -38,34 +45,66 @@ export async function submitCreativeAction(
   const data = parsed.data;
 
   try {
+    const existing = await db
+      .select({ id: creatives.id })
+      .from(creatives)
+      .where(eq(creatives.userId, user.id))
+      .limit(1);
+
+    const profileValues = {
+      name: data.name,
+      craftCategories: data.craftCategories,
+      city: data.city || null,
+      bio: emptyToNull(data.bio),
+      instagramHandle: normalizeInstagramHandle(data.instagramHandle),
+      portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
+      avatarKey: emptyToNull(data.avatarKey),
+      openToPaidWork: data.openToPaidWork,
+      openToTrade: data.openToTrade,
+      buildingPortfolio: data.buildingPortfolio,
+      status: "pending" as const,
+    };
+
+    if (existing[0]) {
+      const [updated] = await db
+        .update(creatives)
+        .set({
+          ...profileValues,
+          slug: await uniqueCreativeSlug(data.name, existing[0].id),
+        })
+        .where(eq(creatives.id, existing[0].id))
+        .returning({ id: creatives.id, slug: creatives.slug });
+
+      revalidateCreativePaths(updated.slug);
+      revalidatePath("/account");
+
+      return {
+        success: true,
+        id: updated.id,
+        message: "Profile saved. It’s in the review queue.",
+      };
+    }
+
     const [created] = await db
       .insert(creatives)
       .values({
-        name: data.name,
+        userId: user.id,
         slug: await uniqueCreativeSlug(data.name),
-        craftCategories: data.craftCategories,
-        city: data.city || null,
-        bio: emptyToNull(data.bio),
-        instagramHandle: normalizeInstagramHandle(data.instagramHandle),
-        portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-        avatarKey: emptyToNull(data.avatarKey),
-        openToPaidWork: data.openToPaidWork,
-        openToTrade: data.openToTrade,
-        buildingPortfolio: data.buildingPortfolio,
-        status: "pending",
+        ...profileValues,
       })
       .returning({ id: creatives.id, slug: creatives.slug });
 
     revalidatePath("/admin/submissions");
+    revalidatePath("/account");
     revalidatePath("/creatives");
 
     return {
       success: true,
       id: created.id,
-      message: "Profile submitted for review. Thanks for pouring back in.",
+      message: "Profile saved. It’s in the review queue.",
     };
   } catch (error) {
-    console.error("submitCreativeAction", error);
+    console.error("saveMyProfileAction", error);
     return {
       success: false,
       message: "Could not save your profile. Please try again.",
@@ -74,6 +113,19 @@ export async function submitCreativeAction(
 }
 
 export async function submitEventAction(input: unknown): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, message: "Sign in to submit an event." };
+  }
+
+  const profile = await getCreativeByUserId(user.id);
+  if (!profile) {
+    return {
+      success: false,
+      message: "Save your profile on Account before submitting an event.",
+    };
+  }
+
   const parsed = eventSubmissionSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -90,6 +142,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
     const [created] = await db
       .insert(events)
       .values({
+        submittedByUserId: user.id,
         title: data.title,
         slug: await uniqueEventSlug(data.title),
         dateTime: new Date(data.dateTime),
@@ -103,8 +156,17 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
       })
       .returning({ id: events.id, slug: events.slug });
 
+    await db.insert(eventLineup).values({
+      eventId: created.id,
+      creativeId: profile.id,
+      role: "organizer",
+    });
+
     revalidatePath("/admin/submissions");
+    revalidatePath("/account");
     revalidatePath("/events");
+    revalidatePath(eventPath(created.slug));
+    revalidatePath(creativePath(profile.slug));
     revalidatePath("/");
 
     return {

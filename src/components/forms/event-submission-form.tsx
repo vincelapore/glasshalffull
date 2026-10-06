@@ -116,8 +116,8 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       <SubmissionSuccess
         title="Your event is in the queue."
         description="Thanks for pouring back in. We’ll review it before it goes live on the directory."
-        primaryHref="/events"
-        primaryLabel="Browse events"
+        primaryHref="/account"
+        primaryLabel="Back to account"
         onSubmitAnother={resetToForm}
         submitAnotherLabel="Submit another event"
       />
@@ -313,16 +313,16 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
               ? "Save changes"
               : "Submit event"}
         </Button>
-        {mode === "edit" ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pending}
-            onClick={() => router.push("/admin/submissions")}
-          >
-            Cancel
-          </Button>
-        ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={() =>
+            router.push(mode === "edit" ? "/admin/submissions" : "/account")
+          }
+        >
+          Cancel
+        </Button>
       </div>
     </form>
   );

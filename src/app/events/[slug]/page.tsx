@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
-import { cityLabels, formatDateTime } from "@/lib/labels";
+import { cityLabels, formatDateTime, lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import { getEventByParam, getEventLineup } from "@/lib/queries";
@@ -98,7 +98,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                       <div>
                         <p className="font-medium">{creative.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {role.replaceAll("_", " ")} ·{" "}
+                          {lineupRoleLabels[role]} ·{" "}
                           <CreativeCraftTags creative={creative} asText />
                         </p>
                       </div>

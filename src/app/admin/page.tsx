@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { isAdminAuthenticated } from "@/lib/admin";
+import { getSessionUser, isAdminEmail } from "@/lib/admin";
 
 export const metadata: Metadata = {
   title: "Admin",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminIndexPage() {
-  if (await isAdminAuthenticated()) {
-    redirect("/admin/submissions");
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/auth/sign-in?next=/admin/submissions");
   }
-  redirect("/admin/login");
+  if (!(await isAdminEmail(user.email))) {
+    redirect("/");
+  }
+  redirect("/admin/submissions");
 }

@@ -8,8 +8,9 @@ Browse upcoming events, meet local creatives, and submit listings for moderation
 
 - **Events** — upcoming nights with category, location, tickets, and flyer images
 - **Creatives** — artist profiles with craft category, bio, links, and work-opportunity tags
-- **Public submissions** — `/submit/event` and `/submit/creative` (pending until approved)
-- **Admin moderation** — password-protected `/admin` to approve, reject, edit, or delete submissions
+- **Accounts** — Neon Auth sign-up / sign-in; one editable creative profile per account
+- **Event submissions** — from `/account` (pending until approved)
+- **Admin moderation** — same login; owners manage the admin list, admins review submissions
 - **Light/dark theme** — dark by default
 
 ## Tech stack
@@ -46,8 +47,14 @@ Fill in `.env.local`:
 # Neon Serverless Postgres
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 
-# Admin moderation password for /admin
-ADMIN_PASSWORD=change-me
+# Neon Auth — Auth URL from Console → Branch → Auth
+NEON_AUTH_BASE_URL=https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth
+NEON_AUTH_COOKIE_SECRET=   # openssl rand -base64 32
+
+# Owners can add/remove admins (always includes vincemlapore@gmail.com)
+OWNER_EMAILS=vincemlapore@gmail.com
+# Optional extra admin emails (moderation only)
+ADMIN_EMAILS=
 
 # Cloudflare R2
 R2_ACCOUNT_ID=
@@ -59,6 +66,8 @@ R2_BUCKET_NAME=glasshalffull
 # Copy the Public Development URL from R2 → glasshalffull → Settings
 NEXT_PUBLIC_MEDIA_BASE_URL=https://pub-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev
 ```
+
+Register trusted Auth domains in Neon (scheme, no trailing slash), e.g. `http://localhost:3000` and `https://glasshalffull.space`.
 
 Push the schema to your database:
 
@@ -102,8 +111,11 @@ Notable routes:
 - `/` — home (featured events + creatives)
 - `/events`, `/events/[id]` — event listing and detail
 - `/creatives`, `/creatives/[id]` — creative directory and profiles
-- `/submit/event`, `/submit/creative` — public submission forms
-- `/admin` — moderation dashboard (requires `ADMIN_PASSWORD`)
+- `/auth/sign-in`, `/auth/sign-up` — Neon Auth accounts
+- `/account` — profile editor + your event submissions
+- `/account/events/new` — submit an event
+- `/admin/submissions` — moderation (owners and admins)
+- `/admin/team` — add/remove admins (owners only)
 
 ## Deploy
 
@@ -111,7 +123,7 @@ Designed for [Vercel](https://vercel.com) with a Neon database:
 
 1. Create a Neon project and copy the connection string
 2. Deploy the repo to Vercel
-3. Set `DATABASE_URL`, `ADMIN_PASSWORD`, the `R2_*` secrets, and `NEXT_PUBLIC_MEDIA_BASE_URL` in the project environment
+3. Set `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `OWNER_EMAILS`, the `R2_*` secrets, and `NEXT_PUBLIC_MEDIA_BASE_URL` in the project environment. Add your production origin as a Neon Auth trusted domain.
 4. Run `npm run db:push` against production (or apply migrations) once before going live
 
 ## Photo uploads

@@ -150,7 +150,7 @@ export default async function EventsPage({
       {events.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
           No approved events yet.{" "}
-          <Link href="/submit/event" className="underline underline-offset-4">
+          <Link href="/account/events/new" className="underline underline-offset-4">
             Submit one
           </Link>
           .

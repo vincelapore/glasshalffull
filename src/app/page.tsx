@@ -68,7 +68,7 @@ export default async function HomePage() {
         {featuredEvents.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
             No upcoming events yet.{" "}
-            <Link href="/submit/event" className="underline underline-offset-4">
+            <Link href="/account/events/new" className="underline underline-offset-4">
               Submit one
             </Link>
             .
@@ -121,11 +121,8 @@ export default async function HomePage() {
         {creatives.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
             No creatives yet.{" "}
-            <Link
-              href="/submit/creative"
-              className="underline underline-offset-4"
-            >
-              Submit a profile
+            <Link href="/account" className="underline underline-offset-4">
+              Add your profile
             </Link>
             .
           </p>

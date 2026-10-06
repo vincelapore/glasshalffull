@@ -1,45 +1,138 @@
-import { createHash, timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
+import { asc, desc, eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
-export const ADMIN_COOKIE = "ghf_admin";
+import { db } from "@/db";
+import { admins } from "@/db/schema";
+import { auth } from "@/lib/auth/server";
 
-function hashSecret(value: string) {
-  return createHash("sha256").update(value).digest("hex");
+function parseEmailList(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
 }
 
-export function getAdminPassword() {
-  return process.env.ADMIN_PASSWORD?.trim() || "";
+/** Hardcoded plus OWNER_EMAILS — owners manage the admin list. */
+export function getOwnerEmails() {
+  return Array.from(
+    new Set([
+      "vincemlapore@gmail.com",
+      ...parseEmailList(process.env.OWNER_EMAILS),
+    ])
+  );
+}
+
+/** Bootstrap seed only — extra admins copied into the table on first check. */
+export function getBootstrapAdminEmails() {
+  return parseEmailList(process.env.ADMIN_EMAILS);
 }
 
 export function isAdminConfigured() {
-  return getAdminPassword().length > 0;
+  return getOwnerEmails().length > 0 || getBootstrapAdminEmails().length > 0;
 }
 
-export function verifyAdminPassword(password: string) {
-  const expected = getAdminPassword();
-  if (!expected) return false;
+export async function getSessionUser() {
+  const { data: session } = await auth.getSession();
+  return session?.user ?? null;
+}
 
-  const left = Buffer.from(hashSecret(password));
-  const right = Buffer.from(hashSecret(expected));
+export async function syncStaff() {
+  const owners = getOwnerEmails();
+  if (owners.length > 0) {
+    await db
+      .insert(admins)
+      .values(
+        owners.map((email) => ({
+          email,
+          role: "owner" as const,
+          createdByEmail: "bootstrap",
+        }))
+      )
+      .onConflictDoUpdate({
+        target: admins.email,
+        set: { role: "owner" },
+      });
+  }
 
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
+  const extraAdmins = getBootstrapAdminEmails().filter(
+    (email) => !owners.includes(email)
+  );
+  if (extraAdmins.length > 0) {
+    await db
+      .insert(admins)
+      .values(
+        extraAdmins.map((email) => ({
+          email,
+          role: "admin" as const,
+          createdByEmail: "bootstrap",
+        }))
+      )
+      .onConflictDoNothing();
+  }
+}
+
+export async function listStaff() {
+  await syncStaff();
+  return db
+    .select()
+    .from(admins)
+    .orderBy(desc(admins.role), asc(admins.email));
+}
+
+export async function getStaffRole(email: string | null | undefined) {
+  if (!email) return null;
+  const normalized = email.trim().toLowerCase();
+
+  try {
+    await syncStaff();
+    const [row] = await db
+      .select({ role: admins.role })
+      .from(admins)
+      .where(eq(admins.email, normalized))
+      .limit(1);
+    return row?.role ?? null;
+  } catch (error) {
+    console.error("getStaffRole", error);
+    if (getOwnerEmails().includes(normalized)) return "owner" as const;
+    if (getBootstrapAdminEmails().includes(normalized)) return "admin" as const;
+    return null;
+  }
+}
+
+export async function isAdminEmail(email: string | null | undefined) {
+  const role = await getStaffRole(email);
+  return role === "owner" || role === "admin";
+}
+
+export async function isOwnerEmail(email: string | null | undefined) {
+  return (await getStaffRole(email)) === "owner";
 }
 
 export async function isAdminAuthenticated() {
-  const expected = getAdminPassword();
-  if (!expected) return false;
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_COOKIE)?.value;
-  if (!token) return false;
-
-  const left = Buffer.from(token);
-  const right = Buffer.from(hashSecret(expected));
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
+  const user = await getSessionUser();
+  return isAdminEmail(user?.email);
 }
 
-export function adminSessionToken() {
-  return hashSecret(getAdminPassword());
+/** Moderators (owners and admins). Guests go to sign-in; everyone else home. */
+export async function requireAdmin() {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/auth/sign-in?next=/admin/submissions");
+  }
+  if (!(await isAdminEmail(user.email))) {
+    redirect("/");
+  }
+  return user;
+}
+
+/** Owners only — manage who can moderate. */
+export async function requireOwner() {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/auth/sign-in?next=/admin/team");
+  }
+  if (!(await isOwnerEmail(user.email))) {
+    redirect("/admin/submissions");
+  }
+  return user;
 }

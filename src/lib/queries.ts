@@ -120,6 +120,37 @@ export async function getCreativeUpcomingEvents(creativeId: string) {
     .orderBy(asc(events.dateTime));
 }
 
+export async function getCreativeByUserId(userId: string) {
+  const [creative] = await db
+    .select()
+    .from(creatives)
+    .where(eq(creatives.userId, userId))
+    .limit(1);
+  return creative ?? null;
+}
+
+export async function getEventsByUserId(userId: string) {
+  return db
+    .select()
+    .from(events)
+    .where(eq(events.submittedByUserId, userId))
+    .orderBy(desc(events.createdAt));
+}
+
+export async function getEventOrganisers(eventId: string) {
+  return db
+    .select({
+      role: eventLineup.role,
+      creative: creatives,
+    })
+    .from(eventLineup)
+    .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
+    .where(
+      and(eq(eventLineup.eventId, eventId), eq(eventLineup.role, "organizer"))
+    )
+    .orderBy(asc(creatives.name));
+}
+
 export async function getSubmissions(options?: {
   status?: Status | "all";
   type?: "events" | "creatives" | "all";
@@ -149,8 +180,15 @@ export async function getSubmissions(options?: {
             .where(eq(creatives.status, status))
             .orderBy(desc(creatives.createdAt));
 
+  const eventsWithOrganisers = await Promise.all(
+    eventRows.map(async (event) => ({
+      event,
+      organisers: (await getEventOrganisers(event.id)).map((row) => row.creative),
+    }))
+  );
+
   return {
-    events: eventRows,
+    events: eventsWithOrganisers,
     creatives: creativeRows,
   };
 }

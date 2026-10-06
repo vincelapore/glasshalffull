@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { EventSubmissionForm } from "@/components/forms/event-submission-form";
 import { Button } from "@/components/ui/button";
-import { isAdminAuthenticated } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin";
 import { toDateTimeLocalValue } from "@/lib/labels";
 import { getEventById } from "@/lib/queries";
 
@@ -12,14 +12,14 @@ export const metadata: Metadata = {
   title: "Edit Event",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function EditEventPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   const { id } = await params;
   const event = await getEventById(id);

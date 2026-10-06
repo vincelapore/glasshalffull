@@ -229,8 +229,8 @@ export default async function CreativesPage({
           {allCreatives.length === 0
             ? "No approved creatives yet. "
             : "No creatives match these filters. "}
-          <Link href="/submit/creative" className="underline underline-offset-4">
-            Submit a profile
+          <Link href="/account" className="underline underline-offset-4">
+            Add your profile
           </Link>
           .
         </p>

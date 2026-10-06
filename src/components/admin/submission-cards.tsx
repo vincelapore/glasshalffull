@@ -22,6 +22,7 @@ import {
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
+  lineupRoleLabels,
   statusLabels,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
@@ -38,7 +39,13 @@ function StatusBadge({ status }: { status: Creative["status"] | Event["status"] 
   return <Badge variant={variant}>{statusLabels[status]}</Badge>;
 }
 
-export function EventSubmissionCard({ event }: { event: Event }) {
+export function EventSubmissionCard({
+  event,
+  organisers,
+}: {
+  event: Event;
+  organisers: Creative[];
+}) {
   return (
     <Card>
       <CardHeader>
@@ -64,6 +71,45 @@ export function EventSubmissionCard({ event }: { event: Event }) {
           {event.description ? (
             <p className="text-sm text-muted-foreground">{event.description}</p>
           ) : null}
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Organisers
+          </p>
+          {organisers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No organisers linked.</p>
+          ) : (
+            <ul className="space-y-2">
+              {organisers.map((creative) => (
+                <li key={creative.id}>
+                  <Link
+                    href={creativePath(creative.slug)}
+                    className="flex items-center gap-3 rounded-lg border border-border/70 p-2 transition-colors hover:bg-muted/40"
+                  >
+                    <ExternalImage
+                      src={mediaUrl(creative.avatarKey)}
+                      alt=""
+                      className="size-9 rounded-full object-cover"
+                      fallback={
+                        <div className="flex size-9 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                          {creative.name.slice(0, 1).toUpperCase()}
+                        </div>
+                      }
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{creative.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lineupRoleLabels.organizer}
+                        {creative.status !== "approved"
+                          ? ` · profile ${statusLabels[creative.status].toLowerCase()}`
+                          : null}
+                      </p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           Submitted {formatDateTime(event.createdAt)}
