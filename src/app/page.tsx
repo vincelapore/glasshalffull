@@ -130,7 +130,8 @@ export default async function HomePage({
               Featured Events
             </h2>
             <p className="text-sm text-muted-foreground">
-              What’s on this weekend {cityCopy}.
+              Browse to find new events in {cityCopy} that'll tickle your pick—
+              uh, fancy.
             </p>
           </div>
           <Link
@@ -193,7 +194,8 @@ export default async function HomePage({
               Discover Creatives
             </h2>
             <p className="text-sm text-muted-foreground">
-              People making things {cityCopy}.
+              Find that graphic designer without having to ask a friend of a
+              friend of a friend of a...
             </p>
           </div>
           <Link

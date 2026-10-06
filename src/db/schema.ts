@@ -25,6 +25,7 @@ export const craftCategoryEnum = pgEnum("craft_category", [
   "photography",
   "fashion",
   "makeup",
+  "model",
   "dance",
   "film",
   "design",
@@ -39,7 +40,15 @@ export const eventCategoryEnum = pgEnum("event_category", [
   "queer",
   "fashion",
   "community",
-  "other",
+  "activism",
+]);
+
+export const musicGenreEnum = pgEnum("music_genre", [
+  "afro",
+  "electronic",
+  "hip_hop",
+  "indie",
+  "jazz",
 ]);
 
 export const cityEnum = pgEnum("city", ["meanjin", "naarm"]);
@@ -100,10 +109,13 @@ export const events = pgTable("events", {
   city: cityEnum("city").notNull().default("meanjin"),
   location: text("location").notNull(),
   categories: eventCategoryEnum("categories").array().notNull(),
+  musicGenres: musicGenreEnum("music_genres").array().notNull().default([]),
   description: text("description"),
   ticketLink: text("ticket_link"),
   flyerKey: text("flyer_key"),
   status: submissionStatusEnum("status").notNull().default("pending"),
+  /** Private review note. Visible to admins and the event's organisers only. */
+  moderationNote: text("moderation_note"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

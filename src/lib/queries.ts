@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 
 import { db } from "@/db";
 import { creatives, eventLineup, events } from "@/db/schema";
+import { getSessionUser, isAdminEmail } from "@/lib/admin";
 import { isUuid } from "@/lib/slug";
 import type { submissionStatuses } from "@/lib/validations";
 
@@ -166,6 +167,21 @@ export async function getEventOrganisers(eventId: string) {
       and(eq(eventLineup.eventId, eventId), eq(eventLineup.role, "organizer"))
     )
     .orderBy(asc(creatives.name));
+}
+
+export async function canViewEventModerationNote(event: {
+  id: string;
+  submittedByUserId: string | null;
+}) {
+  const user = await getSessionUser();
+  if (!user) return false;
+  if (await isAdminEmail(user.email)) return true;
+  if (event.submittedByUserId && event.submittedByUserId === user.id) {
+    return true;
+  }
+
+  const organisers = await getEventOrganisers(event.id);
+  return organisers.some((row) => row.creative.userId === user.id);
 }
 
 export async function getSubmissions(options?: {

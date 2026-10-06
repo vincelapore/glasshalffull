@@ -209,7 +209,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         name="craftCategories"
         render={({ field, fieldState }) => (
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Craft categories</legend>
+            <legend className="text-sm font-medium">Categories</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {craftCategories.map((category) => {
                 const checked = field.value?.includes(category) ?? false;

@@ -22,7 +22,11 @@ import {
 import { getApprovedCreatives } from "@/lib/queries";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
-import { cities, craftCategories, workOpportunityTags } from "@/lib/validations";
+import {
+  cities,
+  craftCategories,
+  workOpportunityTags,
+} from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -67,11 +71,13 @@ export default async function CreativesPage({
 }) {
   const { category, tag, city } = await searchParams;
   const activeCategory =
-    category && craftCategories.includes(category as (typeof craftCategories)[number])
+    category &&
+    craftCategories.includes(category as (typeof craftCategories)[number])
       ? (category as (typeof craftCategories)[number])
       : null;
   const activeTag =
-    tag && workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
+    tag &&
+    workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
       ? (tag as (typeof workOpportunityTags)[number])
       : null;
   const activeCity = parseCityFilter(city);
@@ -98,10 +104,8 @@ export default async function CreativesPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Creatives</h1>
         <p className="text-muted-foreground">
-          Artists, organisers, and makers
-          {activeCity === "all"
-            ? " across the local scene."
-            : ` in ${cityLabels[activeCity]}.`}
+          Find the missing piece to your creative project or discover talent
+          you’d love to collaborate with.
         </p>
       </div>
 
@@ -122,7 +126,7 @@ export default async function CreativesPage({
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                 activeCity === cityOption
                   ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground",
               )}
             >
               {cityLabels[cityOption]}
@@ -138,7 +142,7 @@ export default async function CreativesPage({
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               activeCity === "all"
                 ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
             )}
           >
             All
@@ -148,7 +152,7 @@ export default async function CreativesPage({
 
       <div className="mb-6 space-y-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Craft
+          Category
         </p>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -161,7 +165,7 @@ export default async function CreativesPage({
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               !activeCategory
                 ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
             )}
           >
             All
@@ -178,7 +182,7 @@ export default async function CreativesPage({
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                 activeCategory === cat
                   ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground",
               )}
             >
               {craftCategoryLabels[cat]}
@@ -202,7 +206,7 @@ export default async function CreativesPage({
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               !activeTag
                 ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
             )}
           >
             All
@@ -219,7 +223,7 @@ export default async function CreativesPage({
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                 activeTag === workTag
                   ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground",
               )}
             >
               {workOpportunityTagLabels[workTag]}

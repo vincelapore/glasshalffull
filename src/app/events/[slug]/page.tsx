@@ -5,11 +5,16 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
+import { EventModerationNote } from "@/components/event-moderation-note";
 import { ExternalImage } from "@/components/media/external-image";
 import { cityLabels, formatDateTime, lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
-import { getEventByParam, getEventLineup } from "@/lib/queries";
+import {
+  canViewEventModerationNote,
+  getEventByParam,
+  getEventLineup,
+} from "@/lib/queries";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -37,6 +42,9 @@ export default async function EventDetailPage({ params }: EventPageProps) {
 
   const lineup = await getEventLineup(event.id);
   const isPublic = event.status === "approved";
+  const showModerationNote =
+    Boolean(event.moderationNote?.trim()) &&
+    (await canViewEventModerationNote(event));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
@@ -44,6 +52,9 @@ export default async function EventDetailPage({ params }: EventPageProps) {
         <p className="mb-6 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
           This event is <strong>{event.status}</strong> and not listed publicly yet.
         </p>
+      ) : null}
+      {showModerationNote ? (
+        <EventModerationNote note={event.moderationNote} className="mb-6" />
       ) : null}
 
       <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">

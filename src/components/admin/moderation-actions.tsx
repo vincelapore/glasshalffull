@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
+import { EventRejectDialog } from "@/components/admin/event-reject-dialog";
+import { Button } from "@/components/ui/button";
 import {
   updateCreativeStatusAction,
   updateEventStatusAction,
 } from "@/app/actions/submissions";
-import { Button } from "@/components/ui/button";
+import type { EventRejectionInput } from "@/lib/validations";
 
 type ModerationActionsProps = {
   kind: "event" | "creative";
@@ -18,12 +20,16 @@ type ModerationActionsProps = {
 export function ModerationActions({ kind, id, status }: ModerationActionsProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [rejectOpen, setRejectOpen] = useState(false);
 
-  function run(next: "approved" | "rejected" | "pending") {
+  function run(
+    next: "approved" | "rejected" | "pending",
+    rejection?: EventRejectionInput
+  ) {
     startTransition(async () => {
       const result =
         kind === "event"
-          ? await updateEventStatusAction(id, next)
+          ? await updateEventStatusAction(id, next, rejection)
           : await updateCreativeStatusAction(id, next);
 
       if (!result.success) {
@@ -31,6 +37,7 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
         return;
       }
 
+      setRejectOpen(false);
       router.refresh();
     });
   }
@@ -53,7 +60,13 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
           size="sm"
           variant="destructive"
           disabled={pending}
-          onClick={() => run("rejected")}
+          onClick={() => {
+            if (kind === "event") {
+              setRejectOpen(true);
+              return;
+            }
+            run("rejected");
+          }}
         >
           Reject
         </Button>
@@ -68,6 +81,14 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
         >
           Mark pending
         </Button>
+      ) : null}
+      {kind === "event" ? (
+        <EventRejectDialog
+          open={rejectOpen}
+          onOpenChange={setRejectOpen}
+          pending={pending}
+          onConfirm={(input) => run("rejected", input)}
+        />
       ) : null}
     </div>
   );

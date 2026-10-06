@@ -106,6 +106,7 @@
   --glass-border: oklch(0.2 0.02 260 / 12%);
   --shadow-glass: 0 8px 32px oklch(0.2 0.02 260 / 8%);
   --shadow-glow: 0 0 40px oklch(0.72 0.15 70 / 25%);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Nightlife: default brand surface */

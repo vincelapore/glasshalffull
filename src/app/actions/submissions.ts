@@ -4,11 +4,12 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { getSessionUser, isAdminAuthenticated } from "@/lib/admin";
-import { emptyToNull, normalizeInstagramHandle } from "@/lib/labels";
+import { composeModerationNote, emptyToNull, normalizeInstagramHandle } from "@/lib/labels";
 import { creativePath, eventPath } from "@/lib/paths";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
 import {
   creativeSubmissionSchema,
+  eventRejectionSchema,
   eventSubmissionSchema,
 } from "@/lib/validations";
 import { db } from "@/db";
@@ -160,6 +161,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
         city: data.city,
         location: data.location,
         categories: data.categories,
+        musicGenres: data.categories.includes("music") ? data.musicGenres : [],
         description: emptyToNull(data.description),
         ticketLink: normalizeOptionalUrl(data.ticketLink),
         flyerKey: emptyToNull(data.flyerKey),
@@ -231,16 +233,39 @@ export async function updateCreativeStatusAction(
 
 export async function updateEventStatusAction(
   id: string,
-  status: "approved" | "rejected" | "pending"
+  status: "approved" | "rejected" | "pending",
+  rejection?: unknown
 ): Promise<ActionResult> {
   if (!(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
+  let moderationNote: string | null | undefined;
+
+  if (status === "rejected") {
+    const parsed = eventRejectionSchema.safeParse(rejection ?? {});
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message:
+          parsed.error.issues[0]?.message ?? "Pick a reason or add a note.",
+      };
+    }
+
+    moderationNote = composeModerationNote(
+      parsed.data.reasons,
+      parsed.data.extra
+    );
+  }
+
   try {
     const [updated] = await db
       .update(events)
-      .set({ status })
+      .set({
+        status,
+        ...(moderationNote !== undefined ? { moderationNote } : {}),
+      })
       .where(eq(events.id, id))
       .returning({ id: events.id, slug: events.slug });
 
@@ -248,10 +273,7 @@ export async function updateEventStatusAction(
       return { success: false, message: "Event not found." };
     }
 
-    revalidatePath("/admin/submissions");
-    revalidatePath("/events");
-    revalidatePath(eventPath(updated.slug));
-    revalidatePath("/");
+    revalidateEventPaths(updated.slug);
 
     return {
       success: true,
@@ -274,6 +296,7 @@ function revalidateCreativePaths(slug: string) {
 function revalidateEventPaths(slug: string) {
   revalidatePath("/admin/submissions");
   revalidatePath("/events");
+  revalidatePath("/account");
   revalidatePath(eventPath(slug));
   revalidatePath("/");
 }
@@ -379,6 +402,7 @@ export async function updateEventAction(
         city: data.city,
         location: data.location,
         categories: data.categories,
+        musicGenres: data.categories.includes("music") ? data.musicGenres : [],
         description: emptyToNull(data.description),
         ticketLink: normalizeOptionalUrl(data.ticketLink),
         flyerKey: emptyToNull(data.flyerKey),

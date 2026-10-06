@@ -8,17 +8,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EventCategoryFilters } from "@/components/event-category-filters";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import {
   cityLabels,
-  eventCategoryLabels,
   formatDateTime,
   parseCityFilter,
-  type CityFilter,
+  parseMusicGenre,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
-import { eventPath } from "@/lib/paths";
+import { eventPath, eventsBrowsePath } from "@/lib/paths";
 import { getApprovedEvents } from "@/lib/queries";
 import { cities, eventCategories } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -27,44 +27,36 @@ export const metadata: Metadata = {
   title: "Events",
 };
 
-type SearchParams = Promise<{ category?: string; city?: string }>;
-
-function buildEventsHref(options: {
-  category?: string | null;
-  city?: CityFilter | null;
-}) {
-  const params = new URLSearchParams();
-
-  if (options.city === "all") {
-    params.set("city", "all");
-  } else if (options.city) {
-    params.set("city", options.city);
-  }
-
-  if (options.category) {
-    params.set("category", options.category);
-  }
-
-  const query = params.toString();
-  return query ? `/events?${query}` : "/events";
-}
+type SearchParams = Promise<{
+  category?: string;
+  city?: string;
+  genre?: string;
+}>;
 
 export default async function EventsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { category, city } = await searchParams;
+  const { category, city, genre } = await searchParams;
+  const parsedGenre = parseMusicGenre(genre);
   const activeCategory =
     category && eventCategories.includes(category as (typeof eventCategories)[number])
       ? (category as (typeof eventCategories)[number])
-      : null;
+      : parsedGenre
+        ? "music"
+        : null;
+  const activeGenre = activeCategory === "music" ? parsedGenre : null;
   const activeCity = parseCityFilter(city);
 
   const allEvents = await getApprovedEvents();
   const events = allEvents.filter((event) => {
     if (activeCity !== "all" && event.city !== activeCity) {
       return false;
+    }
+
+    if (activeGenre) {
+      return (event.musicGenres ?? []).includes(activeGenre);
     }
 
     if (activeCategory && !event.categories.includes(activeCategory)) {
@@ -94,9 +86,10 @@ export default async function EventsPage({
           {cities.map((cityOption) => (
             <Link
               key={cityOption}
-              href={buildEventsHref({
+              href={eventsBrowsePath({
                 city: cityOption,
                 category: activeCategory,
+                genre: activeGenre,
               })}
               className={cn(
                 "rounded-lg border px-3 py-1.5 text-sm transition-colors",
@@ -109,7 +102,11 @@ export default async function EventsPage({
             </Link>
           ))}
           <Link
-            href={buildEventsHref({ city: "all", category: activeCategory })}
+            href={eventsBrowsePath({
+              city: "all",
+              category: activeCategory,
+              genre: activeGenre,
+            })}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               activeCity === "all"
@@ -122,38 +119,11 @@ export default async function EventsPage({
         </div>
       </div>
 
-      <div className="mb-8 space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Category
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildEventsHref({ city: activeCity, category: null })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              !activeCategory
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
-          >
-            All
-          </Link>
-          {eventCategories.map((cat) => (
-            <Link
-              key={cat}
-              href={buildEventsHref({ city: activeCity, category: cat })}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeCategory === cat
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {eventCategoryLabels[cat]}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <EventCategoryFilters
+        activeCity={activeCity}
+        activeCategory={activeCategory}
+        activeGenre={activeGenre}
+      />
 
       {events.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">

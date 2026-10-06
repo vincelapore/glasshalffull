@@ -54,6 +54,7 @@ export default async function EditEventPage({
           city: event.city,
           location: event.location,
           categories: event.categories,
+          musicGenres: event.musicGenres ?? [],
           description: event.description ?? "",
           ticketLink: event.ticketLink ?? "",
           flyerKey: event.flyerKey ?? "",

@@ -16,6 +16,7 @@ export const craftCategories = [
   "photography",
   "fashion",
   "makeup",
+  "model",
   "dance",
   "film",
   "design",
@@ -30,7 +31,15 @@ export const eventCategories = [
   "queer",
   "fashion",
   "community",
-  "other",
+  "activism",
+] as const;
+
+export const musicGenres = [
+  "afro",
+  "electronic",
+  "hip_hop",
+  "indie",
+  "jazz",
 ] as const;
 
 export const cities = ["meanjin", "naarm"] as const;
@@ -41,6 +50,15 @@ export const DEFAULT_CITY = "meanjin" as const;
 export const submissionStatuses = ["pending", "approved", "rejected"] as const;
 
 export const workOpportunityTags = ["paid_work", "trade", "portfolio"] as const;
+
+export const eventRejectionReasons = [
+  "location_unclear",
+  "datetime_unclear",
+  "details_mismatch",
+  "duplicate",
+  "doesnt_fit",
+  "more_info",
+] as const;
 
 const optionalUrl = z.union([
   z.literal(""),
@@ -62,7 +80,7 @@ export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
   craftCategories: z
     .array(z.enum(craftCategories))
-    .min(1, "Pick at least one craft category"),
+    .min(1, "Pick at least one category"),
   city: z.union([z.literal(""), z.enum(cities)]),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
   instagramHandle: optionalInstagramHandle,
@@ -94,6 +112,7 @@ export const eventSubmissionSchema = z.object({
   categories: z
     .array(z.enum(eventCategories))
     .min(1, "Pick at least one event category"),
+  musicGenres: z.array(z.enum(musicGenres)),
   description: z.union([z.literal(""), z.string().trim().max(4000)]),
   ticketLink: optionalUrl,
   flyerKey: z.union([
@@ -102,5 +121,16 @@ export const eventSubmissionSchema = z.object({
   ]),
 });
 
+export const eventRejectionSchema = z
+  .object({
+    reasons: z.array(z.enum(eventRejectionReasons)),
+    extra: z.union([z.literal(""), z.string().trim().max(500)]),
+  })
+  .refine(
+    (data) => data.reasons.length > 0 || data.extra.trim().length > 0,
+    { message: "Pick a reason or add a note." }
+  );
+
 export type CreativeSubmissionInput = z.infer<typeof creativeSubmissionSchema>;
 export type EventSubmissionInput = z.infer<typeof eventSubmissionSchema>;
+export type EventRejectionInput = z.infer<typeof eventRejectionSchema>;

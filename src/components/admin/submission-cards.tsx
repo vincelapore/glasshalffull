@@ -5,6 +5,7 @@ import { ModerationActions } from "@/components/admin/moderation-actions";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
+import { EventModerationNote } from "@/components/event-moderation-note";
 import { ExternalImage } from "@/components/media/external-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ export function EventSubmissionCard({
           {event.description ? (
             <p className="text-sm text-muted-foreground">{event.description}</p>
           ) : null}
+          <EventModerationNote note={event.moderationNote} />
         </div>
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

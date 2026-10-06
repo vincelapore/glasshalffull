@@ -9,18 +9,20 @@ import {
   submitEventAction,
   updateEventAction,
 } from "@/app/actions/submissions";
+import { AccordionReveal } from "@/components/accordion-reveal";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cityLabels, eventCategoryLabels } from "@/lib/labels";
+import { cityLabels, eventCategoryLabels, musicGenreLabels } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   cities,
   eventCategories,
   eventSubmissionSchema,
+  musicGenres,
   type EventSubmissionInput,
 } from "@/lib/validations";
 
@@ -52,6 +54,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             city: "meanjin",
             location: "",
             categories: [],
+            musicGenres: [],
             description: "",
             ticketLink: "",
             flyerKey: "",
@@ -114,8 +117,8 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
   if (mode === "create" && submitted) {
     return (
       <SubmissionSuccess
-        title="Thanks. We’ll review it before it goes live."
-        description="You’re listed as the organiser."
+        title="Thanks for pouring back in!"
+        description="We’ll review it before it goes live on the directory."
         primaryHref="/account"
         primaryLabel="Back to account"
         onSubmitAnother={resetToForm}
@@ -195,45 +198,100 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       <Controller
         control={form.control}
         name="categories"
-        render={({ field, fieldState }) => (
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Categories</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {eventCategories.map((category) => {
-                const checked = field.value?.includes(category) ?? false;
+        render={({ field, fieldState }) => {
+          const musicChecked = field.value?.includes("music") ?? false;
 
-                return (
-                  <label
-                    key={category}
-                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 size-4 rounded border-border accent-foreground"
-                      checked={checked}
-                      onChange={(event) => {
-                        const next = event.target.checked
-                          ? [...(field.value ?? []), category]
-                          : (field.value ?? []).filter(
-                              (value) => value !== category
-                            );
-                        field.onChange(next);
-                      }}
-                    />
-                    <span className="text-sm">
-                      {eventCategoryLabels[category]}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            {fieldState.error ? (
-              <p className="text-xs text-destructive">
-                {fieldState.error.message}
-              </p>
-            ) : null}
-          </fieldset>
-        )}
+          return (
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">Categories</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {eventCategories.map((category) => {
+                  const checked = field.value?.includes(category) ?? false;
+
+                  return (
+                    <label
+                      key={category}
+                      className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 size-4 rounded border-border accent-foreground"
+                        checked={checked}
+                        onChange={(event) => {
+                          const next = event.target.checked
+                            ? [...(field.value ?? []), category]
+                            : (field.value ?? []).filter(
+                                (value) => value !== category
+                              );
+                          field.onChange(next);
+                          if (!next.includes("music")) {
+                            form.setValue("musicGenres", []);
+                          }
+                        }}
+                      />
+                      <span className="text-sm">
+                        {eventCategoryLabels[category]}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {fieldState.error ? (
+                <p className="text-xs text-destructive">
+                  {fieldState.error.message}
+                </p>
+              ) : null}
+              <AccordionReveal open={musicChecked}>
+                <Controller
+                  control={form.control}
+                  name="musicGenres"
+                  render={({ field: genreField, fieldState: genreState }) => (
+                    <fieldset className="space-y-2 pt-1">
+                      <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Music genre
+                      </legend>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {musicGenres.map((genre) => {
+                          const checked =
+                            genreField.value?.includes(genre) ?? false;
+
+                          return (
+                            <label
+                              key={genre}
+                              className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-0.5 size-4 rounded border-border accent-foreground"
+                                checked={checked}
+                                onChange={(event) => {
+                                  const next = event.target.checked
+                                    ? [...(genreField.value ?? []), genre]
+                                    : (genreField.value ?? []).filter(
+                                        (value) => value !== genre
+                                      );
+                                  genreField.onChange(next);
+                                }}
+                              />
+                              <span className="text-sm">
+                                {musicGenreLabels[genre]}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {genreState.error ? (
+                        <p className="text-xs text-destructive">
+                          {genreState.error.message}
+                        </p>
+                      ) : null}
+                    </fieldset>
+                  )}
+                />
+              </AccordionReveal>
+            </fieldset>
+          );
+        }}
       />
 
       <div className="space-y-2">

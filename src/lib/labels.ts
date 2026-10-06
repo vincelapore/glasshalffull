@@ -1,9 +1,11 @@
-import type { Creative, EventLineup } from "@/db/schema";
+import type { Creative, Event, EventLineup } from "@/db/schema";
 import {
   cities,
   DEFAULT_CITY,
   craftCategories,
   eventCategories,
+  eventRejectionReasons,
+  musicGenres,
   submissionStatuses,
   workOpportunityTags,
 } from "@/lib/validations";
@@ -29,6 +31,7 @@ export const craftCategoryLabels: Record<(typeof craftCategories)[number], strin
     photography: "Photography",
     fashion: "Fashion",
     makeup: "Makeup",
+    model: "Model",
     dance: "Dance",
     film: "Film & video",
     design: "Design",
@@ -44,8 +47,45 @@ export const eventCategoryLabels: Record<(typeof eventCategories)[number], strin
     queer: "Queer",
     fashion: "Fashion",
     community: "Community",
-    other: "Other",
+    activism: "Activism/Advocacy",
   };
+
+export const musicGenreLabels: Record<(typeof musicGenres)[number], string> = {
+  afro: "Afro",
+  electronic: "Electronic",
+  hip_hop: "Hip hop",
+  indie: "Indie",
+  jazz: "Jazz",
+};
+
+export function parseMusicGenre(genre?: string | null) {
+  if (genre && musicGenres.includes(genre as (typeof musicGenres)[number])) {
+    return genre as (typeof musicGenres)[number];
+  }
+  return null;
+}
+
+export function eventDisplayTags(
+  event: Pick<Event, "categories" | "musicGenres">
+) {
+  const tags: string[] = [];
+  const genres = event.musicGenres ?? [];
+
+  for (const category of event.categories ?? []) {
+    if (category === "music") {
+      if (genres.length > 0) {
+        tags.push(...genres.map((genre) => musicGenreLabels[genre]));
+      } else {
+        tags.push(eventCategoryLabels.music);
+      }
+      continue;
+    }
+
+    tags.push(eventCategoryLabels[category]);
+  }
+
+  return tags;
+}
 
 export const cityLabels: Record<(typeof cities)[number], string> = {
   meanjin: "Brisbane / Meanjin",
@@ -76,6 +116,36 @@ export const lineupRoleLabels: Record<EventLineup["role"], string> = {
   collaborator: "Collaborator",
   other: "Other",
 };
+
+export const eventRejectionReasonLabels: Record<
+  (typeof eventRejectionReasons)[number],
+  string
+> = {
+  location_unclear: "Location unclear",
+  datetime_unclear: "Date / time missing or wrong",
+  details_mismatch: "Flyer or details don’t match",
+  duplicate: "Duplicate / already listed",
+  doesnt_fit: "Doesn’t fit the directory",
+  more_info: "More info needed",
+};
+
+export function composeModerationNote(
+  reasons: (typeof eventRejectionReasons)[number][],
+  extra?: string | null
+) {
+  const ticks = reasons
+    .map((reason) => eventRejectionReasonLabels[reason])
+    .filter(Boolean);
+  const more = extra?.trim() ?? "";
+
+  if (ticks.length > 0 && more) {
+    return `${ticks.join(". ")}.\n\n${more}`;
+  }
+  if (ticks.length > 0) {
+    return `${ticks.join(". ")}.`;
+  }
+  return more || null;
+}
 
 export function getCreativeWorkTags(
   creative: Pick<

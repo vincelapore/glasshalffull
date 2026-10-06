@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/actions/auth";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
+import { EventModerationNote } from "@/components/event-moderation-note";
 import { Button } from "@/components/ui/button";
 import { getSessionUser, isAdminEmail, isOwnerEmail } from "@/lib/admin";
 import { cityLabels, formatDateTime, statusLabels } from "@/lib/labels";
@@ -165,6 +166,10 @@ export default async function AccountPage() {
                   <p className="text-sm text-muted-foreground">
                     {formatDateTime(event.dateTime)} · {cityLabels[event.city]}
                   </p>
+                  <EventModerationNote
+                    note={event.moderationNote}
+                    className="mt-2"
+                  />
                 </div>
                 <span className="text-sm capitalize text-muted-foreground">
                   {statusLabels[event.status]}
