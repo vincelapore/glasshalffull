@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   InputOTP,
@@ -11,6 +12,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { Notice } from "@/components/ui/notice";
 import { authClient } from "@/lib/auth/client";
 
 type AuthFormProps =
@@ -199,7 +201,7 @@ export function AuthForm(props: AuthFormProps) {
           </p>
         </div>
 
-        <div className="space-y-2">
+        <Field>
           <Label htmlFor="otp">Verification code</Label>
           <InputOTP
             id="otp"
@@ -227,18 +229,10 @@ export function AuthForm(props: AuthFormProps) {
               ))}
             </InputOTPGroup>
           </InputOTP>
-        </div>
+        </Field>
 
-        {error ? (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-        {info ? (
-          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            {info}
-          </p>
-        ) : null}
+        {error ? <Notice variant="destructive">{error}</Notice> : null}
+        {info ? <Notice variant="muted">{info}</Notice> : null}
 
         <Button
           type="submit"
@@ -277,7 +271,7 @@ export function AuthForm(props: AuthFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       {props.mode === "sign-up" ? (
-        <div className="space-y-2">
+        <Field>
           <Label htmlFor="name">Name</Label>
           <Input
             id="name"
@@ -287,10 +281,10 @@ export function AuthForm(props: AuthFormProps) {
             autoComplete="name"
             placeholder="Your name or moniker"
           />
-        </div>
+        </Field>
       ) : null}
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -301,9 +295,9 @@ export function AuthForm(props: AuthFormProps) {
           placeholder="you@example.com"
           defaultValue={email}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
@@ -316,18 +310,10 @@ export function AuthForm(props: AuthFormProps) {
           placeholder="At least 8 characters"
           minLength={8}
         />
-      </div>
+      </Field>
 
-      {error ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      {info ? (
-        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-          {info}
-        </p>
-      ) : null}
+      {error ? <Notice variant="destructive">{error}</Notice> : null}
+      {info ? <Notice variant="muted">{info}</Notice> : null}
 
       <Button type="submit" disabled={pending} className="w-full">
         {pending

@@ -1,3 +1,5 @@
+import { Notice } from "@/components/ui/notice";
+import { Eyebrow } from "@/components/ui/page";
 import { cn } from "@/lib/utils";
 
 export function EventModerationNote({
@@ -11,16 +13,9 @@ export function EventModerationNote({
   if (!text) return null;
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border border-border bg-muted/40 px-3 py-2.5",
-        className
-      )}
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Review note
-      </p>
-      <p className="mt-1 whitespace-pre-wrap text-sm">{text}</p>
-    </div>
+    <Notice className={cn("py-2.5", className)}>
+      <Eyebrow>Review note</Eyebrow>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{text}</p>
+    </Notice>
   );
 }

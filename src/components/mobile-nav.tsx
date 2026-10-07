@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import { pageWidths } from "@/components/ui/page";
 import type { NavLink } from "@/components/site-nav";
 
 type MobileNavProps = {
@@ -50,9 +51,9 @@ export function MobileNav({ links, signedIn }: MobileNavProps) {
       {open ? (
         <nav
           id={panelId}
-          className="absolute inset-x-0 top-full border-b border-border/60 bg-background/95 px-4 py-3 shadow-md backdrop-blur-md sm:px-6"
+          className="glass-nav absolute inset-x-0 top-full px-4 py-3 sm:px-6"
         >
-          <ul className="mx-auto flex max-w-6xl flex-col gap-1">
+          <ul className={`mx-auto flex ${pageWidths.wide} flex-col gap-1`}>
             {links.map((link) => (
               <li key={link.href}>
                 <Link

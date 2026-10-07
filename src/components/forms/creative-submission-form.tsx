@@ -18,8 +18,11 @@ import {
   type WorkSlot,
 } from "@/components/forms/work-photos-field";
 import { Button } from "@/components/ui/button";
+import { Choice, ChoiceControl } from "@/components/ui/choice";
+import { Field, FieldError, Fieldset } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Notice } from "@/components/ui/notice";
 import { Textarea } from "@/components/ui/textarea";
 import {
   cityLabels,
@@ -143,31 +146,25 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="name">Name / moniker</Label>
         <Input
           id="name"
           {...form.register("name")}
           aria-invalid={Boolean(form.formState.errors.name)}
         />
-        {form.formState.errors.name ? (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.name.message}
-          </p>
-        ) : null}
-      </div>
+        <FieldError>{form.formState.errors.name?.message}</FieldError>
+      </Field>
 
       <Controller
         control={form.control}
         name="city"
         render={({ field, fieldState }) => (
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">City (optional)</legend>
+          <Fieldset legend="City (optional)">
             <div className="grid gap-2 sm:grid-cols-3">
-              <label className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30">
-                <input
+              <Choice>
+                <ChoiceControl
                   type="radio"
-                  className="mt-0.5 size-4 border-border accent-foreground"
                   name={field.name}
                   value=""
                   checked={field.value === ""}
@@ -176,15 +173,11 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
                   ref={field.ref}
                 />
                 <span className="text-sm">Not specified</span>
-              </label>
+              </Choice>
               {cities.map((city) => (
-                <label
-                  key={city}
-                  className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                >
-                  <input
+                <Choice key={city}>
+                  <ChoiceControl
                     type="radio"
-                    className="mt-0.5 size-4 border-border accent-foreground"
                     name={field.name}
                     value={city}
                     checked={field.value === city}
@@ -192,15 +185,11 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
                     onBlur={field.onBlur}
                   />
                   <span className="text-sm">{cityLabels[city]}</span>
-                </label>
+                </Choice>
               ))}
             </div>
-            {fieldState.error ? (
-              <p className="text-xs text-destructive">
-                {fieldState.error.message}
-              </p>
-            ) : null}
-          </fieldset>
+            <FieldError>{fieldState.error?.message}</FieldError>
+          </Fieldset>
         )}
       />
 
@@ -208,20 +197,14 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         control={form.control}
         name="craftCategories"
         render={({ field, fieldState }) => (
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Categories</legend>
+          <Fieldset legend="Categories">
             <div className="grid gap-2 sm:grid-cols-2">
               {craftCategories.map((category) => {
                 const checked = field.value?.includes(category) ?? false;
 
                 return (
-                  <label
-                    key={category}
-                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 size-4 rounded border-border accent-foreground"
+                  <Choice key={category}>
+                    <ChoiceControl
                       checked={checked}
                       onChange={(event) => {
                         const next = event.target.checked
@@ -235,20 +218,16 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
                     <span className="text-sm">
                       {craftCategoryLabels[category]}
                     </span>
-                  </label>
+                  </Choice>
                 );
               })}
             </div>
-            {fieldState.error ? (
-              <p className="text-xs text-destructive">
-                {fieldState.error.message}
-              </p>
-            ) : null}
-          </fieldset>
+            <FieldError>{fieldState.error?.message}</FieldError>
+          </Fieldset>
         )}
       />
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="bio">Bio</Label>
         <Textarea
           id="bio"
@@ -256,15 +235,10 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           placeholder="Who you are, what you make, where people find you."
           {...form.register("bio")}
         />
-        {form.formState.errors.bio ? (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.bio.message}
-          </p>
-        ) : null}
-      </div>
+        <FieldError>{form.formState.errors.bio?.message}</FieldError>
+      </Field>
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">Open to</legend>
+      <Fieldset legend="Open to">
         <div className="space-y-2">
           {workOpportunityTags.map((tag) => {
             const fieldName =
@@ -280,26 +254,22 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
                 control={form.control}
                 name={fieldName}
                 render={({ field }) => (
-                  <label
-                    className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 size-4 rounded border-border accent-foreground"
+                  <Choice>
+                    <ChoiceControl
                       checked={field.value}
                       onChange={(event) => field.onChange(event.target.checked)}
                     />
                     <span className="text-sm">{workOpportunityTagLabels[tag]}</span>
-                  </label>
+                  </Choice>
                 )}
               />
             );
           })}
         </div>
-      </fieldset>
+      </Fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
+        <Field>
           <Label htmlFor="instagramHandle">Instagram handle</Label>
           <div className="flex h-8 items-center rounded-lg border border-input bg-transparent pl-2.5 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-3 has-[[aria-invalid=true]]:ring-destructive/20 dark:has-[[aria-invalid=true]]:border-destructive/50 dark:has-[[aria-invalid=true]]:ring-destructive/40">
             <span
@@ -328,13 +298,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
               aria-invalid={Boolean(form.formState.errors.instagramHandle)}
             />
           </div>
-          {form.formState.errors.instagramHandle ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.instagramHandle.message}
-            </p>
-          ) : null}
-        </div>
-        <div className="space-y-2">
+          <FieldError>{form.formState.errors.instagramHandle?.message}</FieldError>
+        </Field>
+        <Field>
           <Label htmlFor="portfolioUrl">Website</Label>
           <Input
             id="portfolioUrl"
@@ -343,12 +309,8 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             {...form.register("portfolioUrl")}
             aria-invalid={Boolean(form.formState.errors.portfolioUrl)}
           />
-          {form.formState.errors.portfolioUrl ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.portfolioUrl.message}
-            </p>
-          ) : null}
-        </div>
+          <FieldError>{form.formState.errors.portfolioUrl?.message}</FieldError>
+        </Field>
       </div>
 
       <Controller
@@ -374,17 +336,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         disabled={pending}
       />
 
-      {formError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {formError}
-        </p>
-      ) : null}
+      {formError ? <Notice variant="destructive">{formError}</Notice> : null}
 
-      {savedMessage ? (
-        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-          {savedMessage}
-        </p>
-      ) : null}
+      {savedMessage ? <Notice variant="muted">{savedMessage}</Notice> : null}
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">

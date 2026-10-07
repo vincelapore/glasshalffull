@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { BioRhyme, Syne_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -8,14 +8,16 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-sans",
+const bioRhyme = BioRhyme({
+  variable: "--font-biorhyme",
   subsets: ["latin"],
+  weight: ["200", "300", "400", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const syneMono = Syne_Mono({
+  variable: "--font-syne-mono",
   subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${bioRhyme.variable} ${syneMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <ThemeProvider

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/page";
 
 type SubmissionSuccessProps = {
   title: string;
@@ -30,9 +31,9 @@ export function SubmissionSuccess({
         <CheckCircle2 className="size-6" aria-hidden />
       </div>
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-liquid">
+        <Eyebrow size="brand" tone="liquid">
           Submitted
-        </p>
+        </Eyebrow>
         <h2 className="font-heading text-2xl tracking-tight sm:text-3xl">
           {title}
         </h2>

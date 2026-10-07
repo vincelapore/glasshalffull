@@ -7,6 +7,8 @@ import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { ExternalImage } from "@/components/media/external-image";
 import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
+import { Notice } from "@/components/ui/notice";
+import { Page, PageTitle } from "@/components/ui/page";
 import {
   cityLabels,
   formatDateTime,
@@ -46,12 +48,12 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const isPublic = creative.status === "approved";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+    <Page>
       {!isPublic ? (
-        <p className="mb-6 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+        <Notice className="mb-6">
           This profile is <strong>{creative.status}</strong> and not listed
           publicly yet.
-        </p>
+        </Notice>
       ) : null}
 
       <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
@@ -72,9 +74,9 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                 <CreativeCraftTags creative={creative} />
                 <CreativeWorkTags creative={creative} />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight break-words sm:text-4xl">
+              <PageTitle className="break-words sm:text-4xl">
                 {creative.name}
-              </h1>
+              </PageTitle>
               {creative.city ? (
                 <p className="text-muted-foreground">
                   {cityLabels[creative.city]}
@@ -151,6 +153,6 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
       </div>
 
       <WorkPhotoGrid name={creative.name} keys={creative.workPhotoKeys} />
-    </div>
+    </Page>
   );
 }

@@ -3,9 +3,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/actions/auth";
-import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { EventModerationNote } from "@/components/event-moderation-note";
+import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { Button } from "@/components/ui/button";
+import {
+  EmptyState,
+  Page,
+  PageHeader,
+  SectionHeader,
+  TextLink,
+} from "@/components/ui/page";
 import { getSessionUser, isAdminEmail, isOwnerEmail } from "@/lib/admin";
 import { cityLabels, formatDateTime, statusLabels } from "@/lib/labels";
 import { creativePath, eventPath } from "@/lib/paths";
@@ -32,72 +39,66 @@ export default async function AccountPage() {
   const owner = await isOwnerEmail(user.email);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
-      <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            Account
-          </h1>
-          <p className="text-muted-foreground">
+    <Page width="narrow">
+      <PageHeader
+        className="mb-10"
+        title="Account"
+        description={
+          <>
             {user.name || user.email}
             {user.email && user.name ? ` · ${user.email}` : null}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {admin ? (
-            <Button
-              size="sm"
-              variant="outline"
-              render={<Link href="/admin/submissions" />}
-            >
-              Moderation
-            </Button>
-          ) : null}
-          {owner ? (
-            <Button
-              size="sm"
-              variant="outline"
-              render={<Link href="/admin/team" />}
-            >
-              Team
-            </Button>
-          ) : null}
-          <form action={signOutAction}>
-            <Button type="submit" size="sm" variant="outline">
-              Sign out
-            </Button>
-          </form>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {admin ? (
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link href="/admin/submissions" />}
+              >
+                Moderation
+              </Button>
+            ) : null}
+            {owner ? (
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link href="/admin/team" />}
+              >
+                Team
+              </Button>
+            ) : null}
+            <form action={signOutAction}>
+              <Button type="submit" size="sm" variant="outline">
+                Sign out
+              </Button>
+            </form>
+          </>
+        }
+      />
 
       <section className="mb-14 space-y-4">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-xl font-semibold tracking-tight">Profile</h2>
-            {profile ? (
+        <SectionHeader
+          title="Profile"
+          description={profile ? undefined : "So people can find you."}
+          action={
+            profile ? (
               <p className="text-sm text-muted-foreground">
                 {statusLabels[profile.status]}
                 {profile.status === "approved" ? (
                   <>
                     {" "}
                     ·{" "}
-                    <Link
-                      href={creativePath(profile.slug)}
-                      className="underline-offset-4 hover:underline"
-                    >
+                    <TextLink href={creativePath(profile.slug)} variant="hover">
                       View public page
-                    </Link>
+                    </TextLink>
                   </>
                 ) : null}
               </p>
-            ) : null}
-          </div>
-          {!profile ? (
-            <p className="text-sm text-muted-foreground">
-              So people can find you.
-            </p>
-          ) : null}
-        </div>
+            ) : null
+          }
+        />
         <CreativeSubmissionForm
           mode="profile"
           defaultValues={
@@ -121,34 +122,37 @@ export default async function AccountPage() {
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">Events</h2>
-          {profile ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              render={<Link href="/account/events/new" />}
-            >
-              Submit event
-            </Button>
-          ) : null}
-        </div>
+        <SectionHeader
+          title="Events"
+          action={
+            profile ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                render={<Link href="/account/events/new" />}
+              >
+                Submit event
+              </Button>
+            ) : null
+          }
+        />
         {!profile ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+          <EmptyState>
             Save your profile above first. You’ll be listed as organiser on
             events you submit.
-          </p>
+          </EmptyState>
         ) : events.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+          <EmptyState>
             No events yet.{" "}
-            <Link
+            <TextLink
               href="/account/events/new"
-              className="text-foreground underline-offset-4 hover:underline"
+              variant="hover"
+              className="text-foreground"
             >
               Submit one
-            </Link>
+            </TextLink>
             .
-          </p>
+          </EmptyState>
         ) : (
           <ul className="divide-y divide-border rounded-xl border border-border">
             {events.map((event) => (
@@ -157,12 +161,13 @@ export default async function AccountPage() {
                 className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <Link
+                  <TextLink
                     href={eventPath(event.slug)}
-                    className="font-medium underline-offset-4 hover:underline"
+                    variant="hover"
+                    className="font-medium text-foreground"
                   >
                     {event.title}
-                  </Link>
+                  </TextLink>
                   <p className="text-sm text-muted-foreground">
                     {formatDateTime(event.dateTime)} · {cityLabels[event.city]}
                   </p>
@@ -179,6 +184,6 @@ export default async function AccountPage() {
           </ul>
         )}
       </section>
-    </div>
+    </Page>
   );
 }

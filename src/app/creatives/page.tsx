@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
+import { ExternalImage } from "@/components/media/external-image";
 import {
   Card,
   CardContent,
@@ -10,7 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ExternalImage } from "@/components/media/external-image";
+import { FilterChip } from "@/components/ui/filter-chip";
+import {
+  ChipRow,
+  EmptyState,
+  Page,
+  PageHeader,
+  Section,
+  TextLink,
+} from "@/components/ui/page";
 import {
   cityLabels,
   craftCategoryLabels,
@@ -27,7 +36,6 @@ import {
   craftCategories,
   workOpportunityTags,
 } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Creatives",
@@ -100,148 +108,106 @@ export default async function CreativesPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Creatives</h1>
-        <p className="text-muted-foreground">
-          Find the missing piece to your creative project or discover talent
-          you’d love to collaborate with.
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        title="Creatives"
+        description="Find the missing piece to your creative project or discover talent you’d love to collaborate with."
+      />
 
-      <div className="mb-6 space-y-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          City
-        </p>
-        <div className="flex flex-wrap gap-2">
+      <Section label="City">
+        <ChipRow>
           {cities.map((cityOption) => (
-            <Link
+            <FilterChip
               key={cityOption}
               href={buildCreativesHref({
                 city: cityOption,
                 category: activeCategory,
                 tag: activeTag,
               })}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeCity === cityOption
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
+              active={activeCity === cityOption}
             >
               {cityLabels[cityOption]}
-            </Link>
+            </FilterChip>
           ))}
-          <Link
+          <FilterChip
             href={buildCreativesHref({
               city: "all",
               category: activeCategory,
               tag: activeTag,
             })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              activeCity === "all"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
+            active={activeCity === "all"}
           >
             All
-          </Link>
-        </div>
-      </div>
+          </FilterChip>
+        </ChipRow>
+      </Section>
 
-      <div className="mb-6 space-y-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Category
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link
+      <Section label="Category">
+        <ChipRow>
+          <FilterChip
             href={buildCreativesHref({
               city: activeCity,
               category: null,
               tag: activeTag,
             })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              !activeCategory
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
+            active={!activeCategory}
           >
             All
-          </Link>
+          </FilterChip>
           {craftCategories.map((cat) => (
-            <Link
+            <FilterChip
               key={cat}
               href={buildCreativesHref({
                 city: activeCity,
                 category: cat,
                 tag: activeTag,
               })}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeCategory === cat
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
+              active={activeCategory === cat}
             >
               {craftCategoryLabels[cat]}
-            </Link>
+            </FilterChip>
           ))}
-        </div>
-      </div>
+        </ChipRow>
+      </Section>
 
-      <div className="mb-8 space-y-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Open to
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link
+      <Section label="Open to" className="mb-8">
+        <ChipRow>
+          <FilterChip
             href={buildCreativesHref({
               city: activeCity,
               category: activeCategory,
               tag: null,
             })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              !activeTag
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
+            active={!activeTag}
           >
             All
-          </Link>
+          </FilterChip>
           {workOpportunityTags.map((workTag) => (
-            <Link
+            <FilterChip
               key={workTag}
               href={buildCreativesHref({
                 city: activeCity,
                 category: activeCategory,
                 tag: workTag,
               })}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeTag === workTag
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
+              active={activeTag === workTag}
             >
               {workOpportunityTagLabels[workTag]}
-            </Link>
+            </FilterChip>
           ))}
-        </div>
-      </div>
+        </ChipRow>
+      </Section>
 
       {creatives.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+        <EmptyState align="center">
           {allCreatives.length === 0
             ? "No creatives yet. "
             : "No creatives match these filters. "}
-          <Link href="/account" className="underline underline-offset-4">
+          <TextLink href="/account" variant="inline">
             Add your profile
-          </Link>
+          </TextLink>
           .
-        </p>
+        </EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {creatives.map((creative) => (
@@ -291,6 +257,6 @@ export default async function CreativesPage({
           ))}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

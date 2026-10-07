@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { EventSubmissionForm } from "@/components/forms/event-submission-form";
 import { Button } from "@/components/ui/button";
+import { Page, PageHeader } from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
 import { toDateTimeLocalValue } from "@/lib/labels";
 import { getEventById } from "@/lib/queries";
@@ -29,22 +30,20 @@ export default async function EditEventPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Edit event</h1>
-          <p className="text-muted-foreground">
-            Update event details. Status is managed from the submissions queue.
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          render={<Link href="/admin/submissions" />}
-        >
-          Back to queue
-        </Button>
-      </div>
+    <Page width="narrow">
+      <PageHeader
+        title="Edit event"
+        description="Update event details. Status is managed from the submissions queue."
+        actions={
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href="/admin/submissions" />}
+          >
+            Back to queue
+          </Button>
+        }
+      />
       <EventSubmissionForm
         mode="edit"
         eventId={event.id}
@@ -60,6 +59,6 @@ export default async function EditEventPage({
           flyerKey: event.flyerKey ?? "",
         }}
       />
-    </div>
+    </Page>
   );
 }

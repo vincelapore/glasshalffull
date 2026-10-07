@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Choice, ChoiceControl } from "@/components/ui/choice";
+import { Field, FieldError, Fieldset } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { eventRejectionReasonLabels } from "@/lib/labels";
@@ -64,19 +66,13 @@ export function EventRejectDialog({
           note.
         </DialogDescription>
 
-        <fieldset className="mt-5 space-y-2">
-          <legend className="sr-only">Reasons</legend>
+        <Fieldset className="mt-5 space-y-2" legend="Reasons" legendClassName="sr-only">
           {eventRejectionReasons.map((reason) => {
             const checked = reasons.includes(reason);
 
             return (
-              <label
-                key={reason}
-                className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-              >
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 rounded border-border accent-foreground"
+              <Choice key={reason}>
+                <ChoiceControl
                   checked={checked}
                   disabled={pending}
                   onChange={(event) => {
@@ -91,12 +87,12 @@ export function EventRejectDialog({
                 <span className="text-sm">
                   {eventRejectionReasonLabels[reason]}
                 </span>
-              </label>
+              </Choice>
             );
           })}
-        </fieldset>
+        </Fieldset>
 
-        <div className="mt-4 space-y-2">
+        <Field className="mt-4">
           <Label htmlFor="rejection-extra">Anything else? (optional)</Label>
           <Textarea
             id="rejection-extra"
@@ -109,11 +105,9 @@ export function EventRejectDialog({
               setExtra(event.target.value);
             }}
           />
-        </div>
+        </Field>
 
-        {error ? (
-          <p className="mt-3 text-xs text-destructive">{error}</p>
-        ) : null}
+        <FieldError className="mt-3">{error}</FieldError>
 
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           <Button

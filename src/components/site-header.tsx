@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { publicNavLinks, type NavLink } from "@/components/site-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { pageWidths } from "@/components/ui/page";
 import { getSessionUser, isAdminEmail, isOwnerEmail } from "@/lib/admin";
 
 export async function SiteHeader() {
@@ -20,8 +21,10 @@ export async function SiteHeader() {
   ];
 
   return (
-    <header className="relative sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="glass-nav relative sticky top-0 z-50">
+      <div
+        className={`mx-auto flex h-14 ${pageWidths.wide} items-center justify-between gap-4 px-4 sm:px-6`}
+      >
         <Link
           href="/"
           className="shrink-0 font-heading text-sm font-semibold tracking-tight"

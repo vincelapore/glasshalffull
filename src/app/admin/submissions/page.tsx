@@ -7,10 +7,11 @@ import {
   EventSubmissionCard,
 } from "@/components/admin/submission-cards";
 import { Button } from "@/components/ui/button";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { ChipRow, EmptyState, Page, PageHeader } from "@/components/ui/page";
 import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { getSubmissions } from "@/lib/queries";
 import { submissionStatuses } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Moderation",
@@ -58,87 +59,70 @@ export default async function AdminSubmissionsPage({
   const total = events.length + creatives.length;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Moderation</h1>
-          <p className="text-muted-foreground">
-            Review, edit, approve, reject, or delete community submissions.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {owner ? (
+    <Page>
+      <PageHeader
+        title="Moderation"
+        description="Review, edit, approve, reject, or delete community submissions."
+        actions={
+          <>
+            {owner ? (
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link href="/admin/team" />}
+              >
+                Team
+              </Button>
+            ) : null}
             <Button
               size="sm"
               variant="outline"
-              render={<Link href="/admin/team" />}
+              render={<Link href="/account" />}
             >
-              Team
+              Account
             </Button>
-          ) : null}
-          <Button
-            size="sm"
-            variant="outline"
-            render={<Link href="/account" />}
-          >
-            Account
-          </Button>
-          <form action={signOutAction}>
-            <Button type="submit" variant="outline" size="sm">
-              Sign out
-            </Button>
-          </form>
-        </div>
-      </div>
+            <form action={signOutAction}>
+              <Button type="submit" variant="outline" size="sm">
+                Sign out
+              </Button>
+            </form>
+          </>
+        }
+      />
 
       <div className="mb-8 flex flex-col gap-4">
-        <div className="flex flex-wrap gap-2">
-          {statusFilters.map((filter) => {
-            const href = `/admin/submissions?status=${filter}&type=${type}`;
-            const active = status === filter;
-            return (
-              <Link
-                key={filter}
-                href={href}
-                className={cn(
-                  "rounded-lg border px-3 py-1.5 text-sm capitalize transition-colors",
-                  active
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {filter}
-              </Link>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {typeFilters.map((filter) => {
-            const href = `/admin/submissions?status=${status}&type=${filter}`;
-            const active = type === filter;
-            return (
-              <Link
-                key={filter}
-                href={href}
-                className={cn(
-                  "rounded-lg border px-3 py-1.5 text-sm capitalize transition-colors",
-                  active
-                    ? "border-foreground/40 bg-muted text-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {filter}
-              </Link>
-            );
-          })}
-        </div>
+        <ChipRow>
+          {statusFilters.map((filter) => (
+            <FilterChip
+              key={filter}
+              href={`/admin/submissions?status=${filter}&type=${type}`}
+              active={status === filter}
+              className="capitalize"
+            >
+              {filter}
+            </FilterChip>
+          ))}
+        </ChipRow>
+        <ChipRow>
+          {typeFilters.map((filter) => (
+            <FilterChip
+              key={filter}
+              href={`/admin/submissions?status=${status}&type=${filter}`}
+              active={type === filter}
+              tone="subtle"
+              className="capitalize"
+            >
+              {filter}
+            </FilterChip>
+          ))}
+        </ChipRow>
       </div>
 
       {total === 0 ? (
-        <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+        <EmptyState align="center">
           No {status === "all" ? "" : `${status} `}submissions
           {type === "all" ? "" : ` in ${type}`} yet.
-        </p>
+        </EmptyState>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {type !== "creatives"
@@ -157,6 +141,6 @@ export default async function AdminSubmissionsPage({
             : null}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

@@ -3,6 +3,7 @@
 import { ImageIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { mediaUrl } from "@/lib/media";
 import { ACCEPTED_IMAGE_TYPES, isAcceptedImage } from "@/lib/upload-photo";
@@ -111,9 +112,7 @@ export function PhotoUploadField({
           </span>
         )}
       </button>
-      {localError || error ? (
-        <p className="text-xs text-destructive">{localError ?? error}</p>
-      ) : null}
+      <FieldError>{localError ?? error}</FieldError>
     </div>
   );
 }

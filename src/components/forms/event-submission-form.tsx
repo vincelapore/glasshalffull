@@ -13,8 +13,12 @@ import { AccordionReveal } from "@/components/accordion-reveal";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { SubmissionSuccess } from "@/components/forms/submission-success";
 import { Button } from "@/components/ui/button";
+import { Choice, ChoiceControl } from "@/components/ui/choice";
+import { Field, FieldError, Fieldset } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Notice } from "@/components/ui/notice";
+import { eyebrowVariants } from "@/components/ui/page";
 import { Textarea } from "@/components/ui/textarea";
 import { cityLabels, eventCategoryLabels, musicGenreLabels } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
@@ -129,22 +133,18 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="title">Event title</Label>
         <Input
           id="title"
           {...form.register("title")}
           aria-invalid={Boolean(form.formState.errors.title)}
         />
-        {form.formState.errors.title ? (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.title.message}
-          </p>
-        ) : null}
-      </div>
+        <FieldError>{form.formState.errors.title?.message}</FieldError>
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
+        <Field>
           <Label htmlFor="dateTime">Date & time</Label>
           <Input
             id="dateTime"
@@ -152,29 +152,20 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
             {...form.register("dateTime")}
             aria-invalid={Boolean(form.formState.errors.dateTime)}
           />
-          {form.formState.errors.dateTime ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.dateTime.message}
-            </p>
-          ) : null}
-        </div>
+          <FieldError>{form.formState.errors.dateTime?.message}</FieldError>
+        </Field>
       </div>
 
       <Controller
         control={form.control}
         name="city"
         render={({ field, fieldState }) => (
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">City</legend>
+          <Fieldset legend="City">
             <div className="grid gap-2 sm:grid-cols-2">
               {cities.map((city) => (
-                <label
-                  key={city}
-                  className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                >
-                  <input
+                <Choice key={city}>
+                  <ChoiceControl
                     type="radio"
-                    className="mt-0.5 size-4 border-border accent-foreground"
                     name={field.name}
                     value={city}
                     checked={field.value === city}
@@ -183,15 +174,11 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
                     ref={field.ref}
                   />
                   <span className="text-sm">{cityLabels[city]}</span>
-                </label>
+                </Choice>
               ))}
             </div>
-            {fieldState.error ? (
-              <p className="text-xs text-destructive">
-                {fieldState.error.message}
-              </p>
-            ) : null}
-          </fieldset>
+            <FieldError>{fieldState.error?.message}</FieldError>
+          </Fieldset>
         )}
       />
 
@@ -202,20 +189,14 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           const musicChecked = field.value?.includes("music") ?? false;
 
           return (
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-medium">Categories</legend>
+            <Fieldset legend="Categories">
               <div className="grid gap-2 sm:grid-cols-2">
                 {eventCategories.map((category) => {
                   const checked = field.value?.includes(category) ?? false;
 
                   return (
-                    <label
-                      key={category}
-                      className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                    >
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 size-4 rounded border-border accent-foreground"
+                    <Choice key={category}>
+                      <ChoiceControl
                         checked={checked}
                         onChange={(event) => {
                           const next = event.target.checked
@@ -232,37 +213,29 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
                       <span className="text-sm">
                         {eventCategoryLabels[category]}
                       </span>
-                    </label>
+                    </Choice>
                   );
                 })}
               </div>
-              {fieldState.error ? (
-                <p className="text-xs text-destructive">
-                  {fieldState.error.message}
-                </p>
-              ) : null}
+              <FieldError>{fieldState.error?.message}</FieldError>
               <AccordionReveal open={musicChecked}>
                 <Controller
                   control={form.control}
                   name="musicGenres"
                   render={({ field: genreField, fieldState: genreState }) => (
-                    <fieldset className="space-y-2 pt-1">
-                      <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Music genre
-                      </legend>
+                    <Fieldset
+                      className="space-y-2 pt-1"
+                      legend="Music genre"
+                      legendClassName={eyebrowVariants()}
+                    >
                       <div className="grid gap-2 sm:grid-cols-2">
                         {musicGenres.map((genre) => {
                           const checked =
                             genreField.value?.includes(genre) ?? false;
 
                           return (
-                            <label
-                              key={genre}
-                              className="flex items-start gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors has-[:checked]:border-foreground/40 has-[:checked]:bg-muted/30"
-                            >
-                              <input
-                                type="checkbox"
-                                className="mt-0.5 size-4 rounded border-border accent-foreground"
+                            <Choice key={genre}>
+                              <ChoiceControl
                                 checked={checked}
                                 onChange={(event) => {
                                   const next = event.target.checked
@@ -276,25 +249,21 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
                               <span className="text-sm">
                                 {musicGenreLabels[genre]}
                               </span>
-                            </label>
+                            </Choice>
                           );
                         })}
                       </div>
-                      {genreState.error ? (
-                        <p className="text-xs text-destructive">
-                          {genreState.error.message}
-                        </p>
-                      ) : null}
-                    </fieldset>
+                      <FieldError>{genreState.error?.message}</FieldError>
+                    </Fieldset>
                   )}
                 />
               </AccordionReveal>
-            </fieldset>
+            </Fieldset>
           );
         }}
       />
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="location">Location</Label>
         <Input
           id="location"
@@ -302,14 +271,10 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           {...form.register("location")}
           aria-invalid={Boolean(form.formState.errors.location)}
         />
-        {form.formState.errors.location ? (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.location.message}
-          </p>
-        ) : null}
-      </div>
+        <FieldError>{form.formState.errors.location?.message}</FieldError>
+      </Field>
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
@@ -317,9 +282,9 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           placeholder="What&apos;s the vibe, who&apos;s involved, why it matters."
           {...form.register("description")}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-2">
+      <Field>
         <Label htmlFor="ticketLink">Ticket / RSVP link</Label>
         <Input
           id="ticketLink"
@@ -328,12 +293,8 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           {...form.register("ticketLink")}
           aria-invalid={Boolean(form.formState.errors.ticketLink)}
         />
-        {form.formState.errors.ticketLink ? (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.ticketLink.message}
-          </p>
-        ) : null}
-      </div>
+        <FieldError>{form.formState.errors.ticketLink?.message}</FieldError>
+      </Field>
 
       <Controller
         control={form.control}
@@ -351,11 +312,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         )}
       />
 
-      {formError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {formError}
-        </p>
-      ) : null}
+      {formError ? <Notice variant="destructive">{formError}</Notice> : null}
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">

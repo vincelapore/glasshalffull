@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field";
 import {
   MAX_WORK_PHOTOS,
   MAX_WORK_PHOTO_SOURCE_BYTES,
@@ -197,9 +198,7 @@ export function WorkPhotosField({
           </li>
         ) : null}
       </ul>
-      {localError || error ? (
-        <p className="text-xs text-destructive">{localError ?? error}</p>
-      ) : null}
+      <FieldError>{localError ?? error}</FieldError>
     </fieldset>
   );
 }

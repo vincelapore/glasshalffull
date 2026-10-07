@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
+import { Page, PageTitle } from "@/components/ui/page";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { EventModerationNote } from "@/components/event-moderation-note";
@@ -47,11 +49,11 @@ export default async function EventDetailPage({ params }: EventPageProps) {
     (await canViewEventModerationNote(event));
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+    <Page>
       {!isPublic ? (
-        <p className="mb-6 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+        <Notice className="mb-6">
           This event is <strong>{event.status}</strong> and not listed publicly yet.
-        </p>
+        </Notice>
       ) : null}
       {showModerationNote ? (
         <EventModerationNote note={event.moderationNote} className="mb-6" />
@@ -61,9 +63,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
         <div className="space-y-6">
           <div className="space-y-3">
             <EventCategoryTags event={event} />
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              {event.title}
-            </h1>
+            <PageTitle className="sm:text-4xl">{event.title}</PageTitle>
             <p className="text-muted-foreground">
               {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
               {event.location}
@@ -134,6 +134,6 @@ export default async function EventDetailPage({ params }: EventPageProps) {
           />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

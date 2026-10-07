@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { CreativeCraftTags } from "@/components/creative-craft-tags";
+import { EventCategoryTags } from "@/components/event-category-tags";
+import { ExternalImage } from "@/components/media/external-image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,9 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CreativeCraftTags } from "@/components/creative-craft-tags";
-import { EventCategoryTags } from "@/components/event-category-tags";
-import { ExternalImage } from "@/components/media/external-image";
+import { FilterChip } from "@/components/ui/filter-chip";
+import {
+  ChipRow,
+  EmptyState,
+  Page,
+  PageHeader,
+  SectionHeader,
+  TextLink,
+} from "@/components/ui/page";
 import {
   cityLabels,
   formatDateTime,
@@ -20,7 +29,6 @@ import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import { getApprovedCreatives, getUpcomingApprovedEvents } from "@/lib/queries";
 import { cities } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -66,48 +74,36 @@ export default async function HomePage({
       : `in ${cityLabels[activeCity]}`;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-16 sm:px-6">
-      <section className="space-y-5">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Glass Half Full
-        </p>
-        <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">
-          {activeCity === "naarm"
+    <Page className="flex flex-col gap-16 py-16">
+      <PageHeader
+        className="mb-0 space-y-5"
+        eyebrow="Glass Half Full"
+        eyebrowSize="md"
+        title={
+          activeCity === "naarm"
             ? "Pouring back into Melbourne's creative scene."
             : activeCity === "all"
               ? "Pouring back into the creative scene."
-              : "Pouring back into Brisbane's creative scene."}
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Find events and local creatives.
-        </p>
-        <div className="flex flex-wrap gap-2">
+              : "Pouring back into Brisbane's creative scene."
+        }
+        titleClassName="max-w-3xl sm:text-5xl"
+        description="Find events and local creatives."
+        descriptionClassName="max-w-2xl"
+      >
+        <ChipRow>
           {cities.map((cityOption) => (
-            <Link
+            <FilterChip
               key={cityOption}
               href={buildHomeHref(cityOption)}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeCity === cityOption
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
+              active={activeCity === cityOption}
             >
               {cityLabels[cityOption]}
-            </Link>
+            </FilterChip>
           ))}
-          <Link
-            href={buildHomeHref("all")}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              activeCity === "all"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
+          <FilterChip href={buildHomeHref("all")} active={activeCity === "all"}>
             All
-          </Link>
-        </div>
+          </FilterChip>
+        </ChipRow>
         <div className="flex flex-wrap gap-3">
           <Button
             render={<Link href={cityBrowseHref("/events", activeCity)} />}
@@ -121,38 +117,32 @@ export default async function HomePage({
             Meet creatives
           </Button>
         </div>
-      </section>
+      </PageHeader>
 
       <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Featured Events
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Browse to find new events in {cityCopy} that'll tickle your pick—
-              uh, fancy.
-            </p>
-          </div>
-          <Link
-            href={cityBrowseHref("/events", activeCity)}
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            View all
-          </Link>
-        </div>
+        <SectionHeader
+          title="Featured Events"
+          description={
+            <>
+              Browse to find new events in {cityCopy} that&apos;ll tickle your
+              pick— uh, fancy.
+            </>
+          }
+          action={
+            <TextLink href={cityBrowseHref("/events", activeCity)}>
+              View all
+            </TextLink>
+          }
+        />
 
         {featuredEvents.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+          <EmptyState>
             No upcoming events yet.{" "}
-            <Link
-              href="/account/events/new"
-              className="underline underline-offset-4"
-            >
+            <TextLink href="/account/events/new" variant="inline">
               Submit one
-            </Link>
+            </TextLink>
             .
-          </p>
+          </EmptyState>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featuredEvents.map((event) => (
@@ -188,32 +178,24 @@ export default async function HomePage({
       </section>
 
       <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Discover Creatives
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Find that graphic designer without having to ask a friend of a
-              friend of a friend of a...
-            </p>
-          </div>
-          <Link
-            href={cityBrowseHref("/creatives", activeCity)}
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            View all
-          </Link>
-        </div>
+        <SectionHeader
+          title="Discover Creatives"
+          description="Find that graphic designer without having to ask a friend of a friend of a friend of a..."
+          action={
+            <TextLink href={cityBrowseHref("/creatives", activeCity)}>
+              View all
+            </TextLink>
+          }
+        />
 
         {creatives.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+          <EmptyState>
             No creatives yet.{" "}
-            <Link href="/account" className="underline underline-offset-4">
+            <TextLink href="/account" variant="inline">
               Add your profile
-            </Link>
+            </TextLink>
             .
-          </p>
+          </EmptyState>
         ) : (
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
             {creatives.map((creative) => (
@@ -242,6 +224,6 @@ export default async function HomePage({
           </div>
         )}
       </section>
-    </div>
+    </Page>
   );
 }

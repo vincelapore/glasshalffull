@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { EventSubmissionForm } from "@/components/forms/event-submission-form";
 import { Button } from "@/components/ui/button";
+import { Page, PageHeader } from "@/components/ui/page";
 import { getSessionUser } from "@/lib/admin";
 import { getCreativeByUserId } from "@/lib/queries";
 
@@ -25,22 +26,17 @@ export default async function AccountSubmitEventPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            Submit an event
-          </h1>
-          <p className="text-muted-foreground">
-            You’ll be listed as organiser ({profile.name}). We’ll review it
-            before it goes live.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" render={<Link href="/account" />}>
-          Account
-        </Button>
-      </div>
+    <Page width="narrow">
+      <PageHeader
+        title="Submit an event"
+        description={`You’ll be listed as organiser (${profile.name}). We’ll review it before it goes live.`}
+        actions={
+          <Button size="sm" variant="outline" render={<Link href="/account" />}>
+            Account
+          </Button>
+        }
+      />
       <EventSubmissionForm />
-    </div>
+    </Page>
   );
 }

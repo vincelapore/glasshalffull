@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { EventCategoryFilters } from "@/components/event-category-filters";
+import { EventCategoryTags } from "@/components/event-category-tags";
+import { ExternalImage } from "@/components/media/external-image";
 import {
   Card,
   CardContent,
@@ -8,9 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { EventCategoryFilters } from "@/components/event-category-filters";
-import { EventCategoryTags } from "@/components/event-category-tags";
-import { ExternalImage } from "@/components/media/external-image";
+import { FilterChip } from "@/components/ui/filter-chip";
+import {
+  ChipRow,
+  EmptyState,
+  Page,
+  PageHeader,
+  Section,
+  TextLink,
+} from "@/components/ui/page";
 import {
   cityLabels,
   formatDateTime,
@@ -21,7 +30,6 @@ import { mediaUrl } from "@/lib/media";
 import { eventPath, eventsBrowsePath } from "@/lib/paths";
 import { getApprovedEvents } from "@/lib/queries";
 import { cities, eventCategories } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -67,57 +75,46 @@ export default async function EventsPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
-        <p className="text-muted-foreground">
-          Gigs and gatherings
-          {activeCity === "all"
-            ? " across Brisbane / Meanjin and Melbourne / Naarm."
-            : ` in ${cityLabels[activeCity]}.`}
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        title="Events"
+        description={
+          <>
+            Gigs and gatherings
+            {activeCity === "all"
+              ? " across Brisbane / Meanjin and Melbourne / Naarm."
+              : ` in ${cityLabels[activeCity]}.`}
+          </>
+        }
+      />
 
-      <div className="mb-4 space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          City
-        </p>
-        <div className="flex flex-wrap gap-2">
+      <Section label="City" className="mb-4">
+        <ChipRow>
           {cities.map((cityOption) => (
-            <Link
+            <FilterChip
               key={cityOption}
               href={eventsBrowsePath({
                 city: cityOption,
                 category: activeCategory,
                 genre: activeGenre,
               })}
-              className={cn(
-                "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-                activeCity === cityOption
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              )}
+              active={activeCity === cityOption}
             >
               {cityLabels[cityOption]}
-            </Link>
+            </FilterChip>
           ))}
-          <Link
+          <FilterChip
             href={eventsBrowsePath({
               city: "all",
               category: activeCategory,
               genre: activeGenre,
             })}
-            className={cn(
-              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
-              activeCity === "all"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
+            active={activeCity === "all"}
           >
             All
-          </Link>
-        </div>
-      </div>
+          </FilterChip>
+        </ChipRow>
+      </Section>
 
       <EventCategoryFilters
         activeCity={activeCity}
@@ -126,15 +123,15 @@ export default async function EventsPage({
       />
 
       {events.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+        <EmptyState align="center">
           {allEvents.length === 0
             ? "No events yet. "
             : "No events match these filters. "}
-          <Link href="/account/events/new" className="underline underline-offset-4">
+          <TextLink href="/account/events/new" variant="inline">
             Submit one
-          </Link>
+          </TextLink>
           .
-        </p>
+        </EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
@@ -169,6 +166,6 @@ export default async function EventsPage({
           ))}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

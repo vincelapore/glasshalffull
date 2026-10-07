@@ -1,10 +1,11 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AccordionReveal } from "@/components/accordion-reveal";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { ChipRow, Section } from "@/components/ui/page";
 import {
   eventCategoryLabels,
   musicGenreLabels,
@@ -19,14 +20,6 @@ import {
 
 type EventCategory = (typeof eventCategories)[number];
 type MusicGenre = (typeof musicGenres)[number];
-
-const chipClass = (active: boolean) =>
-  cn(
-    "inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm transition-colors",
-    active
-      ? "border-foreground bg-foreground text-background"
-      : "border-border text-muted-foreground hover:text-foreground"
-  );
 
 export function EventCategoryFilters({
   activeCity,
@@ -45,21 +38,18 @@ export function EventCategoryFilters({
   }, [musicActive]);
 
   return (
-    <div className="mb-8">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Category
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Link
+    <Section label="Category" className="mb-8">
+      <ChipRow>
+        <FilterChip
           href={eventsBrowsePath({ city: activeCity, category: null })}
-          className={chipClass(!activeCategory)}
+          active={!activeCategory}
         >
           All
-        </Link>
+        </FilterChip>
         {eventCategories.map((cat) => {
           if (cat === "music") {
             return (
-              <Link
+              <FilterChip
                 key={cat}
                 href={eventsBrowsePath({
                   city: activeCity,
@@ -68,7 +58,7 @@ export function EventCategoryFilters({
                 aria-expanded={musicOpen}
                 aria-controls="music-genre-filters"
                 onClick={() => setMusicOpen(true)}
-                className={chipClass(musicActive)}
+                active={musicActive}
               >
                 {eventCategoryLabels.music}
                 <ChevronDown
@@ -77,38 +67,38 @@ export function EventCategoryFilters({
                     musicOpen && "rotate-180"
                   )}
                 />
-              </Link>
+              </FilterChip>
             );
           }
 
           return (
-            <Link
+            <FilterChip
               key={cat}
               href={eventsBrowsePath({ city: activeCity, category: cat })}
-              className={chipClass(activeCategory === cat)}
+              active={activeCategory === cat}
             >
               {eventCategoryLabels[cat]}
-            </Link>
+            </FilterChip>
           );
         })}
-      </div>
+      </ChipRow>
       <AccordionReveal open={musicOpen} id="music-genre-filters">
-        <div className="flex flex-wrap gap-2 pt-2">
+        <ChipRow className="pt-2">
           {musicGenres.map((genre) => (
-            <Link
+            <FilterChip
               key={genre}
               href={eventsBrowsePath({
                 city: activeCity,
                 category: "music",
                 genre,
               })}
-              className={chipClass(activeGenre === genre)}
+              active={activeGenre === genre}
             >
               {musicGenreLabels[genre]}
-            </Link>
+            </FilterChip>
           ))}
-        </div>
+        </ChipRow>
       </AccordionReveal>
-    </div>
+    </Section>
   );
 }

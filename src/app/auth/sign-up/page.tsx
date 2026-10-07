@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AuthForm } from "@/components/auth/auth-form";
+import { Page, PageHeader } from "@/components/ui/page";
 import { getSessionUser } from "@/lib/admin";
 
 export const metadata: Metadata = {
@@ -17,17 +18,13 @@ export default async function SignUpPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16 sm:px-6">
-      <div className="space-y-2">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Create account
-        </h1>
-        <p className="text-muted-foreground">
-          Create an account to add your profile and events. We&apos;ll email a
-          verification code.
-        </p>
-      </div>
+    <Page width="auth" className="flex flex-col gap-6 py-16">
+      <PageHeader
+        className="mb-0"
+        title="Create account"
+        description="Create an account to add your profile and events. We'll email a verification code."
+      />
       <AuthForm mode="sign-up" />
-    </div>
+    </Page>
   );
 }
