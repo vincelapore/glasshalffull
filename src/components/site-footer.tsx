@@ -12,17 +12,17 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-auto px-3 pt-10 pb-3 sm:px-4 sm:pb-4">
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#3c5cff] text-white">
+      <div className="relative overflow-clip rounded-md bg-[#3c5cff] text-white">
         <Image
           src="/mark.png"
           alt=""
           width={552}
           height={608}
           aria-hidden
-          className="pointer-events-none absolute -bottom-12 -left-12 h-[20rem] w-auto max-w-none opacity-50 select-none sm:-bottom-16 sm:-left-16 sm:h-[24rem]"
+          className="pointer-events-none absolute -bottom-10 -left-10 h-[16rem] w-auto max-w-none opacity-45 select-none sm:-bottom-14 sm:-left-14 sm:h-[22rem]"
         />
         <div className="relative flex flex-col px-6 py-8 sm:px-10 sm:py-10 md:px-12">
-          <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="font-heading text-lg leading-snug sm:text-xl">
                 Pour back in. Stay connected{" "}
@@ -39,7 +39,7 @@ export function SiteFooter() {
               </a>
             </div>
 
-            <nav className="flex flex-col items-start gap-1.5 text-sm">
+            <nav className="flex flex-col items-start gap-1.5 text-xs">
               {publicNavLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -49,26 +49,23 @@ export function SiteFooter() {
                   {link.label}
                 </Link>
               ))}
-              <ThemeToggle
-                appearance="text"
-                className="w-fit font-normal tracking-normal text-white normal-case"
-              />
+              <ThemeToggle className="size-7 text-white hover:bg-white/15 hover:text-white" />
             </nav>
           </div>
 
-          <div className="mt-16 flex flex-col gap-8 md:mt-24 md:flex-row md:items-end md:justify-between">
-            <p className="font-heading text-[3.25rem] leading-[0.8] font-extrabold tracking-tight sm:text-[clamp(5.5rem,16vw,11rem)]">
+          <div className="mt-12 flex flex-col gap-8 md:mt-16 md:flex-row md:items-center md:justify-between md:gap-12">
+            <p className="font-heading pb-[0.08em] text-[3.75rem] leading-[0.92] font-extrabold tracking-tight sm:text-[clamp(7rem,18vw,13rem)]">
               ghf.
             </p>
 
-            <div className="flex max-w-sm flex-col gap-8 md:items-end">
-              <p className="text-sm leading-relaxed text-white/90 md:text-center">
+            <div className="ml-auto flex w-full max-w-xs flex-col gap-4 text-right">
+              <p className="text-xs leading-snug text-white/85">
                 Glass Half Full operates on the unceded lands of the Yugera and
                 Turrbal peoples of Meanjin, and the Wurundjeri and Boon Wurrung
                 peoples of the Kulin Nation in Naarm. We pay our respects to
                 the original owners of this land and their legacy.
               </p>
-              <div className="text-sm md:text-right">
+              <div className="text-[11px] text-white/70">
                 <p>© {year} Glass Half Full</p>
                 <p>
                   Website by{" "}
@@ -93,7 +90,7 @@ function InstagramIcon() {
     <svg
       viewBox="0 0 24 24"
       aria-hidden
-      className="size-6"
+      className="size-5"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.75"

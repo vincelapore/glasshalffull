@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 
 import { ExternalImage } from "@/components/media/external-image";
 import { mediaUrl } from "@/lib/media";
+import { cn } from "@/lib/utils";
 
 export type EventListingOrganiser = {
   id: string;
@@ -13,8 +14,10 @@ const visibleCount = 4;
 
 export function EventOrganiserFaces({
   organisers,
+  className,
 }: {
   organisers: EventListingOrganiser[];
+  className?: string;
 }) {
   if (organisers.length === 0) return null;
 
@@ -22,7 +25,14 @@ export function EventOrganiserFaces({
   const extra = organisers.length - shown.length;
 
   return (
-    <div className="absolute bottom-3 left-3 z-10 flex items-center">
+    <div
+      className={cn("absolute bottom-3 left-3 z-10 flex items-center", className)}
+      style={
+        {
+          "--faces": shown.length + (extra > 0 ? 1 : 0),
+        } as CSSProperties
+      }
+    >
       <span className="sr-only">
         Organised by {organisers.map((organiser) => organiser.name).join(", ")}
       </span>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  Clapperboard,
   Eye,
   LogOut,
   Shield,
@@ -42,6 +43,7 @@ const menuIcons: Record<ProfileMenuIconName, LucideIcon> = {
   events: CalendarDays,
   view: Eye,
   moderation: Shield,
+  overflow: Clapperboard,
   team: Users,
 };
 

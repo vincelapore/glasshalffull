@@ -350,6 +350,11 @@
   .group:hover .poster-face {
     translate: calc(var(--face) * 6px) 0;
   }
+
+  /* Overflow posters open the stack until each face is fully visible. */
+  .overflow-poster:hover .poster-face {
+    translate: calc((var(--face) - (var(--faces, 1) - 1) / 2) * 12px) 0;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {

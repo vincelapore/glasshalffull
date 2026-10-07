@@ -8,6 +8,7 @@ import {
   EventListingCard,
   eventListingGridClassName,
 } from "@/components/event-listing";
+import { OverflowBanner } from "@/components/overflow-banner";
 import { Button } from "@/components/ui/button";
 import { FilterChip } from "@/components/ui/filter-chip";
 import {
@@ -22,13 +23,15 @@ import { cityLabels, parseCityFilter, type CityFilter } from "@/lib/labels";
 import {
   getApprovedCreatives,
   getOrganisersByEventIds,
+  getOverflowEpisodeBySlug,
+  getOverflowEpisodes,
   getUpcomingApprovedEvents,
 } from "@/lib/queries";
 import { cities } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ city?: string }>;
+type SearchParams = Promise<{ city?: string; episode?: string }>;
 
 function buildHomeHref(city: CityFilter) {
   if (city === "meanjin") return "/";
@@ -45,13 +48,20 @@ export default async function HomePage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { city } = await searchParams;
+  const { city, episode } = await searchParams;
   const activeCity = parseCityFilter(city);
+  const episodeSlug = episode?.trim() || null;
 
-  const [upcomingEvents, approvedCreatives] = await Promise.all([
+  const [upcomingEvents, approvedCreatives, overflowEpisodes] = await Promise.all([
     getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
     getApprovedCreatives(activeCity === "all" ? 8 : 16),
+    getOverflowEpisodes(activeCity),
   ]);
+
+  const openEpisode = episodeSlug
+    ? (overflowEpisodes.find((item) => item.slug === episodeSlug) ??
+      (await getOverflowEpisodeBySlug(episodeSlug)))
+    : null;
 
   const featuredEvents = (
     activeCity === "all"
@@ -115,6 +125,14 @@ export default async function HomePage({
           </Button>
         </div>
       </PageHeader>
+
+      {overflowEpisodes.length > 0 || openEpisode ? (
+        <OverflowBanner
+          episodes={overflowEpisodes}
+          openEpisode={openEpisode}
+          activeCity={activeCity}
+        />
+      ) : null}
 
       <section className="space-y-5">
         <SectionHeader

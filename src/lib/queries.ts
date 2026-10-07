@@ -1,10 +1,18 @@
 import { and, asc, desc, eq, getTableColumns, gte, ilike, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { creatives, eventLineup, events } from "@/db/schema";
+import {
+  creatives,
+  eventLineup,
+  events,
+  overflowEpisodes,
+  overflowFeatures,
+  type OverflowEpisode,
+} from "@/db/schema";
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
+import type { CityFilter } from "@/lib/labels";
 import { isUuid } from "@/lib/slug";
-import type { submissionStatuses } from "@/lib/validations";
+import type { overflowFeatureRoles, submissionStatuses } from "@/lib/validations";
 
 type Status = (typeof submissionStatuses)[number];
 
@@ -339,4 +347,140 @@ export async function getSubmissions(options?: {
     events: eventsWithOrganisers,
     creatives: creativeRows,
   };
+}
+
+export type OverflowFeatureView = {
+  creativeId: string;
+  name: string;
+  slug: string;
+  avatarKey: string | null;
+  role: (typeof overflowFeatureRoles)[number];
+  note: string | null;
+  sort: number;
+};
+
+export type OverflowEpisodeView = {
+  id: string;
+  number: number;
+  slug: string;
+  title: string;
+  city: OverflowEpisode["city"];
+  coverKey: string;
+  body: string;
+  features: OverflowFeatureView[];
+  event: { id: string; slug: string; title: string } | null;
+};
+
+async function hydrateOverflowEpisodes(
+  episodeRows: OverflowEpisode[]
+): Promise<OverflowEpisodeView[]> {
+  if (episodeRows.length === 0) return [];
+
+  const ids = episodeRows.map((episode) => episode.id);
+  const featureRows = await db
+    .select({
+      episodeId: overflowFeatures.episodeId,
+      creativeId: creatives.id,
+      name: creatives.name,
+      slug: creatives.slug,
+      avatarKey: creatives.avatarKey,
+      role: overflowFeatures.role,
+      note: overflowFeatures.note,
+      sort: overflowFeatures.sort,
+    })
+    .from(overflowFeatures)
+    .innerJoin(creatives, eq(overflowFeatures.creativeId, creatives.id))
+    .where(inArray(overflowFeatures.episodeId, ids))
+    .orderBy(asc(overflowFeatures.sort), asc(creatives.name));
+
+  const eventIds = episodeRows.flatMap((episode) =>
+    episode.eventId ? [episode.eventId] : []
+  );
+  const eventRows =
+    eventIds.length === 0
+      ? []
+      : await db
+          .select({
+            id: events.id,
+            slug: events.slug,
+            title: events.title,
+          })
+          .from(events)
+          .where(inArray(events.id, eventIds));
+
+  const eventsById = new Map(eventRows.map((event) => [event.id, event]));
+
+  return episodeRows.map((episode) => ({
+    id: episode.id,
+    number: episode.number,
+    slug: episode.slug,
+    title: episode.title,
+    city: episode.city,
+    coverKey: episode.coverKey,
+    body: episode.body,
+    features: featureRows
+      .filter((feature) => feature.episodeId === episode.id)
+      .map(({ episodeId: _episodeId, ...feature }) => feature),
+    event: episode.eventId ? (eventsById.get(episode.eventId) ?? null) : null,
+  }));
+}
+
+export async function getOverflowEpisodes(city: CityFilter) {
+  const rows = await db
+    .select()
+    .from(overflowEpisodes)
+    .where(city === "all" ? undefined : eq(overflowEpisodes.city, city))
+    .orderBy(desc(overflowEpisodes.number));
+
+  return hydrateOverflowEpisodes(rows);
+}
+
+export async function getOverflowEpisodeBySlug(slug: string) {
+  const rows = await db
+    .select()
+    .from(overflowEpisodes)
+    .where(eq(overflowEpisodes.slug, slug))
+    .limit(1);
+
+  const [episode] = await hydrateOverflowEpisodes(rows);
+  return episode ?? null;
+}
+
+export async function getOverflowEpisodeById(id: string) {
+  const rows = await db
+    .select()
+    .from(overflowEpisodes)
+    .where(eq(overflowEpisodes.id, id))
+    .limit(1);
+
+  const [episode] = await hydrateOverflowEpisodes(rows);
+  return episode ?? null;
+}
+
+export async function getNextOverflowNumber() {
+  const [row] = await db
+    .select({ number: overflowEpisodes.number })
+    .from(overflowEpisodes)
+    .orderBy(desc(overflowEpisodes.number))
+    .limit(1);
+
+  return (row?.number ?? 0) + 1;
+}
+
+export async function searchApprovedEventsByTitle(query: string, limit = 8) {
+  const term = query.trim();
+  if (term.length < 2) return [];
+
+  const pattern = `%${term.replace(/[%_\\]/g, "\\$&")}%`;
+
+  return db
+    .select({
+      id: events.id,
+      title: events.title,
+      city: events.city,
+    })
+    .from(events)
+    .where(and(eq(events.status, "approved"), ilike(events.title, pattern)))
+    .orderBy(desc(events.dateTime))
+    .limit(limit);
 }

@@ -148,6 +148,50 @@ export const organiserStubSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(200),
 });
 
+export const overflowFeatureRoles = ["organiser", "wall", "music"] as const;
+
+const overflowFeatureSchema = z.object({
+  creativeId: z.string().uuid(),
+  role: z.enum(overflowFeatureRoles),
+  note: z.string().trim().max(400),
+});
+
+export const overflowEpisodeSchema = z.object({
+  title: z.string().trim().min(2, "Name is required").max(80),
+  number: z
+    .number({ invalid_type_error: "Enter an episode number" })
+    .int()
+    .min(1, "Enter an episode number")
+    .max(999),
+  city: z.enum(cities, {
+    errorMap: () => ({ message: "Pick a city" }),
+  }),
+  coverKey: z
+    .string()
+    .trim()
+    .min(1, "Upload a poster")
+    .regex(flyerKeyPattern, "Upload a valid poster"),
+  body: z.string().trim().min(1, "Write a short recap").max(4000),
+  eventId: z.union([z.literal(""), z.string().uuid()]),
+  features: z
+    .array(overflowFeatureSchema)
+    .max(12)
+    .superRefine((features, ctx) => {
+      const seen = new Set<string>();
+      features.forEach((feature, index) => {
+        if (seen.has(feature.creativeId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Each person can only be added once.",
+            path: [index, "creativeId"],
+          });
+        }
+        seen.add(feature.creativeId);
+      });
+    }),
+});
+
 export type CreativeSubmissionInput = z.infer<typeof creativeSubmissionSchema>;
 export type EventSubmissionInput = z.infer<typeof eventSubmissionSchema>;
 export type EventRejectionInput = z.infer<typeof eventRejectionSchema>;
+export type OverflowEpisodeInput = z.infer<typeof overflowEpisodeSchema>;

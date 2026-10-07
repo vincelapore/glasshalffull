@@ -6,6 +6,7 @@ import {
   eventCategories,
   eventRejectionReasons,
   musicGenres,
+  overflowFeatureRoles,
   submissionStatuses,
   workOpportunityTags,
 } from "@/lib/validations";
@@ -130,6 +131,26 @@ export const cityShortLabels: Record<(typeof cities)[number], string> = {
   meanjin: "Meanjin",
   naarm: "Naarm",
 };
+
+/** Role names on the admin form. */
+export const overflowFeatureRoleLabels: Record<
+  (typeof overflowFeatureRoles)[number],
+  string
+> = {
+  organiser: "Organiser",
+  wall: "On the wall",
+  music: "Music",
+};
+
+/** Section headings in the episode popup, in display order. */
+export const overflowFeatureGroups = [
+  { role: "wall", label: "On the wall" },
+  { role: "music", label: "In the room" },
+  { role: "organiser", label: "With" },
+] as const satisfies ReadonlyArray<{
+  role: (typeof overflowFeatureRoles)[number];
+  label: string;
+}>;
 
 export const statusLabels: Record<(typeof submissionStatuses)[number], string> = {
   pending: "Pending",

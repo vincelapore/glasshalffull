@@ -3,6 +3,7 @@ export type ProfileMenuIconName =
   | "events"
   | "view"
   | "moderation"
+  | "overflow"
   | "team";
 
 export type ProfileMenuLinkItem = {
@@ -32,11 +33,18 @@ export function getProfileMenuLinks(options: {
   const staff: ProfileMenuLinkItem[] = [];
 
   if (options.canModerate) {
-    staff.push({
-      href: "/admin/submissions",
-      label: "Moderation",
-      icon: "moderation",
-    });
+    staff.push(
+      {
+        href: "/admin/submissions",
+        label: "Moderation",
+        icon: "moderation",
+      },
+      {
+        href: "/admin/overflow",
+        label: "Overflow",
+        icon: "overflow",
+      }
+    );
   }
 
   if (options.canManageTeam) {
@@ -53,8 +61,14 @@ export function getProfileMenuLinks(options: {
 export function isProfileMenuLinkActive(pathname: string, href: string) {
   if (href === "/admin/submissions") {
     return (
-      pathname.startsWith("/admin") && !pathname.startsWith("/admin/team")
+      pathname.startsWith("/admin") &&
+      !pathname.startsWith("/admin/team") &&
+      !pathname.startsWith("/admin/overflow")
     );
+  }
+
+  if (href === "/admin/overflow") {
+    return pathname.startsWith("/admin/overflow");
   }
 
   if (href === "/account") {

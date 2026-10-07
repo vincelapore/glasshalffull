@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  integer,
   pgEnum,
   pgTable,
   text,
@@ -64,6 +65,12 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
   "visual_artist",
   "collaborator",
   "other",
+]);
+
+export const overflowFeatureRoleEnum = pgEnum("overflow_feature_role", [
+  "organiser",
+  "wall",
+  "music",
 ]);
 
 /** One public creative profile per Neon Auth account (unique userId). */
@@ -160,12 +167,55 @@ export const eventLineup = pgTable(
   (table) => [primaryKey({ columns: [table.eventId, table.creativeId] })]
 );
 
+/**
+ * An Overflow episode: an interview with a night, plus the people in it.
+ * The cover is a flyer-sized photo (`flyers/…webp`).
+ */
+export const overflowEpisodes = pgTable("overflow_episodes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  number: integer("number").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  city: cityEnum("city").notNull(),
+  coverKey: text("cover_key").notNull(),
+  body: text("body").notNull(),
+  eventId: uuid("event_id").references(() => events.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+/** One creative per episode. Role is how they showed up in the episode. */
+export const overflowFeatures = pgTable(
+  "overflow_features",
+  {
+    episodeId: uuid("episode_id")
+      .notNull()
+      .references(() => overflowEpisodes.id, { onDelete: "cascade" }),
+    creativeId: uuid("creative_id")
+      .notNull()
+      .references(() => creatives.id, { onDelete: "cascade" }),
+    role: overflowFeatureRoleEnum("role").notNull(),
+    note: text("note"),
+    sort: integer("sort").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.episodeId, table.creativeId] })]
+);
+
 export const creativesRelations = relations(creatives, ({ many }) => ({
   lineup: many(eventLineup),
+  overflowFeatures: many(overflowFeatures),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
   lineup: many(eventLineup),
+  overflowEpisodes: many(overflowEpisodes),
 }));
 
 export const eventLineupRelations = relations(eventLineup, ({ one }) => ({
@@ -179,6 +229,31 @@ export const eventLineupRelations = relations(eventLineup, ({ one }) => ({
   }),
 }));
 
+export const overflowEpisodesRelations = relations(
+  overflowEpisodes,
+  ({ one, many }) => ({
+    features: many(overflowFeatures),
+    event: one(events, {
+      fields: [overflowEpisodes.eventId],
+      references: [events.id],
+    }),
+  })
+);
+
+export const overflowFeaturesRelations = relations(
+  overflowFeatures,
+  ({ one }) => ({
+    episode: one(overflowEpisodes, {
+      fields: [overflowFeatures.episodeId],
+      references: [overflowEpisodes.id],
+    }),
+    creative: one(creatives, {
+      fields: [overflowFeatures.creativeId],
+      references: [creatives.id],
+    }),
+  })
+);
+
 export type Creative = typeof creatives.$inferSelect;
 export type NewCreative = typeof creatives.$inferInsert;
 export type Event = typeof events.$inferSelect;
@@ -187,3 +262,7 @@ export type EventLineup = typeof eventLineup.$inferSelect;
 export type NewEventLineup = typeof eventLineup.$inferInsert;
 export type Admin = typeof admins.$inferSelect;
 export type NewAdmin = typeof admins.$inferInsert;
+export type OverflowEpisode = typeof overflowEpisodes.$inferSelect;
+export type NewOverflowEpisode = typeof overflowEpisodes.$inferInsert;
+export type OverflowFeature = typeof overflowFeatures.$inferSelect;
+export type NewOverflowFeature = typeof overflowFeatures.$inferInsert;

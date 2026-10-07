@@ -3,6 +3,7 @@ import { BioRhyme, Syne_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { HideHeaderOnFooter } from "@/components/hide-header-on-footer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           disableTransitionOnChange
         >
           <SiteHeader />
+          <HideHeaderOnFooter />
           <main className="flex-1 pt-[4.25rem]">{children}</main>
           <SiteFooter />
         </ThemeProvider>

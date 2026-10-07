@@ -1,7 +1,7 @@
 import { and, eq, like, ne, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { creatives, events } from "@/db/schema";
+import { creatives, events, overflowEpisodes } from "@/db/schema";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,7 +25,7 @@ export function slugify(input: string, fallback: string) {
 }
 
 async function nextUniqueSlug(
-  table: typeof creatives | typeof events,
+  table: typeof creatives | typeof events | typeof overflowEpisodes,
   base: string,
   excludeId?: string
 ) {
@@ -58,4 +58,8 @@ export async function uniqueCreativeSlug(name: string, excludeId?: string) {
 
 export async function uniqueEventSlug(title: string, excludeId?: string) {
   return nextUniqueSlug(events, slugify(title, "event"), excludeId);
+}
+
+export async function uniqueOverflowSlug(title: string, excludeId?: string) {
+  return nextUniqueSlug(overflowEpisodes, slugify(title, "overflow"), excludeId);
 }
