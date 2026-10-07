@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { EventCategoryFilters } from "@/components/event-category-filters";
-import { EventCategoryTags } from "@/components/event-category-tags";
-import { ExternalImage } from "@/components/media/external-image";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  EventListingCard,
+  eventListingGridClassName,
+} from "@/components/event-listing";
 import { FilterChip } from "@/components/ui/filter-chip";
 import {
   ChipRow,
@@ -20,15 +14,9 @@ import {
   Section,
   TextLink,
 } from "@/components/ui/page";
-import {
-  cityLabels,
-  formatDateTime,
-  parseCityFilter,
-  parseMusicGenre,
-} from "@/lib/labels";
-import { mediaUrl } from "@/lib/media";
-import { eventPath, eventsBrowsePath } from "@/lib/paths";
-import { getApprovedEvents } from "@/lib/queries";
+import { cityLabels, parseCityFilter, parseMusicGenre } from "@/lib/labels";
+import { eventsBrowsePath } from "@/lib/paths";
+import { getApprovedEvents, getOrganisersByEventIds } from "@/lib/queries";
 import { cities, eventCategories } from "@/lib/validations";
 
 export const metadata: Metadata = {
@@ -73,6 +61,9 @@ export default async function EventsPage({
 
     return true;
   });
+  const organisersByEvent = await getOrganisersByEventIds(
+    events.map((event) => event.id)
+  );
 
   return (
     <Page>
@@ -85,6 +76,9 @@ export default async function EventsPage({
               ? " across Brisbane / Meanjin and Melbourne / Naarm."
               : ` in ${cityLabels[activeCity]}.`}
           </>
+        }
+        actions={
+          <TextLink href="/account/events/new">Submit an event</TextLink>
         }
       />
 
@@ -133,36 +127,13 @@ export default async function EventsPage({
           .
         </EmptyState>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={eventListingGridClassName}>
           {events.map((event) => (
-            <Link key={event.id} href={eventPath(event.slug)} className="group">
-              <Card className="h-full transition-colors group-hover:bg-muted/30">
-                <ExternalImage
-                  src={mediaUrl(event.flyerKey)}
-                  alt=""
-                  className="aspect-[4/5] w-full object-cover sm:aspect-video"
-                />
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="group-hover:underline group-hover:underline-offset-4">
-                      {event.title}
-                    </CardTitle>
-                    <EventCategoryTags event={event} className="justify-end" />
-                  </div>
-                  <CardDescription>
-                    {formatDateTime(event.dateTime)} · {cityLabels[event.city]} ·{" "}
-                    {event.location}
-                  </CardDescription>
-                </CardHeader>
-                {event.description ? (
-                  <CardContent>
-                    <p className="line-clamp-3 text-sm text-muted-foreground">
-                      {event.description}
-                    </p>
-                  </CardContent>
-                ) : null}
-              </Card>
-            </Link>
+            <EventListingCard
+              key={event.id}
+              event={event}
+              organisers={organisersByEvent.get(event.id)}
+            />
           ))}
         </div>
       )}

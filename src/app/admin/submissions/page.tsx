@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { signOutAction } from "@/app/actions/auth";
 import {
   CreativeSubmissionCard,
   EventSubmissionCard,
@@ -9,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { ChipRow, EmptyState, Page, PageHeader } from "@/components/ui/page";
-import { isOwnerEmail, requireAdmin } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin";
 import { getSubmissions } from "@/lib/queries";
 import { submissionStatuses } from "@/lib/validations";
 
@@ -44,8 +43,7 @@ export default async function AdminSubmissionsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const user = await requireAdmin();
-  const owner = await isOwnerEmail(user.email);
+  await requireAdmin();
 
   const params = await searchParams;
   const status = isStatusFilter(params.status) ? params.status : "pending";
@@ -65,27 +63,16 @@ export default async function AdminSubmissionsPage({
         description="Review, edit, approve, reject, or delete community submissions."
         actions={
           <>
-            {owner ? (
-              <Button
-                size="sm"
-                variant="outline"
-                render={<Link href="/admin/team" />}
-              >
-                Team
-              </Button>
-            ) : null}
             <Button
               size="sm"
               variant="outline"
-              render={<Link href="/account" />}
+              render={<Link href="/admin/creatives/new" />}
             >
-              Account
+              New profile
             </Button>
-            <form action={signOutAction}>
-              <Button type="submit" variant="outline" size="sm">
-                Sign out
-              </Button>
-            </form>
+            <Button size="sm" render={<Link href="/admin/events/new" />}>
+              New event
+            </Button>
           </>
         }
       />

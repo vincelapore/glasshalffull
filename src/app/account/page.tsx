@@ -1,22 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { signOutAction } from "@/app/actions/auth";
-import { EventModerationNote } from "@/components/event-moderation-note";
+import { AccountShell } from "@/components/account-shell";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
-import { Button } from "@/components/ui/button";
-import {
-  EmptyState,
-  Page,
-  PageHeader,
-  SectionHeader,
-  TextLink,
-} from "@/components/ui/page";
-import { getSessionUser, isAdminEmail, isOwnerEmail } from "@/lib/admin";
-import { cityLabels, formatDateTime, statusLabels } from "@/lib/labels";
-import { creativePath, eventPath } from "@/lib/paths";
-import { getCreativeByUserId, getEventsByUserId } from "@/lib/queries";
+import { Notice } from "@/components/ui/notice";
+import { SectionHeader, TextLink } from "@/components/ui/page";
+import { getSessionUser } from "@/lib/admin";
+import { claimInvitedProfile } from "@/lib/claim-profile";
+import { statusLabels } from "@/lib/labels";
+import { creativePath } from "@/lib/paths";
+import { getCreativeByUserId } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -30,55 +23,12 @@ export default async function AccountPage() {
     redirect("/auth/sign-in?next=/account");
   }
 
-  const [profile, events] = await Promise.all([
-    getCreativeByUserId(user.id),
-    getEventsByUserId(user.id),
-  ]);
-
-  const admin = await isAdminEmail(user.email);
-  const owner = await isOwnerEmail(user.email);
+  const claim = await claimInvitedProfile(user);
+  const profile = await getCreativeByUserId(user.id);
 
   return (
-    <Page width="narrow">
-      <PageHeader
-        className="mb-10"
-        title="Account"
-        description={
-          <>
-            {user.name || user.email}
-            {user.email && user.name ? ` · ${user.email}` : null}
-          </>
-        }
-        actions={
-          <>
-            {admin ? (
-              <Button
-                size="sm"
-                variant="outline"
-                render={<Link href="/admin/submissions" />}
-              >
-                Moderation
-              </Button>
-            ) : null}
-            {owner ? (
-              <Button
-                size="sm"
-                variant="outline"
-                render={<Link href="/admin/team" />}
-              >
-                Team
-              </Button>
-            ) : null}
-            <form action={signOutAction}>
-              <Button type="submit" size="sm" variant="outline">
-                Sign out
-              </Button>
-            </form>
-          </>
-        }
-      />
-
-      <section className="mb-14 space-y-4">
+    <AccountShell user={user}>
+      <section className="space-y-4">
         <SectionHeader
           title="Profile"
           description={profile ? undefined : "So people can find you."}
@@ -99,6 +49,12 @@ export default async function AccountPage() {
             ) : null
           }
         />
+        {claim.status === "conflict" ? (
+          <Notice>
+            A profile is waiting for this email, and this account already has
+            one. An admin needs to sort that out.
+          </Notice>
+        ) : null}
         <CreativeSubmissionForm
           mode="profile"
           defaultValues={
@@ -120,70 +76,6 @@ export default async function AccountPage() {
           }
         />
       </section>
-
-      <section className="space-y-4">
-        <SectionHeader
-          title="Events"
-          action={
-            profile ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                render={<Link href="/account/events/new" />}
-              >
-                Submit event
-              </Button>
-            ) : null
-          }
-        />
-        {!profile ? (
-          <EmptyState>
-            Save your profile above first. You’ll be listed as organiser on
-            events you submit.
-          </EmptyState>
-        ) : events.length === 0 ? (
-          <EmptyState>
-            No events yet.{" "}
-            <TextLink
-              href="/account/events/new"
-              variant="hover"
-              className="text-foreground"
-            >
-              Submit one
-            </TextLink>
-            .
-          </EmptyState>
-        ) : (
-          <ul className="divide-y divide-border rounded-xl border border-border">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <TextLink
-                    href={eventPath(event.slug)}
-                    variant="hover"
-                    className="font-medium text-foreground"
-                  >
-                    {event.title}
-                  </TextLink>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDateTime(event.dateTime)} · {cityLabels[event.city]}
-                  </p>
-                  <EventModerationNote
-                    note={event.moderationNote}
-                    className="mt-2"
-                  />
-                </div>
-                <span className="text-sm capitalize text-muted-foreground">
-                  {statusLabels[event.status]}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </Page>
+    </AccountShell>
   );
 }

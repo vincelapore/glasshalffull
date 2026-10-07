@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
+import { InviteEmailForm } from "@/components/invite-email-form";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Page, PageHeader } from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
 import { getCreativeById } from "@/lib/queries";
@@ -43,6 +45,16 @@ export default async function EditCreativePage({
           </Button>
         }
       />
+      {creative.userId ? (
+        <Notice className="mb-8">This profile is linked to an account.</Notice>
+      ) : (
+        <div className="mb-8">
+          <InviteEmailForm
+            creativeId={creative.id}
+            inviteEmail={creative.inviteEmail}
+          />
+        </div>
+      )}
       <CreativeSubmissionForm
         mode="admin"
         creativeId={creative.id}

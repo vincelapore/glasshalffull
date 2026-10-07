@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { EventOrganisersPanel } from "@/components/event-organisers-panel";
 import { EventSubmissionForm } from "@/components/forms/event-submission-form";
 import { Button } from "@/components/ui/button";
-import { Page, PageHeader } from "@/components/ui/page";
+import { Page, PageHeader, SectionHeader } from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
 import { toDateTimeLocalValue } from "@/lib/labels";
-import { getEventById } from "@/lib/queries";
+import { getEventById, getEventOrganisers } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Edit Event",
@@ -28,6 +29,8 @@ export default async function EditEventPage({
   if (!event) {
     notFound();
   }
+
+  const organisers = await getEventOrganisers(event.id);
 
   return (
     <Page width="narrow">
@@ -59,6 +62,21 @@ export default async function EditEventPage({
           flyerKey: event.flyerKey ?? "",
         }}
       />
+      <section className="mt-14 space-y-4">
+        <SectionHeader
+          title="Organisers"
+          description="Search the directory, or invite someone with a name and email."
+        />
+        <EventOrganisersPanel
+          eventId={event.id}
+          organisers={organisers.map(({ creative }) => ({
+            id: creative.id,
+            name: creative.name,
+            claimed: Boolean(creative.userId),
+            inviteEmail: creative.inviteEmail,
+          }))}
+        />
+      </section>
     </Page>
   );
 }

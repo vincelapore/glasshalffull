@@ -60,7 +60,7 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
   "performer",
   "dj",
   "host",
-  "organizer",
+  "organiser",
   "visual_artist",
   "collaborator",
   "other",
@@ -89,6 +89,11 @@ export const creatives = pgTable(
     openToTrade: boolean("open_to_trade").notNull().default(false),
     buildingPortfolio: boolean("building_portfolio").notNull().default(false),
     status: submissionStatusEnum("status").notNull().default("pending"),
+    /**
+     * Email that can claim this profile by signing up or signing in.
+     * Cleared once userId is set. Never shown on public pages.
+     */
+    inviteEmail: text("invite_email"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -97,7 +102,10 @@ export const creatives = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [uniqueIndex("creatives_user_id_unique").on(table.userId)]
+  (table) => [
+    uniqueIndex("creatives_user_id_unique").on(table.userId),
+    uniqueIndex("creatives_invite_email_unique").on(table.inviteEmail),
+  ]
 );
 
 export const events = pgTable("events", {

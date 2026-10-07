@@ -223,4 +223,145 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .page-surface {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(
+        ellipse 80% 50% at 15% -10%,
+        color-mix(in oklch, var(--glow) 18%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 90% 0%,
+        color-mix(in oklch, var(--liquid) 12%, transparent),
+        transparent 50%
+      );
+    background-attachment: fixed;
+  }
+
+  .nav-search {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.2rem 0.35rem;
+    border-radius: 1.25rem;
+    border: 1.5px solid color-mix(in oklch, var(--foreground) 78%, transparent);
+    background: color-mix(in oklch, var(--background) 82%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    padding: 0.55rem 0.85rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 64rem) {
+    .nav-search {
+      flex-wrap: nowrap;
+      width: max-content;
+      height: 2.75rem;
+      min-height: 0;
+      gap: 0.45rem;
+      border-radius: 9999px;
+      padding: 0 0.95rem;
+      line-height: 1;
+    }
+  }
+
+  /*
+    Profile posters are squares. Each side matches the event poster height
+    in the same width row: events are minmax(15rem, 1fr) at 8/5, gap 1rem.
+  */
+  .profile-listing {
+    container-type: inline-size;
+  }
+
+  .profile-listing-grid {
+    display: grid;
+    column-gap: 1rem;
+    row-gap: 2rem;
+    grid-template-columns: repeat(auto-fill, calc(100cqi * 5 / 8));
+  }
+
+  @container (width >= 31rem) {
+    .profile-listing-grid {
+      grid-template-columns: repeat(
+        auto-fill,
+        calc((100cqi - 1rem) / 2 * 5 / 8)
+      );
+    }
+  }
+
+  @container (width >= 47rem) {
+    .profile-listing-grid {
+      grid-template-columns: repeat(
+        auto-fill,
+        calc((100cqi - 2rem) / 3 * 5 / 8)
+      );
+    }
+  }
+
+  @container (width >= 63rem) {
+    .profile-listing-grid {
+      grid-template-columns: repeat(
+        auto-fill,
+        calc((100cqi - 3rem) / 4 * 5 / 8)
+      );
+    }
+  }
+
+  @container (width >= 79rem) {
+    .profile-listing-grid {
+      grid-template-columns: repeat(
+        auto-fill,
+        calc((100cqi - 4rem) / 5 * 5 / 8)
+      );
+    }
+  }
+
+  /* Listing posters: image zoom, profile avatar, organiser fan. */
+  .poster-hover,
+  .poster-avatar {
+    transition: scale 200ms var(--ease-out);
+  }
+
+  .poster-face {
+    transition: translate 200ms var(--ease-out);
+  }
+
+  .poster-meta {
+    transition: color 150ms var(--ease-out);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .group:hover .poster-hover {
+    scale: 1.06;
+  }
+
+  .group:hover .poster-avatar {
+    scale: 1.08;
+  }
+
+  .group:hover .poster-face {
+    translate: calc(var(--face) * 6px) 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .poster-meta {
+    color: var(--foreground);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster-hover,
+  .poster-avatar,
+  .poster-face {
+    transition: none;
+  }
 }

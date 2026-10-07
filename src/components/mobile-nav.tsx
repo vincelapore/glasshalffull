@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { Suspense, useEffect, useId, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { signOutAction } from "@/app/actions/auth";
+import { NavSearch, NavSearchSkeleton } from "@/components/nav-search";
 import { Button } from "@/components/ui/button";
-import { pageWidths } from "@/components/ui/page";
 import type { NavLink } from "@/components/site-nav";
 
 type MobileNavProps = {
@@ -36,13 +35,14 @@ export function MobileNav({ links, signedIn }: MobileNavProps) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <Button
         variant="ghost"
         size="icon"
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Close menu" : "Open menu"}
+        className="drop-shadow-[0_0_8px_var(--background)]"
         onClick={() => setOpen((value) => !value)}
       >
         {open ? <X className="size-4" /> : <Menu className="size-4" />}
@@ -51,50 +51,37 @@ export function MobileNav({ links, signedIn }: MobileNavProps) {
       {open ? (
         <nav
           id={panelId}
-          className="glass-nav absolute inset-x-0 top-full px-4 py-3 sm:px-6"
+          className="absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl bg-background/95 p-3 shadow-lg ring-1 ring-foreground/10 backdrop-blur-md"
         >
-          <ul className={`mx-auto flex ${pageWidths.wide} flex-col gap-1`}>
-            {links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={() => setOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-            <li className="mt-2 border-t border-border/60 pt-2">
-              {signedIn ? (
-                <form action={signOutAction}>
-                  <button
-                    type="submit"
-                    className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          <div>
+            <Suspense fallback={<NavSearchSkeleton className="lg:hidden" />}>
+              <NavSearch className="max-w-full lg:hidden" />
+            </Suspense>
+            <ul className="mt-3 flex flex-col gap-1">
+              {links.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+                    onClick={() => setOpen(false)}
                   >
-                    Sign out
-                  </button>
-                </form>
-              ) : (
-                <div className="flex flex-col gap-1">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              {signedIn ? null : (
+                <li className="mt-1 border-t border-border/60 pt-1">
                   <Link
                     href="/auth/sign-in"
-                    className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
                     onClick={() => setOpen(false)}
                   >
                     Sign in
                   </Link>
-                  <Link
-                    href="/auth/sign-up"
-                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-                    onClick={() => setOpen(false)}
-                  >
-                    Join
-                  </Link>
-                </div>
+                </li>
               )}
-            </li>
-          </ul>
+            </ul>
+          </div>
         </nav>
       ) : null}
     </div>

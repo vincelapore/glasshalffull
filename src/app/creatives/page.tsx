@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { CreativeCraftTags } from "@/components/creative-craft-tags";
-import { CreativeWorkTags } from "@/components/creative-work-tags";
-import { ExternalImage } from "@/components/media/external-image";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CreativeListingCard,
+  ProfileListingGrid,
+} from "@/components/creative-listing-card";
 import { FilterChip } from "@/components/ui/filter-chip";
 import {
   ChipRow,
@@ -29,8 +22,6 @@ import {
   type CityFilter,
 } from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
-import { mediaUrl } from "@/lib/media";
-import { creativePath } from "@/lib/paths";
 import {
   cities,
   craftCategories,
@@ -111,7 +102,7 @@ export default async function CreativesPage({
     <Page>
       <PageHeader
         title="Creatives"
-        description="Find the missing piece to your creative project or discover talent you’d love to collaborate with."
+        description="People to work with, or just to know."
       />
 
       <Section label="City">
@@ -209,53 +200,11 @@ export default async function CreativesPage({
           .
         </EmptyState>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ProfileListingGrid>
           {creatives.map((creative) => (
-            <Link
-              key={creative.id}
-              href={creativePath(creative.slug)}
-              className="group"
-            >
-              <Card className="h-full transition-colors group-hover:bg-muted/30">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <ExternalImage
-                      src={mediaUrl(creative.avatarKey)}
-                      alt=""
-                      className="size-14 rounded-full object-cover"
-                      fallback={
-                        <div className="flex size-14 items-center justify-center rounded-full bg-muted text-base font-medium">
-                          {creative.name.slice(0, 1).toUpperCase()}
-                        </div>
-                      }
-                    />
-                    <div className="space-y-1">
-                      <CardTitle className="group-hover:underline group-hover:underline-offset-4">
-                        {creative.name}
-                      </CardTitle>
-                      {creative.city ? (
-                        <p className="text-sm text-muted-foreground">
-                          {cityLabels[creative.city]}
-                        </p>
-                      ) : null}
-                      <div className="flex flex-wrap gap-1.5">
-                        <CreativeCraftTags creative={creative} />
-                        <CreativeWorkTags creative={creative} />
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                {creative.bio ? (
-                  <CardContent>
-                    <CardDescription className="line-clamp-3">
-                      {creative.bio}
-                    </CardDescription>
-                  </CardContent>
-                ) : null}
-              </Card>
-            </Link>
+            <CreativeListingCard key={creative.id} creative={creative} />
           ))}
-        </div>
+        </ProfileListingGrid>
       )}
     </Page>
   );

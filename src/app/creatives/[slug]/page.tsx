@@ -1,24 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
-import { EventCategoryTags } from "@/components/event-category-tags";
+import {
+  EventListingCard,
+  eventListingGridClassName,
+} from "@/components/event-listing";
 import { ExternalImage } from "@/components/media/external-image";
 import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageTitle } from "@/components/ui/page";
 import {
   cityLabels,
-  formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
   lineupRoleLabels,
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
-import { creativePath, eventPath } from "@/lib/paths";
-import { getCreativeByParam, getCreativeUpcomingEvents } from "@/lib/queries";
+import { creativePath } from "@/lib/paths";
+import {
+  getCreativeByParam,
+  getCreativeUpcomingEvents,
+  getOrganisersByEventIds,
+} from "@/lib/queries";
 
 type CreativePageProps = {
   params: Promise<{ slug: string }>;
@@ -45,6 +50,9 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   }
 
   const upcoming = await getCreativeUpcomingEvents(creative.id);
+  const organisersByEvent = await getOrganisersByEventIds(
+    upcoming.map(({ event }) => event.id)
+  );
   const isPublic = creative.status === "approved";
 
   return (
@@ -124,30 +132,16 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
               No upcoming events yet.
             </p>
           ) : (
-            <ul className="space-y-3">
+            <div className={eventListingGridClassName}>
               {upcoming.map(({ event, role }) => (
-                <li key={event.id}>
-                  <Link
-                    href={eventPath(event.slug)}
-                    className="block rounded-xl border border-border/70 p-4 transition-colors hover:bg-muted/40"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{event.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDateTime(event.dateTime)} ·{" "}
-                          {cityLabels[event.city]} · {event.location}
-                        </p>
-                      </div>
-                      <EventCategoryTags event={event} />
-                    </div>
-                    <p className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">
-                      {lineupRoleLabels[role]}
-                    </p>
-                  </Link>
-                </li>
+                <EventListingCard
+                  key={event.id}
+                  event={event}
+                  organisers={organisersByEvent.get(event.id)}
+                  note={lineupRoleLabels[role]}
+                />
               ))}
-            </ul>
+            </div>
           )}
         </section>
       </div>

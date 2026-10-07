@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import {
+  createAdminCreativeAction,
   saveMyProfileAction,
   updateCreativeAction,
 } from "@/app/actions/submissions";
@@ -61,23 +62,28 @@ type CreativeSubmissionFormProps =
       mode: "admin";
       creativeId: string;
       defaultValues: CreativeSubmissionInput;
+    }
+  | {
+      mode: "admin-create";
     };
 
 export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const mode = props.mode;
   const creativeId = mode === "admin" ? props.creativeId : null;
+  const defaults = mode === "admin-create" ? undefined : props.defaultValues;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
   const [workSlots, setWorkSlots] = useState<WorkSlot[]>(() =>
-    workSlotsFromKeys(props.defaultValues?.workPhotoKeys)
+    workSlotsFromKeys(defaults?.workPhotoKeys)
   );
 
   const form = useForm<CreativeSubmissionInput>({
     resolver: zodResolver(creativeSubmissionSchema),
-    defaultValues: props.defaultValues ?? emptyProfileValues,
+    defaultValues: defaults ?? emptyProfileValues,
   });
 
   const onSubmit = form.handleSubmit((values) => {
@@ -110,7 +116,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       const result =
         mode === "admin" && creativeId
           ? await updateCreativeAction(creativeId, payload)
-          : await saveMyProfileAction(payload);
+          : mode === "admin-create"
+            ? await createAdminCreativeAction(payload, inviteEmail)
+            : await saveMyProfileAction(payload);
 
       if (!result.success) {
         if (workPhotos.fresh.length > 0) {
@@ -124,6 +132,12 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             });
           }
         }
+        return;
+      }
+
+      if (mode === "admin-create") {
+        router.push(`/admin/creatives/${result.id}/edit`);
+        router.refresh();
         return;
       }
 
@@ -146,6 +160,24 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      {mode === "admin-create" ? (
+        <Field>
+          <Label htmlFor="inviteEmail">Invite email (optional)</Label>
+          <Input
+            id="inviteEmail"
+            type="email"
+            autoComplete="off"
+            value={inviteEmail}
+            onChange={(event) => setInviteEmail(event.target.value)}
+            placeholder="name@example.com"
+          />
+          <p className="text-sm text-muted-foreground">
+            They claim this profile by signing up or signing in with this
+            email.
+          </p>
+        </Field>
+      ) : null}
+
       <Field>
         <Label htmlFor="name">Name / moniker</Label>
         <Input
@@ -325,6 +357,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             onFileChange={setPendingPhoto}
             error={fieldState.error?.message}
             disabled={pending}
+            crop
           />
         )}
       />
@@ -342,9 +375,15 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          {pending ? "Saving…" : "Save profile"}
+          {pending
+            ? mode === "admin-create"
+              ? "Creating…"
+              : "Saving…"
+            : mode === "admin-create"
+              ? "Create profile"
+              : "Save profile"}
         </Button>
-        {mode === "admin" ? (
+        {mode === "admin" || mode === "admin-create" ? (
           <Button
             type="button"
             variant="outline"

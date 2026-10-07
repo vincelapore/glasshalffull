@@ -39,6 +39,38 @@ export const craftCategoryLabels: Record<(typeof craftCategories)[number], strin
     other: "Other",
   };
 
+/** One-word pill on a directory card. `other` has no pill. */
+export const craftTagLabels: Record<
+  (typeof craftCategories)[number],
+  string | null
+> = {
+  dj: "DJ",
+  musician: "music",
+  producer: "music",
+  tattoo: "tattoo",
+  visual_art: "art",
+  photography: "photo",
+  fashion: "fashion",
+  makeup: "makeup",
+  model: "model",
+  dance: "dance",
+  film: "film",
+  design: "design",
+  queer: "queer",
+  other: null,
+};
+
+/** First craft that fits the card pill. */
+export function primaryCraftTag(
+  categories: readonly (typeof craftCategories)[number][] | null | undefined
+) {
+  for (const category of categories ?? []) {
+    const tag = craftTagLabels[category];
+    if (tag) return tag;
+  }
+  return null;
+}
+
 export const eventCategoryLabels: Record<(typeof eventCategories)[number], string> =
   {
     music: "Music",
@@ -93,6 +125,12 @@ export const cityLabels: Record<(typeof cities)[number], string> = {
   naarm: "Melbourne / Naarm",
 };
 
+/** Place name on a card or in search. Filters keep the longer `cityLabels`. */
+export const cityShortLabels: Record<(typeof cities)[number], string> = {
+  meanjin: "Meanjin",
+  naarm: "Naarm",
+};
+
 export const statusLabels: Record<(typeof submissionStatuses)[number], string> = {
   pending: "Pending",
   approved: "Approved",
@@ -112,7 +150,7 @@ export const lineupRoleLabels: Record<EventLineup["role"], string> = {
   performer: "Performer",
   dj: "DJ",
   host: "Host",
-  organizer: "Organiser",
+  organiser: "Organiser",
   visual_artist: "Visual artist",
   collaborator: "Collaborator",
   other: "Other",
@@ -175,13 +213,109 @@ export function creativeMatchesWorkTag(
   return creative.buildingPortfolio;
 }
 
+const BRISBANE = "Australia/Brisbane";
+
+const WEEKDAY_LABELS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
+
+function asDate(value: Date | string) {
+  return typeof value === "string" ? new Date(value) : value;
+}
+
+function brisbaneParts(date: Date) {
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: BRISBANE,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(date);
+}
+
+function brisbaneYmd(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: BRISBANE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** 0 = Sunday … 6 = Saturday, in Brisbane. */
+function brisbaneWeekdayIndex(date: Date) {
+  const short = new Intl.DateTimeFormat("en-US", {
+    timeZone: BRISBANE,
+    weekday: "short",
+  })
+    .format(date)
+    .replace(".", "");
+  const index = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(short);
+  return index === -1 ? 0 : index;
+}
+
+function brisbaneDayDiff(event: Date, now: Date) {
+  const [ey, em, ed] = brisbaneYmd(event).split("-").map(Number);
+  const [ny, nm, nd] = brisbaneYmd(now).split("-").map(Number);
+  return Math.round(
+    (Date.UTC(ey, em - 1, ed) - Date.UTC(ny, nm - 1, nd)) / 86_400_000
+  );
+}
+
 export function formatDateTime(value: Date | string) {
-  const date = typeof value === "string" ? new Date(value) : value;
+  const date = asDate(value);
   return new Intl.DateTimeFormat("en-AU", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "Australia/Brisbane",
+    timeZone: BRISBANE,
   }).format(date);
+}
+
+/** Listing date, e.g. "Sat 7 Nov 3:00pm". */
+export function formatEventListingDate(value: Date | string) {
+  const parts = brisbaneParts(asDate(value));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const hour = String(Number(get("hour")));
+  const minute = get("minute");
+  const period = get("dayPeriod").toLowerCase().replace(/[\s.]/g, "");
+  return `${get("weekday")} ${get("day")} ${get("month")} ${hour}:${minute}${period}`;
+}
+
+/**
+ * Short relative label for upcoming listings.
+ * Tonight and tomorrow win over the weekday. Saturday and Sunday in the
+ * current Monday–Sunday week read as "this weekend".
+ */
+export function eventRelativeLabel(value: Date | string, now: Date = new Date()) {
+  const event = asDate(value);
+  const diff = brisbaneDayDiff(event, now);
+  if (diff < 0) return null;
+  if (diff === 0) return "tonight";
+  if (diff === 1) return "tomorrow";
+
+  const eventWeekday = brisbaneWeekdayIndex(event);
+  const todayWeekday = brisbaneWeekdayIndex(now);
+  const daysLeftThisWeek = todayWeekday === 0 ? 0 : 7 - todayWeekday;
+  const weekend = eventWeekday === 0 || eventWeekday === 6;
+
+  if (diff <= daysLeftThisWeek) {
+    return weekend ? "this weekend" : `this ${WEEKDAY_LABELS[eventWeekday]}`;
+  }
+
+  if (diff <= daysLeftThisWeek + 7) {
+    return weekend ? "next weekend" : `next ${WEEKDAY_LABELS[eventWeekday]}`;
+  }
+
+  return null;
 }
 
 /** Format a Date for `<input type="datetime-local" />` in Brisbane time. */

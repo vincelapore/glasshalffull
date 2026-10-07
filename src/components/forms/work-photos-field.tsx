@@ -6,12 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
-import {
-  MAX_WORK_PHOTOS,
-  MAX_WORK_PHOTO_SOURCE_BYTES,
-  mediaUrl,
-} from "@/lib/media";
-import { compressAndUploadPhoto, isAcceptedImage } from "@/lib/upload-photo";
+import { MAX_WORK_PHOTOS, mediaUrl } from "@/lib/media";
+import { compressAndUploadPhoto, compressPhoto, isAcceptedImage } from "@/lib/upload-photo";
 
 export type WorkSlot =
   | { id: string; source: "stored"; key: string }
@@ -68,39 +64,50 @@ export function WorkPhotosField({
 }: WorkPhotosFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const remaining = MAX_WORK_PHOTOS - slots.length;
 
-  function addFiles(list: FileList | File[] | null | undefined) {
-    if (!list || disabled || remaining <= 0) return;
+  async function addFiles(list: FileList | File[] | null | undefined) {
+    if (!list || disabled || preparing || remaining <= 0) return;
 
-    const next = [...slots];
+    const accepted: File[] = [];
     let rejected = false;
-
     for (const file of Array.from(list)) {
-      if (next.length >= MAX_WORK_PHOTOS) break;
+      if (accepted.length >= remaining) break;
       if (!isAcceptedImage(file)) {
         rejected = true;
         continue;
       }
-      if (file.size > MAX_WORK_PHOTO_SOURCE_BYTES) {
-        rejected = true;
-        continue;
-      }
-      next.push({
-        id: crypto.randomUUID(),
-        source: "file",
-        file,
-      });
+      accepted.push(file);
     }
 
-    if (rejected) {
-      setLocalError("Try a photo (JPG, PNG, or WebP) under 12 MB.");
-    } else {
-      setLocalError(null);
-    }
-
-    if (next.length !== slots.length) onChange(next);
     if (inputRef.current) inputRef.current.value = "";
+    if (accepted.length === 0) {
+      if (rejected) setLocalError("Try a photo (JPG, PNG, or WebP).");
+      return;
+    }
+
+    setPreparing(true);
+    setLocalError(rejected ? "Try a photo (JPG, PNG, or WebP)." : null);
+    const next = [...slots];
+    try {
+      for (const file of accepted) {
+        if (next.length >= MAX_WORK_PHOTOS) break;
+        const compressed = await compressPhoto(file, "work");
+        next.push({
+          id: crypto.randomUUID(),
+          source: "file",
+          file: compressed,
+        });
+      }
+      if (next.length !== slots.length) onChange(next);
+    } catch (error) {
+      console.error(error);
+      if (next.length !== slots.length) onChange(next);
+      setLocalError("Could not process that image. Try another file.");
+    } finally {
+      setPreparing(false);
+    }
   }
 
   function move(index: number, direction: -1 | 1) {
@@ -129,7 +136,7 @@ export function WorkPhotosField({
         type="file"
         accept="image/jpeg,image/png,image/webp"
         multiple
-        disabled={disabled || remaining <= 0}
+        disabled={disabled || preparing || remaining <= 0}
         className="sr-only"
         onChange={(event) => addFiles(event.target.files)}
       />
@@ -146,7 +153,7 @@ export function WorkPhotosField({
                   type="button"
                   size="icon-xs"
                   variant="secondary"
-                  disabled={disabled || index === 0}
+                  disabled={disabled || preparing || index === 0}
                   aria-label="Move photo earlier"
                   onClick={() => move(index, -1)}
                 >
@@ -156,7 +163,7 @@ export function WorkPhotosField({
                   type="button"
                   size="icon-xs"
                   variant="secondary"
-                  disabled={disabled || index === slots.length - 1}
+                  disabled={disabled || preparing || index === slots.length - 1}
                   aria-label="Move photo later"
                   onClick={() => move(index, 1)}
                 >
@@ -167,7 +174,7 @@ export function WorkPhotosField({
                 type="button"
                 size="icon-xs"
                 variant="secondary"
-                disabled={disabled}
+                disabled={disabled || preparing}
                 aria-label="Remove photo"
                 onClick={() => remove(index)}
               >
@@ -180,7 +187,7 @@ export function WorkPhotosField({
           <li>
             <button
               type="button"
-              disabled={disabled}
+              disabled={disabled || preparing}
               aria-label="Add work photos"
               onClick={() => inputRef.current?.click()}
               onDragOver={(event) => event.preventDefault()}
@@ -192,7 +199,7 @@ export function WorkPhotosField({
             >
               <ImagePlus className="size-5" />
               <span className="text-xs">
-                {slots.length === 0 ? "Add photos" : "Add"}
+                {preparing ? "Preparing…" : slots.length === 0 ? "Add photos" : "Add"}
               </span>
             </button>
           </li>

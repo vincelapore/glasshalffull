@@ -2,12 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 
 import {
+  createAdminEventAction,
   submitEventAction,
   updateEventAction,
+  updateMyEventAction,
 } from "@/app/actions/submissions";
 import { AccordionReveal } from "@/components/accordion-reveal";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
@@ -31,26 +34,44 @@ import {
 } from "@/lib/validations";
 
 type EventSubmissionFormProps =
-  | { mode?: "create"; eventId?: never; defaultValues?: never }
+  | { mode?: "create"; eventId?: never; defaultValues?: never; editor?: never }
+  | { mode: "admin-create" }
   | {
       mode: "edit";
       eventId: string;
       defaultValues: EventSubmissionInput;
+      /** Owner edits save through the account action and return to Events. */
+      editor?: "admin" | "owner";
     };
 
 export function EventSubmissionForm(props: EventSubmissionFormProps) {
   const mode = props.mode ?? "create";
-  const eventId = mode === "edit" ? props.eventId : null;
+  const eventId = props.mode === "edit" ? props.eventId : null;
+  const editor = props.mode === "edit" ? (props.editor ?? "admin") : "admin";
+  const returnHref =
+    editor === "owner" ? "/account/events" : "/admin/submissions";
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [pendingFlyer, setPendingFlyer] = useState<File | null>(null);
+  const [pendingFlyer, setPendingFlyerState] = useState<File | null>(null);
+  const pendingFlyerRef = useRef<File | null>(null);
+
+  const setPendingFlyer = (file: File | null) => {
+    pendingFlyerRef.current = file;
+    setPendingFlyerState(file);
+  };
 
   const form = useForm<EventSubmissionInput>({
-    resolver: zodResolver(eventSubmissionSchema),
+    resolver: (values, context, options) => {
+      // The file is uploaded after this check. A chosen flyer satisfies it.
+      const schema = pendingFlyerRef.current
+        ? eventSubmissionSchema.extend({ flyerKey: z.string() })
+        : eventSubmissionSchema;
+      return zodResolver(schema)(values, context, options);
+    },
     defaultValues:
-      mode === "edit"
+      props.mode === "edit"
         ? props.defaultValues
         : {
             title: "",
@@ -85,13 +106,19 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
           return;
         }
         flyerKey = uploaded.key;
+        setPendingFlyer(null);
+        form.setValue("flyerKey", flyerKey);
       }
 
       const payload = { ...values, flyerKey };
       const result =
         mode === "edit" && eventId
-          ? await updateEventAction(eventId, payload)
-          : await submitEventAction(payload);
+          ? editor === "owner"
+            ? await updateMyEventAction(eventId, payload)
+            : await updateEventAction(eventId, payload)
+          : mode === "admin-create"
+            ? await createAdminEventAction(payload)
+            : await submitEventAction(payload);
 
       if (!result.success) {
         setFormError(result.message);
@@ -105,8 +132,14 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         return;
       }
 
+      if (mode === "admin-create") {
+        router.push(`/admin/events/${result.id}/edit`);
+        router.refresh();
+        return;
+      }
+
       if (mode === "edit") {
-        router.push("/admin/submissions");
+        router.push(returnHref);
         router.refresh();
         return;
       }
@@ -123,8 +156,8 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       <SubmissionSuccess
         title="Thanks for pouring back in!"
         description="We’ll review it before it goes live on the directory."
-        primaryHref="/account"
-        primaryLabel="Back to account"
+        primaryHref="/account/events"
+        primaryLabel="Back to events"
         onSubmitAnother={resetToForm}
         submitAnotherLabel="Submit another event"
       />
@@ -134,7 +167,7 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <Field>
-        <Label htmlFor="title">Event title</Label>
+        <Label htmlFor="title">Name</Label>
         <Input
           id="title"
           {...form.register("title")}
@@ -302,12 +335,16 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <PhotoUploadField
             id="flyerKey"
-            label="Flyer (optional)"
+            label="Flyer"
             storedKey={field.value}
             file={pendingFlyer}
-            onFileChange={setPendingFlyer}
+            onFileChange={(file) => {
+              setPendingFlyer(file);
+              if (file) form.clearErrors("flyerKey");
+            }}
             error={fieldState.error?.message}
             disabled={pending}
+            kind="flyer"
           />
         )}
       />
@@ -317,17 +354,29 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending
-            ? "Submitting…"
+            ? mode === "edit"
+              ? "Saving…"
+              : mode === "admin-create"
+                ? "Publishing…"
+                : "Submitting…"
             : mode === "edit"
               ? "Save changes"
-              : "Submit event"}
+              : mode === "admin-create"
+                ? "Publish event"
+                : "Submit event"}
         </Button>
         <Button
           type="button"
           variant="outline"
           disabled={pending}
           onClick={() =>
-            router.push(mode === "edit" ? "/admin/submissions" : "/account")
+            router.push(
+              mode === "admin-create"
+                ? "/admin/submissions"
+                : mode === "edit"
+                  ? returnHref
+                  : "/account/events"
+            )
           }
         >
           Cancel

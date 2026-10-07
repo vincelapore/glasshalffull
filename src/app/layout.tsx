@@ -3,6 +3,7 @@ import { BioRhyme, Syne_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -47,7 +48,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           disableTransitionOnChange
         >
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pt-14">{children}</main>
+          <SiteFooter />
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />

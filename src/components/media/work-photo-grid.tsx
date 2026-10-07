@@ -28,8 +28,8 @@ export function WorkPhotoGrid({
             <img
               src={photo.src}
               alt={`${name}, work example ${index + 1}`}
-              width={960}
-              height={960}
+              width={1200}
+              height={1200}
               loading="lazy"
               decoding="async"
               fetchPriority="low"

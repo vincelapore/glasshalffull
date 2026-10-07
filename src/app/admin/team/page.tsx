@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import {
   AddAdminForm,
   AdminList,
 } from "@/components/admin/admin-team-form";
-import { Button } from "@/components/ui/button";
 import { EmptyState, Page, PageHeader, SectionHeader } from "@/components/ui/page";
 import { listStaff, requireOwner } from "@/lib/admin";
 
@@ -24,15 +22,6 @@ export default async function AdminTeamPage() {
       <PageHeader
         title="Team"
         description="Admins can moderate submissions. Only owners can add or remove admins."
-        actions={
-          <Button
-            size="sm"
-            variant="outline"
-            render={<Link href="/admin/submissions" />}
-          >
-            Moderation
-          </Button>
-        }
       />
 
       <section className="mb-10 space-y-4">

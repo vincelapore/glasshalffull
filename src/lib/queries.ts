@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, ilike, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { creatives, eventLineup, events } from "@/db/schema";
@@ -7,6 +7,14 @@ import { isUuid } from "@/lib/slug";
 import type { submissionStatuses } from "@/lib/validations";
 
 type Status = (typeof submissionStatuses)[number];
+
+const publicCreativeColumns = omitInviteEmail(getTableColumns(creatives));
+
+function omitInviteEmail<T extends { inviteEmail: unknown }>(columns: T) {
+  const { inviteEmail, ...rest } = columns;
+  void inviteEmail;
+  return rest;
+}
 
 export async function getApprovedEvents(limit?: number) {
   const query = db
@@ -31,7 +39,7 @@ export async function getUpcomingApprovedEvents(limit = 6) {
     .limit(limit);
 }
 
-/** Directory cards. Work-photo keys stay off this query so listings don't pull them. */
+/** Directory cards. Only the first work photo — listings never pull the full set. */
 const creativeCardColumns = {
   id: creatives.id,
   slug: creatives.slug,
@@ -42,6 +50,7 @@ const creativeCardColumns = {
   instagramHandle: creatives.instagramHandle,
   portfolioUrl: creatives.portfolioUrl,
   avatarKey: creatives.avatarKey,
+  coverWorkPhotoKey: sql<string | null>`${creatives.workPhotoKeys}[1]`,
   openToPaidWork: creatives.openToPaidWork,
   openToTrade: creatives.openToTrade,
   buildingPortfolio: creatives.buildingPortfolio,
@@ -87,7 +96,7 @@ export async function getEventBySlug(slug: string) {
 
 export async function getCreativeBySlug(slug: string) {
   const [creative] = await db
-    .select()
+    .select(publicCreativeColumns)
     .from(creatives)
     .where(eq(creatives.slug, slug))
     .limit(1);
@@ -101,10 +110,19 @@ export async function getEventByParam(param: string) {
   );
 }
 
+async function getPublicCreativeById(id: string) {
+  const [creative] = await db
+    .select(publicCreativeColumns)
+    .from(creatives)
+    .where(eq(creatives.id, id))
+    .limit(1);
+  return creative ?? null;
+}
+
 export async function getCreativeByParam(param: string) {
   return (
     (await getCreativeBySlug(param)) ??
-    (isUuid(param) ? await getCreativeById(param) : null)
+    (isUuid(param) ? await getPublicCreativeById(param) : null)
   );
 }
 
@@ -112,7 +130,7 @@ export async function getEventLineup(eventId: string) {
   return db
     .select({
       role: eventLineup.role,
-      creative: creatives,
+      creative: publicCreativeColumns,
     })
     .from(eventLineup)
     .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
@@ -155,6 +173,103 @@ export async function getEventsByUserId(userId: string) {
     .orderBy(desc(events.createdAt));
 }
 
+/** Events this account submitted, plus events their profile organises. */
+export async function getAccountEvents(userId: string) {
+  const profile = await getCreativeByUserId(userId);
+  const submitted = await getEventsByUserId(userId);
+  const organised = profile
+    ? await db
+        .select({ event: events })
+        .from(eventLineup)
+        .innerJoin(events, eq(eventLineup.eventId, events.id))
+        .where(
+          and(
+            eq(eventLineup.creativeId, profile.id),
+            eq(eventLineup.role, "organiser")
+          )
+        )
+    : [];
+
+  const merged = new Map<
+    string,
+    (typeof submitted)[number] & { submittedByMe: boolean; organising: boolean }
+  >();
+
+  for (const event of submitted) {
+    merged.set(event.id, { ...event, submittedByMe: true, organising: false });
+  }
+
+  for (const { event } of organised) {
+    const existing = merged.get(event.id);
+    if (existing) {
+      existing.organising = true;
+      continue;
+    }
+    merged.set(event.id, {
+      ...event,
+      submittedByMe: false,
+      organising: true,
+    });
+  }
+
+  return [...merged.values()].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
+}
+
+export async function searchCreativesByName(query: string, limit = 8) {
+  const term = query.trim();
+  if (term.length < 2) return [];
+
+  const pattern = `%${term.replace(/[%_\\]/g, "\\$&")}%`;
+
+  return db
+    .select({
+      id: creatives.id,
+      name: creatives.name,
+      city: creatives.city,
+    })
+    .from(creatives)
+    .where(ilike(creatives.name, pattern))
+    .orderBy(asc(creatives.name))
+    .limit(limit);
+}
+
+export async function getOrganisersByEventIds(eventIds: string[]) {
+  const unique = [...new Set(eventIds)];
+  const grouped = new Map<
+    string,
+    { id: string; name: string; avatarKey: string | null }[]
+  >();
+
+  if (unique.length === 0) return grouped;
+
+  const rows = await db
+    .select({
+      eventId: eventLineup.eventId,
+      id: creatives.id,
+      name: creatives.name,
+      avatarKey: creatives.avatarKey,
+    })
+    .from(eventLineup)
+    .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
+    .where(
+      and(
+        inArray(eventLineup.eventId, unique),
+        eq(eventLineup.role, "organiser")
+      )
+    )
+    .orderBy(asc(creatives.name));
+
+  for (const row of rows) {
+    const list = grouped.get(row.eventId) ?? [];
+    list.push({ id: row.id, name: row.name, avatarKey: row.avatarKey });
+    grouped.set(row.eventId, list);
+  }
+
+  return grouped;
+}
+
 export async function getEventOrganisers(eventId: string) {
   return db
     .select({
@@ -164,7 +279,7 @@ export async function getEventOrganisers(eventId: string) {
     .from(eventLineup)
     .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
     .where(
-      and(eq(eventLineup.eventId, eventId), eq(eventLineup.role, "organizer"))
+      and(eq(eventLineup.eventId, eventId), eq(eventLineup.role, "organiser"))
     )
     .orderBy(asc(creatives.name));
 }

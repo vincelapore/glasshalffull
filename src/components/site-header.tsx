@@ -1,38 +1,54 @@
+import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { signOutAction } from "@/app/actions/auth";
 import { MobileNav } from "@/components/mobile-nav";
-import { publicNavLinks, type NavLink } from "@/components/site-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { NavSearch, NavSearchSkeleton } from "@/components/nav-search";
+import { ProfileMenu } from "@/components/profile-menu";
+import { publicNavLinks } from "@/components/site-nav";
 import { pageWidths } from "@/components/ui/page";
-import { getSessionUser, isAdminEmail, isOwnerEmail } from "@/lib/admin";
+import { getSessionUser, getStaffRole } from "@/lib/admin";
+import { mediaUrl } from "@/lib/media";
+import { creativePath } from "@/lib/paths";
+import { getCreativeByUserId } from "@/lib/queries";
 
 export async function SiteHeader() {
   const user = await getSessionUser();
-  const admin = await isAdminEmail(user?.email);
-  const owner = await isOwnerEmail(user?.email);
-
-  const links: NavLink[] = [
-    ...publicNavLinks,
-    ...(user ? [{ href: "/account", label: "Account" }] : []),
-    ...(admin ? [{ href: "/admin/submissions", label: "Moderation" }] : []),
-    ...(owner ? [{ href: "/admin/team", label: "Team" }] : []),
-  ];
+  const [profile, role] = user
+    ? await Promise.all([
+        getCreativeByUserId(user.id),
+        getStaffRole(user.email),
+      ])
+    : [null, null];
 
   return (
-    <header className="glass-nav relative sticky top-0 z-50">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50">
       <div
-        className={`mx-auto flex h-14 ${pageWidths.wide} items-center justify-between gap-4 px-4 sm:px-6`}
+        className={`mx-auto flex h-14 ${pageWidths.wide} items-center gap-4 px-4 sm:px-6`}
       >
         <Link
           href="/"
-          className="shrink-0 font-heading text-sm font-semibold tracking-tight"
+          aria-label="Glass Half Full"
+          className="pointer-events-auto shrink-0"
         >
-          Glass Half Full
+          <Image
+            src="/mark.png"
+            alt=""
+            width={552}
+            height={608}
+            priority
+            className="h-8 w-auto drop-shadow-[0_0_10px_var(--background)] dark:invert"
+          />
         </Link>
-        <nav className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
-          {links.map((link) => (
+
+        <div className="pointer-events-auto hidden shrink-0 lg:block">
+          <Suspense fallback={<NavSearchSkeleton />}>
+            <NavSearch />
+          </Suspense>
+        </div>
+
+        <nav className="pointer-events-auto ml-auto hidden items-center gap-5 text-sm text-muted-foreground [text-shadow:0_0_12px_var(--background),0_0_4px_var(--background)] lg:flex">
+          {publicNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -41,32 +57,32 @@ export async function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          {user ? null : (
+            <Link
+              href="/auth/sign-in"
+              className="text-foreground transition-opacity hover:opacity-60"
+            >
+              Sign in
+            </Link>
+          )}
         </nav>
-        <div className="flex shrink-0 items-center gap-1">
-          <div className="hidden items-center gap-2 md:flex">
-            {user ? (
-              <form action={signOutAction}>
-                <Button type="submit" variant="ghost" size="sm">
-                  Sign out
-                </Button>
-              </form>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  render={<Link href="/auth/sign-in" />}
-                >
-                  Sign in
-                </Button>
-                <Button size="sm" render={<Link href="/auth/sign-up" />}>
-                  Join
-                </Button>
-              </>
-            )}
-          </div>
-          <MobileNav links={links} signedIn={Boolean(user)} />
-          <ThemeToggle />
+
+        <div className="pointer-events-auto relative ml-auto flex shrink-0 items-center gap-1 lg:ml-0">
+          <MobileNav links={[...publicNavLinks]} signedIn={Boolean(user)} />
+          {user ? (
+            <ProfileMenu
+              name={user.name ?? ""}
+              email={user.email ?? ""}
+              avatarUrl={mediaUrl(profile?.avatarKey)}
+              publicProfileHref={
+                profile?.status === "approved"
+                  ? creativePath(profile.slug)
+                  : undefined
+              }
+              canModerate={role === "admin" || role === "owner"}
+              canManageTeam={role === "owner"}
+            />
+          ) : null}
         </div>
       </div>
     </header>

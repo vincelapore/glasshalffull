@@ -101,7 +101,7 @@ export function EventSubmissionCard({
                     <div>
                       <p className="text-sm font-medium">{creative.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {lineupRoleLabels.organizer}
+                        {lineupRoleLabels.organiser}
                         {creative.status !== "approved"
                           ? ` · profile ${statusLabels[creative.status].toLowerCase()}`
                           : null}

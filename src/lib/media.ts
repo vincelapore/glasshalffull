@@ -3,12 +3,17 @@ export const MEDIA_CONTENT_TYPE = "image/webp";
 export const MAX_COMPRESSED_BYTES = 800 * 1024;
 export const PRESIGN_TTL_SECONDS = 60;
 
-/** Profile work examples: one small WebP each, never a second rendition. */
+/** Stored avatar edge. Cropping exports this size; nothing larger is uploaded. */
+export const AVATAR_MAX_EDGE = 720;
+/** Device-only framing image. Discarded after crop and never uploaded. */
+export const AVATAR_CROP_SOURCE_EDGE = AVATAR_MAX_EDGE * 2;
+export const FLYER_MAX_EDGE = 1080;
+
+/** Profile work examples: one WebP each, never a second rendition. */
 export const MAX_WORK_PHOTOS = 6;
-export const MAX_WORK_PHOTO_BYTES = 220 * 1024;
-export const WORK_PHOTO_MAX_EDGE = 960;
-export const WORK_PHOTO_QUALITY = 0.66;
-export const MAX_WORK_PHOTO_SOURCE_BYTES = 12 * 1024 * 1024;
+export const MAX_WORK_PHOTO_BYTES = 600 * 1024;
+export const WORK_PHOTO_MAX_EDGE = 1200;
+export const WORK_PHOTO_QUALITY = 0.8;
 
 export type UploadKind = "avatar" | "flyer" | "work";
 
