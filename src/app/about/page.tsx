@@ -35,7 +35,7 @@ export default function AboutPage() {
         <p>
           A name on a flyer doesn&apos;t tell you much on its own. We put a
           face to it, so you feel more connected to the event before you even
-          walk in.           The interviews and the bits from backstage are on{" "}
+          walk in. The interviews and the bits from backstage are on{" "}
           <TextLink href="/" variant="inline">the overflow</TextLink>, and
           that&apos;s how these events get the hype they deserve.
         </p>
