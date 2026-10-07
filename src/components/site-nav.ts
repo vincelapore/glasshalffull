@@ -10,3 +10,8 @@ export type NavLink = {
 };
 
 export const navLinks = publicNavLinks;
+
+export const mobileNavEvents = {
+  closeMenu: "ghf-close-mobile-nav",
+  closeSearch: "ghf-close-nav-search",
+} as const;

@@ -77,11 +77,6 @@ export default async function HomePage({
       : approvedCreatives.filter((creative) => creative.city === activeCity)
   ).slice(0, 8);
 
-  const cityCopy =
-    activeCity === "all"
-      ? "across Brisbane / Meanjin and Melbourne / Naarm"
-      : `in ${cityLabels[activeCity]}`;
-
   return (
     <Page className="flex flex-col gap-14 py-12">
       <PageHeader
@@ -137,7 +132,7 @@ export default async function HomePage({
       <section className="space-y-5">
         <SectionHeader
           title="Featured Events"
-          description={<>Coming up {cityCopy}.</>}
+          description="Browse and find events that'll tickle your pick— uhh, fancy."
           action={
             <TextLink href={cityBrowseHref("/events", activeCity)}>
               View all
@@ -169,7 +164,7 @@ export default async function HomePage({
       <section className="space-y-5">
         <SectionHeader
           title="Discover Creatives"
-          description="Without asking a friend of a friend."
+          description="Find that missing piece to your project without asking a friend of a friend of a friend of a fr..."
           action={
             <TextLink href={cityBrowseHref("/creatives", activeCity)}>
               View all

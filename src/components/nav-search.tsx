@@ -55,7 +55,15 @@ function creativesHref(category: Craft, city: NavCity) {
   return `/creatives?${params.toString()}`;
 }
 
-export function NavSearch({ className }: { className?: string }) {
+export function NavSearch({
+  className,
+  bare = false,
+  hideIcon = false,
+}: {
+  className?: string;
+  bare?: boolean;
+  hideIcon?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
@@ -68,9 +76,11 @@ export function NavSearch({ className }: { className?: string }) {
   }
 
   return (
-    <div className={cn("nav-search", className)}>
+    <div className={cn("nav-search", bare && "nav-search-bare", className)}>
       <span className="inline-flex min-w-0 items-center gap-1.5">
-        <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        {hideIcon ? null : (
+          <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        )}
         <span className="shrink-0 text-muted-foreground">i&apos;m looking for a</span>
         <CraftInput
           value={category}
@@ -95,11 +105,21 @@ export function NavSearch({ className }: { className?: string }) {
   );
 }
 
-export function NavSearchSkeleton({ className }: { className?: string }) {
+export function NavSearchSkeleton({
+  className,
+  bare = false,
+  hideIcon = false,
+}: {
+  className?: string;
+  bare?: boolean;
+  hideIcon?: boolean;
+}) {
   return (
-    <div className={cn("nav-search", className)} aria-hidden>
+    <div className={cn("nav-search", bare && "nav-search-bare", className)} aria-hidden>
       <span className="inline-flex items-center gap-1.5">
-        <Search className="size-4 shrink-0 text-muted-foreground" />
+        {hideIcon ? null : (
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+        )}
         <span className="text-muted-foreground">i&apos;m looking for a</span>
         <span className="inline-flex items-center gap-1 font-medium text-foreground">
           <ChevronDown className="size-3.5" />

@@ -25,8 +25,7 @@ export function SiteFooter() {
           <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="font-heading text-lg leading-snug sm:text-xl">
-                Pour back in. Stay connected{" "}
-                <span className="whitespace-nowrap">muchacho. 🚰</span>
+                Stay connected, muchacho.
               </p>
               <a
                 href={instagramHref}

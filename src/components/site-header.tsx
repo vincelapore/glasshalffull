@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { MobileNav } from "@/components/mobile-nav";
+import { MobileNavSearch } from "@/components/mobile-nav-search";
 import { NavSearch, NavSearchSkeleton } from "@/components/nav-search";
 import { ProfileMenu } from "@/components/profile-menu";
 import { publicNavLinks } from "@/components/site-nav";
@@ -67,7 +68,10 @@ export async function SiteHeader() {
           )}
         </nav>
 
-        <div className="pointer-events-auto relative ml-auto flex shrink-0 items-center gap-1 lg:ml-0">
+        <div
+          data-nav-cluster
+          className="pointer-events-auto relative ml-auto flex shrink-0 items-center gap-1 lg:ml-0"
+        >
           <MobileNav links={[...publicNavLinks]} signedIn={Boolean(user)} />
           {user ? (
             <ProfileMenu
@@ -85,6 +89,7 @@ export async function SiteHeader() {
           ) : null}
         </div>
       </div>
+      <MobileNavSearch />
     </header>
   );
 }
