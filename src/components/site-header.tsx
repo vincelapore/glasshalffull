@@ -22,7 +22,7 @@ export async function SiteHeader() {
     : [null, null];
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50">
+    <header className="pointer-events-none fixed inset-x-0 top-3 z-50">
       <div
         className={`mx-auto flex h-14 ${pageWidths.wide} items-center gap-4 px-4 sm:px-6`}
       >
