@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { ExternalImage } from "@/components/media/external-image";
 import { mediaUrl } from "@/lib/media";
 
@@ -29,11 +31,13 @@ export function EventOrganiserFaces({
           key={organiser.id}
           title={organiser.name}
           className="poster-face relative size-8 overflow-hidden rounded-full ring-2 ring-white"
-          style={{
-            zIndex: index + 1,
-            marginLeft: index === 0 ? 0 : -8,
-            "--face": index,
-          }}
+          style={
+            {
+              zIndex: index + 1,
+              marginLeft: index === 0 ? 0 : -8,
+              "--face": index,
+            } as CSSProperties
+          }
         >
           <ExternalImage
             src={mediaUrl(organiser.avatarKey)}
@@ -50,11 +54,13 @@ export function EventOrganiserFaces({
       {extra > 0 ? (
         <span
           className="poster-face relative flex size-8 items-center justify-center rounded-full bg-neutral-900 font-mono text-[10px] text-white ring-2 ring-white"
-          style={{
-            zIndex: shown.length + 1,
-            marginLeft: -8,
-            "--face": shown.length,
-          }}
+          style={
+            {
+              zIndex: shown.length + 1,
+              marginLeft: -8,
+              "--face": shown.length,
+            } as CSSProperties
+          }
         >
           +{extra}
         </span>
