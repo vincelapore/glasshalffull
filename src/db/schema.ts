@@ -37,6 +37,7 @@ export const eventCategoryEnum = pgEnum("event_category", [
   "music",
   "art",
   "theatre",
+  "dance",
   "queer",
   "fashion",
   "community",

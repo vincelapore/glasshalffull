@@ -44,6 +44,7 @@ export const eventCategoryLabels: Record<(typeof eventCategories)[number], strin
     music: "Music",
     art: "Art",
     theatre: "Theatre",
+    dance: "Dance",
     queer: "Queer",
     fashion: "Fashion",
     community: "Community",

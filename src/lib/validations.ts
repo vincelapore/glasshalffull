@@ -28,6 +28,7 @@ export const eventCategories = [
   "music",
   "art",
   "theatre",
+  "dance",
   "queer",
   "fashion",
   "community",
