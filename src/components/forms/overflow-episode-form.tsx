@@ -97,7 +97,7 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
       let coverKey = values.coverKey;
 
       if (pendingCover) {
-        const uploaded = await compressAndUploadPhoto(pendingCover, "flyer");
+        const uploaded = await compressAndUploadPhoto(pendingCover, "overflow");
         if (!uploaded.success) {
           setFormError(uploaded.message);
           return;
@@ -227,7 +227,7 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
           <PhotoUploadField
             id="coverKey"
             label="Poster"
-            kind="flyer"
+            kind="overflow"
             storedKey={form.watch("coverKey")}
             file={pendingCover}
             error={fieldState.error?.message}

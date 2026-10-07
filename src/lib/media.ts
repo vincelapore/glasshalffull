@@ -9,13 +9,22 @@ export const AVATAR_MAX_EDGE = 720;
 export const AVATAR_CROP_SOURCE_EDGE = AVATAR_MAX_EDGE * 2;
 export const FLYER_MAX_EDGE = 1080;
 
+/**
+ * Overflow posters. Sharper than a flyer, still one WebP in the flyers prefix.
+ * The byte cap stops a phone original from being stored.
+ */
+export const OVERFLOW_MAX_EDGE = 2048;
+export const OVERFLOW_MIN_EDGE = 1600;
+export const OVERFLOW_MAX_BYTES = 1280 * 1024;
+export const OVERFLOW_QUALITY = 0.84;
+
 /** Profile work examples: one WebP each, never a second rendition. */
 export const MAX_WORK_PHOTOS = 6;
 export const MAX_WORK_PHOTO_BYTES = 600 * 1024;
 export const WORK_PHOTO_MAX_EDGE = 1200;
 export const WORK_PHOTO_QUALITY = 0.8;
 
-export type UploadKind = "avatar" | "flyer" | "work";
+export type UploadKind = "avatar" | "flyer" | "work" | "overflow";
 
 const UUID_WEBP =
   "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.webp";
@@ -62,6 +71,7 @@ export function mediaObjectKey(kind: UploadKind, ownerUserId?: string) {
     }
     return `work/${workOwnerSegment(ownerUserId)}/${id}.webp`;
   }
+  if (kind === "overflow") return `flyers/${id}.webp`;
   return `${mediaPrefix(kind)}/${id}.webp`;
 }
 

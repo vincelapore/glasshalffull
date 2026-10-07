@@ -12,7 +12,7 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-auto px-3 pt-10 pb-3 sm:px-4 sm:pb-4">
-      <div className="relative overflow-clip rounded-md bg-[#3c5cff] text-white">
+      <div className="relative overflow-clip rounded-[1.5rem] bg-[#3c5cff] text-white">
         <Image
           src="/mark.png"
           alt=""
@@ -21,7 +21,7 @@ export function SiteFooter() {
           aria-hidden
           className="pointer-events-none absolute -bottom-10 -left-10 h-[16rem] w-auto max-w-none opacity-45 select-none sm:-bottom-14 sm:-left-14 sm:h-[22rem]"
         />
-        <div className="relative flex flex-col px-6 py-8 sm:px-10 sm:py-10 md:px-12">
+        <div className="relative flex flex-col px-5 py-6 sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="font-heading text-lg leading-snug sm:text-xl">

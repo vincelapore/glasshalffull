@@ -148,9 +148,12 @@ export function OverflowBanner({
                     fallback={<span className="block aspect-square w-full bg-neutral-900" />}
                   />
                 </span>
-                <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.9),0_0_16px_rgb(0_0_0/0.75)]">
-                  <span className="text-sm">the overflow #{episode.number}</span>
-                  <span className="font-heading text-4xl font-semibold tracking-wide uppercase">
+                <span className="pointer-events-none absolute inset-0 bg-black/25" />
+                <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
+                  <span className="font-mono text-sm">
+                    the overflow #{episode.number}
+                  </span>
+                  <span className="font-mono text-4xl tracking-wide uppercase">
                     {episode.title}
                   </span>
                   <span className="text-sm lowercase">

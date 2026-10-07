@@ -11,6 +11,10 @@ import {
   MAX_WORK_PHOTO_BYTES,
   MEDIA_CACHE_CONTROL,
   MEDIA_CONTENT_TYPE,
+  OVERFLOW_MAX_BYTES,
+  OVERFLOW_MAX_EDGE,
+  OVERFLOW_MIN_EDGE,
+  OVERFLOW_QUALITY,
   WORK_PHOTO_MAX_EDGE,
   WORK_PHOTO_QUALITY,
   type UploadKind,
@@ -24,25 +28,41 @@ export type UploadPhotoResult =
 
 const OUTPUT: Record<
   UploadKind,
-  { maxBytes: number; maxEdge: number; minEdge: number; quality: number }
+  {
+    maxBytes: number;
+    maxEdge: number;
+    minEdge: number;
+    quality: number;
+    minQuality: number;
+  }
 > = {
   avatar: {
     maxBytes: MAX_COMPRESSED_BYTES,
     maxEdge: AVATAR_MAX_EDGE,
     minEdge: 480,
     quality: 0.8,
+    minQuality: 0.45,
   },
   flyer: {
     maxBytes: MAX_COMPRESSED_BYTES,
     maxEdge: FLYER_MAX_EDGE,
     minEdge: 480,
     quality: 0.8,
+    minQuality: 0.45,
   },
   work: {
     maxBytes: MAX_WORK_PHOTO_BYTES,
     maxEdge: WORK_PHOTO_MAX_EDGE,
     minEdge: 960,
     quality: WORK_PHOTO_QUALITY,
+    minQuality: 0.45,
+  },
+  overflow: {
+    maxBytes: OVERFLOW_MAX_BYTES,
+    maxEdge: OVERFLOW_MAX_EDGE,
+    minEdge: OVERFLOW_MIN_EDGE,
+    quality: OVERFLOW_QUALITY,
+    minQuality: 0.75,
   },
 };
 
@@ -61,7 +81,8 @@ async function shrinkToBudget(
   maxBytes: number,
   maxEdge: number,
   minEdge: number,
-  quality: number
+  quality: number,
+  minQuality: number
 ) {
   let edge = maxEdge;
   let nextQuality = quality;
@@ -79,7 +100,7 @@ async function shrinkToBudget(
     });
     if (current.size <= maxBytes) return current;
     edge = Math.max(minEdge, Math.round(edge * 0.75));
-    nextQuality = Math.max(0.45, nextQuality - 0.12);
+    nextQuality = Math.max(minQuality, nextQuality - 0.12);
   }
 
   if (current.size <= maxBytes) return current;
@@ -102,7 +123,8 @@ export async function compressPhoto(file: File, kind: UploadKind): Promise<File>
     limits.maxBytes,
     limits.maxEdge,
     limits.minEdge,
-    limits.quality
+    limits.quality,
+    limits.minQuality
   );
   preparedFiles.add(compressed);
   return compressed;
@@ -160,6 +182,52 @@ export async function exportAvatarCrop(
 
   const file = new File([blob], "avatar.webp", { type: MEDIA_CONTENT_TYPE });
   if (file.size > MAX_COMPRESSED_BYTES) return compressPhoto(file, "avatar");
+  preparedFiles.add(file);
+  return file;
+}
+
+/**
+ * Square poster crop from the original pixels. Never upscales.
+ * Only this file may be uploaded.
+ */
+export async function exportOverflowCrop(
+  image: CanvasImageSource,
+  source: { sx: number; sy: number; size: number }
+): Promise<File> {
+  if (source.size <= 0) {
+    throw new Error("Could not crop that photo.");
+  }
+
+  const edge = Math.max(1, Math.min(OVERFLOW_MAX_EDGE, Math.round(source.size)));
+  const canvas = document.createElement("canvas");
+  canvas.width = edge;
+  canvas.height = edge;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not crop that photo.");
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(
+    image,
+    source.sx,
+    source.sy,
+    source.size,
+    source.size,
+    0,
+    0,
+    edge,
+    edge
+  );
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, MEDIA_CONTENT_TYPE, OVERFLOW_QUALITY);
+  });
+  canvas.width = 0;
+  canvas.height = 0;
+  if (!blob) throw new Error("Could not crop that photo.");
+
+  const file = new File([blob], "poster.webp", { type: MEDIA_CONTENT_TYPE });
+  if (file.size > OVERFLOW_MAX_BYTES) return compressPhoto(file, "overflow");
   preparedFiles.add(file);
   return file;
 }

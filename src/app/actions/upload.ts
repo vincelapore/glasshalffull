@@ -18,7 +18,7 @@ export type CreateUploadUrlResult =
 export async function createUploadUrlAction(
   kind: UploadKind
 ): Promise<CreateUploadUrlResult> {
-  if (kind !== "avatar" && kind !== "flyer" && kind !== "work") {
+  if (kind !== "avatar" && kind !== "flyer" && kind !== "work" && kind !== "overflow") {
     return { success: false, message: "That file type isn’t supported." };
   }
 

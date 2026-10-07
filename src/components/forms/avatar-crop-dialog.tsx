@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { exportAvatarCrop } from "@/lib/upload-photo";
+import { cn } from "@/lib/utils";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -25,6 +26,13 @@ type AvatarCropDialogProps = {
   src: string | null;
   onCancel: () => void;
   onConfirm: (file: File) => void;
+  title?: string;
+  description?: string;
+  popupClassName?: string;
+  exportCrop?: (
+    image: CanvasImageSource,
+    source: { sx: number; sy: number; size: number }
+  ) => Promise<File>;
 };
 
 type Point = { x: number; y: number };
@@ -56,6 +64,10 @@ export function AvatarCropDialog({
   src,
   onCancel,
   onConfirm,
+  title = "Crop profile photo",
+  description = "Drag to reposition. This square is what people see on your profile. Round avatars use the middle.",
+  popupClassName,
+  exportCrop = exportAvatarCrop,
 }: AvatarCropDialogProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const pointers = useRef(new Map<number, Point>());
@@ -173,7 +185,7 @@ export function AvatarCropDialog({
     setError(null);
     try {
       const scale = image.naturalWidth / layout.displayWidth;
-      const file = await exportAvatarCrop(image, {
+      const file = await exportCrop(image, {
         sx: -layout.x * scale,
         sy: -layout.y * scale,
         size: frameSize * scale,
@@ -188,12 +200,14 @@ export function AvatarCropDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-sm overflow-y-auto">
-        <DialogTitle>Crop profile photo</DialogTitle>
-        <DialogDescription className="mt-1">
-          Drag to reposition. This square is what people see on your profile.
-          Round avatars use the middle.
-        </DialogDescription>
+      <DialogPopup
+        className={cn(
+          "max-h-[calc(100dvh-2rem)] max-w-sm overflow-y-auto",
+          popupClassName
+        )}
+      >
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription className="mt-1">{description}</DialogDescription>
 
         <div
           ref={setFrameNode}

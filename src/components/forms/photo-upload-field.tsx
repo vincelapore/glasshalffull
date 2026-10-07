@@ -10,6 +10,7 @@ import { mediaUrl } from "@/lib/media";
 import {
   ACCEPTED_IMAGE_TYPES,
   compressPhoto,
+  exportOverflowCrop,
   isAcceptedImage,
   prepareAvatarCropSource,
 } from "@/lib/upload-photo";
@@ -25,8 +26,8 @@ type PhotoUploadFieldProps = {
   disabled?: boolean;
   /** Profile photos: frame a square crop before the file is kept. */
   crop?: boolean;
-  /** Flyers are shrunk in the browser as soon as they are chosen. */
-  kind?: "flyer";
+  /** Shrunk in the browser as soon as the file is chosen. */
+  kind?: "flyer" | "overflow";
 };
 
 export function PhotoUploadField({
@@ -50,6 +51,7 @@ export function PhotoUploadField({
 
   const previewUrl = objectUrl ?? (storedKey ? mediaUrl(storedKey) : undefined);
   const busy = disabled || preparing;
+  const crops = crop || kind === "overflow";
 
   useEffect(() => {
     if (!file) {
@@ -83,8 +85,11 @@ export function PhotoUploadField({
     setLocalError(null);
     setPreparing(true);
     try {
-      if (crop) {
-        const source = await prepareAvatarCropSource(next);
+      if (crops) {
+        // Profile crops frame a small preview. Posters crop the original so the
+        // stored square keeps those pixels.
+        const source =
+          kind === "overflow" ? next : await prepareAvatarCropSource(next);
         const url = URL.createObjectURL(source);
         setCropUrl((current) => {
           if (current) URL.revokeObjectURL(current);
@@ -140,7 +145,11 @@ export function PhotoUploadField({
         }}
         className={cn(
           "relative flex overflow-hidden border border-dashed text-left transition-colors",
-          crop ? "aspect-square w-full max-w-48 rounded-2xl" : "min-h-40 w-full rounded-xl",
+          kind === "overflow"
+            ? "aspect-square w-full max-w-sm rounded-lg"
+            : crop
+              ? "aspect-square w-full max-w-48 rounded-2xl"
+              : "min-h-40 w-full rounded-xl",
           dragging
             ? "border-foreground/50 bg-muted/40"
             : "border-border bg-muted/20 hover:bg-muted/30",
@@ -169,10 +178,18 @@ export function PhotoUploadField({
         ) : null}
       </button>
       <FieldError>{localError ?? error}</FieldError>
-      {crop ? (
+      {crops ? (
         <AvatarCropDialog
           open={cropOpen && Boolean(cropUrl)}
           src={cropUrl}
+          title={kind === "overflow" ? "Crop poster" : undefined}
+          description={
+            kind === "overflow"
+              ? "Drag to reposition. This square is the poster."
+              : undefined
+          }
+          popupClassName={kind === "overflow" ? "max-w-md" : undefined}
+          exportCrop={kind === "overflow" ? exportOverflowCrop : undefined}
           onCancel={() => setCropOpen(false)}
           onConfirm={(cropped) => {
             onFileChange(cropped);
