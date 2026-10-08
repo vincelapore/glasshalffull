@@ -27,6 +27,30 @@ const FIND_WORDS = [
 const ICON_SIZE = 44;
 const WORD_INTERVAL_MS = 2600;
 
+function sideRoom(header: Element | null | undefined) {
+  const logo = header?.querySelector("a");
+  const cluster = header?.querySelector("[data-nav-cluster]");
+  if (!logo || !cluster) return window.innerWidth - 24;
+
+  const gap = 12;
+  let right = cluster.getBoundingClientRect().left;
+  const nav = header?.querySelector("[data-nav-links]");
+  if (nav) {
+    const rect = nav.getBoundingClientRect();
+    if (rect.width > 1) right = Math.min(right, rect.left);
+  }
+
+  const left = logo.getBoundingClientRect().right;
+  const desktop = window.matchMedia("(min-width: 64rem)").matches;
+  if (desktop) return right - left - 16 - gap;
+
+  const center = window.innerWidth / 2;
+  return (
+    2 *
+    Math.min(center - left - gap, right - center - gap)
+  );
+}
+
 export function MobileNavSearch() {
   const [open, setOpen] = useState(false);
   const [labeled, setLabeled] = useState(false);
@@ -36,6 +60,10 @@ export function MobileNavSearch() {
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
+  const chromeRef = useRef(0);
+  const openRef = useRef(false);
+  const [swap, setSwap] = useState(false);
+  const [openWidth, setOpenWidth] = useState(ICON_SIZE);
   const pathname = usePathname();
   const bodyId = useId();
 
@@ -47,15 +75,6 @@ export function MobileNavSearch() {
     const close = () => setOpen(false);
     window.addEventListener(mobileNavEvents.closeSearch, close);
     return () => window.removeEventListener(mobileNavEvents.closeSearch, close);
-  }, []);
-
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 64rem)");
-    const onChange = () => {
-      if (media.matches) setOpen(false);
-    };
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
   }, []);
 
   useLayoutEffect(() => {
@@ -86,14 +105,15 @@ export function MobileNavSearch() {
         return;
       }
 
-      const center = window.innerWidth / 2;
-      const gap = 12;
-      const room =
-        2 *
-        Math.min(
-          center - logo.getBoundingClientRect().right - gap,
-          cluster.getBoundingClientRect().left - center - gap,
+      const prompt = samples[0]?.querySelector(".nav-search-prompt");
+      const pill = samples[0]?.parentElement;
+      if (prompt && pill) {
+        chromeRef.current = Math.ceil(
+          pill.getBoundingClientRect().width - prompt.getBoundingClientRect().width,
         );
+      }
+
+      const room = sideRoom(header);
 
       const nextLabeled = Math.max(...nextWidths) <= room;
       setWidths((current) =>
@@ -177,40 +197,33 @@ export function MobileNavSearch() {
     };
   }, [open]);
 
-  function readOpenHeight() {
-    const panel = panelRef.current;
-    const frame = anchorRef.current?.parentElement;
-    if (!panel || !frame) return ICON_SIZE;
+  useLayoutEffect(() => {
+    if (openRef.current === open) return;
+    openRef.current = open;
+    setSwap(true);
+    const timeout = window.setTimeout(() => setSwap(false), 280);
+    return () => window.clearTimeout(timeout);
+  }, [open]);
 
-    const width = Math.min(frame.clientWidth - 24, 36 * 16);
-    const snapshot = {
-      position: panel.style.position,
-      width: panel.style.width,
-      height: panel.style.height,
-      inset: panel.style.inset,
-    };
-    panel.style.position = "relative";
-    panel.style.inset = "auto";
-    panel.style.width = `${width}px`;
-    panel.style.height = "auto";
-    const border = anchorRef.current
-      ? parseFloat(getComputedStyle(anchorRef.current).borderTopWidth) +
-        parseFloat(getComputedStyle(anchorRef.current).borderBottomWidth)
-      : 0;
-    const height = Math.max(panel.scrollHeight + border, ICON_SIZE);
-    panel.style.position = snapshot.position;
-    panel.style.inset = snapshot.inset;
-    panel.style.width = snapshot.width;
-    panel.style.height = snapshot.height;
-    return height;
+  function measureOpenWidth() {
+    const anchor = anchorRef.current;
+    const panel = panelRef.current;
+    const search = panel?.querySelector<HTMLElement>(".nav-search");
+    if (!anchor || !search) return ICON_SIZE;
+
+    const room = Math.min(
+      window.innerWidth - 24,
+      36 * 16,
+      sideRoom(anchor.closest("header")),
+    );
+    const text = Math.ceil(search.scrollWidth);
+    const chrome = chromeRef.current || ICON_SIZE;
+    return Math.max(ICON_SIZE, Math.min(room, chrome + text));
   }
 
   useLayoutEffect(() => {
     if (!open) return;
-    const fit = () => {
-      const height = readOpenHeight();
-      anchorRef.current?.style.setProperty("--open-height", `${height}px`);
-    };
+    const fit = () => setOpenWidth(measureOpenWidth());
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
@@ -218,8 +231,7 @@ export function MobileNavSearch() {
 
   function toggle() {
     if (!open) {
-      const height = readOpenHeight();
-      anchorRef.current?.style.setProperty("--open-height", `${height}px`);
+      setOpenWidth(measureOpenWidth());
       window.dispatchEvent(new Event(mobileNavEvents.closeMenu));
     }
     setOpen((value) => !value);
@@ -229,14 +241,17 @@ export function MobileNavSearch() {
     labeled && widths[index] ? widths[index] : ICON_SIZE;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-14 lg:hidden">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-14 lg:static lg:inset-auto lg:z-auto lg:h-auto lg:w-auto">
       <div
         ref={anchorRef}
         className="nav-search-anchor"
         data-open={open ? "" : undefined}
         data-labeled={labeled ? "" : undefined}
-        style={open ? undefined : { width: closedWidth }}
+        style={{ width: open ? openWidth : closedWidth }}
       >
+        <span className="nav-search-icon" aria-hidden>
+          <Search className="size-4" />
+        </span>
         <button
           type="button"
           className="nav-search-trigger"
@@ -244,19 +259,36 @@ export function MobileNavSearch() {
           aria-controls={bodyId}
           aria-label={open ? "Close search" : "Search"}
           onClick={toggle}
-        >
-          <Search className="size-4" />
-          {labeled ? (
-            <span className="nav-search-prompt">
+        />
+        <div className="nav-search-slot">
+          {labeled && (!open || swap) ? (
+            <span
+              className={`nav-search-prompt${
+                open && swap ? " is-out" : !open && swap ? " is-in" : ""
+              }`}
+            >
               <span className="nav-search-find">find</span>
               <WordSwap word={FIND_WORDS[index]} width={wordWidths[index]} />
             </span>
           ) : null}
-        </button>
-        <div ref={panelRef} id={bodyId} className="nav-search-panel" inert={!open}>
-          <Suspense fallback={<NavSearchSkeleton bare />}>
-            <NavSearch bare />
-          </Suspense>
+          <div
+            ref={panelRef}
+            id={bodyId}
+            className={`nav-search-panel${
+              open && swap
+                ? " is-in"
+                : !open && swap
+                  ? " is-out"
+                  : open
+                    ? ""
+                    : " is-parked"
+            }`}
+            inert={!open}
+          >
+            <Suspense fallback={<NavSearchSkeleton bare hideIcon />}>
+              <NavSearch bare hideIcon />
+            </Suspense>
+          </div>
         </div>
       </div>
       <div ref={measureRef} className="nav-search-measure" aria-hidden>

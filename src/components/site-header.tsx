@@ -1,10 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileNavSearch } from "@/components/mobile-nav-search";
-import { NavSearch, NavSearchSkeleton } from "@/components/nav-search";
 import { ProfileMenu } from "@/components/profile-menu";
 import { publicNavLinks } from "@/components/site-nav";
 import { pageWidths } from "@/components/ui/page";
@@ -42,13 +40,12 @@ export async function SiteHeader() {
           />
         </Link>
 
-        <div className="pointer-events-auto hidden shrink-0 lg:block">
-          <Suspense fallback={<NavSearchSkeleton />}>
-            <NavSearch />
-          </Suspense>
-        </div>
+        <MobileNavSearch />
 
-        <nav className="pointer-events-auto ml-auto hidden items-center gap-5 text-sm text-muted-foreground [text-shadow:0_0_12px_var(--background),0_0_4px_var(--background)] lg:flex">
+        <nav
+          data-nav-links
+          className="pointer-events-auto ml-auto hidden items-center gap-5 text-sm text-muted-foreground [text-shadow:0_0_12px_var(--background),0_0_4px_var(--background)] lg:flex"
+        >
           {publicNavLinks.map((link) => (
             <Link
               key={link.href}
@@ -89,7 +86,6 @@ export async function SiteHeader() {
           ) : null}
         </div>
       </div>
-      <MobileNavSearch />
     </header>
   );
 }
