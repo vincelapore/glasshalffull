@@ -344,6 +344,37 @@
       left: auto;
       translate: none;
     }
+
+    /* The open bar already names the city, so the picker beside it clears out. */
+    [data-nav-city] {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-width: 0;
+      opacity: 1;
+      transition:
+        grid-template-columns 280ms var(--ease-in-out),
+        opacity 280ms var(--ease-in-out),
+        margin-right 280ms var(--ease-in-out),
+        visibility 0s linear;
+    }
+
+    [data-nav-city] > * {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    [data-site-header]:has(.nav-search-anchor[data-open]) [data-nav-city] {
+      grid-template-columns: 0fr;
+      margin-right: -1rem;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        grid-template-columns 280ms var(--ease-in-out),
+        opacity 160ms var(--ease-out),
+        margin-right 280ms var(--ease-in-out),
+        visibility 0s linear 160ms;
+    }
   }
 
   .nav-search-anchor[data-open] {
@@ -924,7 +955,8 @@
   .nav-search-anchor[data-open] .nav-search-panel,
   .nav-search-anchor:not([data-labeled]) .nav-search-icon,
   [data-site-header] > div > a,
-  [data-site-header] [data-nav-cluster] {
+  [data-site-header] [data-nav-cluster],
+  [data-nav-city] {
     transition: none;
     scale: none;
   }

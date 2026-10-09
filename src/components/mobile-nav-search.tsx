@@ -31,7 +31,7 @@ const FIND_WORDS = [
 const ICON_SIZE = 44;
 const WORD_INTERVAL_MS = 2600;
 
-function sideRoom(header: Element | null | undefined) {
+function sideRoom(header: Element | null | undefined, ignoreCity = false) {
   const anchor = header?.querySelector("[data-nav-anchor]");
   const cluster = header?.querySelector("[data-nav-cluster]");
   if (!anchor || !cluster) return window.innerWidth - 24;
@@ -47,8 +47,10 @@ function sideRoom(header: Element | null | undefined) {
   const left = anchor.getBoundingClientRect().right;
   const desktop = window.matchMedia("(min-width: 64rem)").matches;
   if (desktop) {
-    const city = header?.querySelector("[data-nav-city]");
-    const cityWidth = city ? Math.ceil(city.getBoundingClientRect().width) : 0;
+    const city = ignoreCity
+      ? null
+      : header?.querySelector("[data-nav-city] button");
+    const cityWidth = city ? Math.ceil(city.scrollWidth) : 0;
     const cityReserve = cityWidth > 1 ? cityWidth + 16 : 0;
     return right - left - 16 - gap - cityReserve;
   }
@@ -263,7 +265,7 @@ export function MobileNavSearch() {
     if (!search) return ICON_SIZE;
 
     const room = isDesktopNav()
-      ? Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header))
+      ? Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header, true))
       : mobileOpenRoom(header);
     const text = Math.ceil(search.scrollWidth);
     const chrome = chromeRef.current || ICON_SIZE;
@@ -274,15 +276,9 @@ export function MobileNavSearch() {
     if (!open) return;
     const fit = () => setOpenWidth(measureOpenWidth());
     fit();
-    const city = anchorRef.current?.closest("header")?.querySelector("[data-nav-city]");
-    const observer = new ResizeObserver(fit);
-    if (city) observer.observe(city);
     window.addEventListener("resize", fit);
     document.fonts?.ready.then(fit).catch(() => {});
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", fit);
-    };
+    return () => window.removeEventListener("resize", fit);
   }, [open, compact, desktop]);
 
   useEffect(() => {

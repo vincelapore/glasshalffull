@@ -62,13 +62,13 @@ export function SiteFooter() {
               <p className="text-xs leading-snug text-white/85">
                 Glass Half Full operates on the unceded lands of the Yugera and
                 Turrbal peoples of Meanjin, and the Wurundjeri and Boon Wurrung
-                peoples of the Kulin Nation in Naarm. We pay our respects to
-                the original owners of this land and their legacy.
+                peoples of the Kulin Nation in Naarm. We pay our respects to the
+                original owners of this land and their legacy.
               </p>
               <div className="text-[11px] text-white/70">
                 <p>© {year} Glass Half Full</p>
                 <p>
-                  Website by{" "}
+                  Website design by{" "}
                   <Link
                     href={creativePath("vince-lapore")}
                     className="underline underline-offset-4 transition-opacity hover:opacity-60"
