@@ -11,7 +11,11 @@ import {
   useState,
 } from "react";
 
-import { NavSearch, NavSearchSkeleton } from "@/components/nav-search";
+import {
+  MobileNavQuery,
+  NavSearch,
+  NavSearchSkeleton,
+} from "@/components/nav-search";
 import { mobileNavEvents } from "@/components/site-nav";
 
 const FIND_WORDS = [
@@ -60,16 +64,8 @@ function mobileOpenRoom(header: Element | null | undefined) {
   return Math.max(ICON_SIZE, Math.floor(rect.width - pad));
 }
 
-function openInnerWidth(anchor: HTMLElement, outer: number) {
-  const style = getComputedStyle(anchor);
-  const pad = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  const border =
-    parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
-  const icon =
-    anchor.querySelector(".nav-search-icon")?.getBoundingClientRect().width ??
-    16;
-  const gap = parseFloat(style.columnGap) || parseFloat(style.gap) || 0;
-  return Math.max(0, Math.floor(outer - pad - border - icon - gap));
+function isDesktopNav() {
+  return window.matchMedia("(min-width: 64rem)").matches;
 }
 
 export function MobileNavSearch() {
@@ -85,13 +81,22 @@ export function MobileNavSearch() {
   const openRef = useRef(false);
   const [swap, setSwap] = useState(false);
   const [openWidth, setOpenWidth] = useState(ICON_SIZE);
-  const [openInner, setOpenInner] = useState(0);
+  const [desktop, setDesktop] = useState(true);
+  const openedAt = useRef(0);
   const pathname = usePathname();
   const bodyId = useId();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useLayoutEffect(() => {
+    const media = window.matchMedia("(min-width: 64rem)");
+    const sync = () => setDesktop(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const close = () => setOpen(false);
@@ -231,39 +236,62 @@ export function MobileNavSearch() {
     const anchor = anchorRef.current;
     const panel = panelRef.current;
     const search = panel?.querySelector<HTMLElement>(".nav-search");
-    if (!anchor || !search) return { width: ICON_SIZE, inner: 0 };
+    if (!anchor) return ICON_SIZE;
 
     const header = anchor.closest("header");
-    const desktop = window.matchMedia("(min-width: 64rem)").matches;
-    if (!desktop) {
-      const width = mobileOpenRoom(header);
-      return { width, inner: openInnerWidth(anchor, width) };
-    }
+    if (!isDesktopNav()) return mobileOpenRoom(header);
+    if (!search) return ICON_SIZE;
 
     const room = Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header));
     const text = Math.ceil(search.scrollWidth);
     const chrome = chromeRef.current || ICON_SIZE;
-    return { width: Math.max(ICON_SIZE, Math.min(room, chrome + text)), inner: 0 };
+    return Math.max(ICON_SIZE, Math.min(room, chrome + text));
   }
 
   useLayoutEffect(() => {
     if (!open) return;
-    const fit = () => {
-      const next = measureOpenWidth();
-      setOpenWidth(next.width);
-      setOpenInner(next.inner);
-    };
+    const fit = () => setOpenWidth(measureOpenWidth());
     fit();
     window.addEventListener("resize", fit);
     document.fonts?.ready.then(fit).catch(() => {});
     return () => window.removeEventListener("resize", fit);
   }, [open]);
 
+  useEffect(() => {
+    if (!open || desktop) return;
+
+    const startY = window.scrollY;
+    const onScroll = () => {
+      if (Date.now() - openedAt.current < 800) return;
+      if (Math.abs(window.scrollY - startY) < 12) return;
+      setOpen(false);
+    };
+
+    const anchor = anchorRef.current;
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (next instanceof Node && anchor?.contains(next)) return;
+      if (next instanceof Element && next.closest("[role='listbox']")) return;
+      if (event.target instanceof Element && event.target.closest("select")) return;
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active instanceof Node && anchor?.contains(active)) return;
+        setOpen(false);
+      }, 80);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    anchor?.addEventListener("focusout", onFocusOut);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      anchor?.removeEventListener("focusout", onFocusOut);
+    };
+  }, [open, desktop]);
+
   function toggle() {
     if (!open) {
-      const next = measureOpenWidth();
-      setOpenWidth(next.width);
-      setOpenInner(next.inner);
+      openedAt.current = Date.now();
+      setOpenWidth(measureOpenWidth());
       window.dispatchEvent(new Event(mobileNavEvents.closeMenu));
     }
     setOpen((value) => !value);
@@ -274,15 +302,13 @@ export function MobileNavSearch() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-14 lg:static lg:inset-auto lg:z-auto lg:h-auto lg:w-auto">
+      <p className="nav-search-lead">I&apos;m looking for a</p>
       <div
         ref={anchorRef}
         className="nav-search-anchor"
         data-open={open ? "" : undefined}
         data-labeled={labeled ? "" : undefined}
-        style={{
-          width: open ? openWidth : closedWidth,
-          "--open-inner": open && openInner > 0 ? `${openInner}px` : undefined,
-        }}
+        style={{ width: open ? openWidth : closedWidth }}
       >
         <span className="nav-search-icon" aria-hidden>
           <Search className="size-4" />
@@ -320,8 +346,16 @@ export function MobileNavSearch() {
             }`}
             inert={!open}
           >
-            <Suspense fallback={<NavSearchSkeleton bare hideIcon />}>
-              <NavSearch bare hideIcon />
+            <Suspense
+              fallback={
+                desktop ? <NavSearchSkeleton bare hideIcon /> : <div className="nav-search-mobile" />
+              }
+            >
+              {desktop ? (
+                <NavSearch bare hideIcon />
+              ) : (
+                <MobileNavQuery active={open} noteAnchor={anchorRef.current} />
+              )}
             </Suspense>
           </div>
         </div>
