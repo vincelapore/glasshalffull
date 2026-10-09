@@ -386,8 +386,7 @@ function CreativePicker({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function onSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function search() {
     setMessage(null);
     startTransition(async () => {
       const result = await searchOverflowCreativesAction(query);
@@ -403,17 +402,27 @@ function CreativePicker({
 
   return (
     <div className="space-y-2">
-      <form onSubmit={onSearch} className="flex gap-2">
+      <div className="flex gap-2">
         <Input
           value={query}
           disabled={disabled || pending}
           placeholder="Search creatives"
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            search();
+          }}
         />
-        <Button type="submit" variant="outline" disabled={disabled || pending}>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled || pending}
+          onClick={search}
+        >
           Search
         </Button>
-      </form>
+      </div>
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
       {results.length > 0 ? (
         <ul className="overflow-hidden rounded-lg border border-border/70">
@@ -458,8 +467,7 @@ function EventPicker({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function onSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function search() {
     setMessage(null);
     startTransition(async () => {
       const result = await searchOverflowEventsAction(query);
@@ -484,17 +492,27 @@ function EventPicker({
         </div>
       ) : (
         <div className="space-y-2">
-          <form onSubmit={onSearch} className="flex gap-2">
+          <div className="flex gap-2">
             <Input
               value={query}
               disabled={disabled || pending}
               placeholder="Search events"
               onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                search();
+              }}
             />
-            <Button type="submit" variant="outline" disabled={disabled || pending}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={disabled || pending}
+              onClick={search}
+            >
               Search
             </Button>
-          </form>
+          </div>
           {message ? (
             <p className="text-sm text-muted-foreground">{message}</p>
           ) : null}

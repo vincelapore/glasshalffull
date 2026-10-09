@@ -21,7 +21,10 @@ export async function SiteHeader() {
     : [null, null];
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-3 z-50 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] data-hidden:-translate-y-[calc(100%+1rem)] motion-reduce:transition-none">
+    <header
+      data-site-header
+      className="pointer-events-none fixed inset-x-0 top-3 z-50 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] data-hidden:-translate-y-[calc(100%+1rem)] motion-reduce:transition-none"
+    >
       <div
         className={`mx-auto flex h-14 ${pageWidths.wide} items-center gap-4 px-4 sm:px-6`}
       >

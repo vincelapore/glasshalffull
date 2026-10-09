@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, getTableColumns, gte, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gte, ilike, inArray, or, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -65,11 +65,20 @@ const creativeCardColumns = {
   status: creatives.status,
 };
 
+/** Approved profiles that belong in the public directory. */
+function isDiscoverable() {
+  return sql`${creatives.userId} is null or not exists (
+    select 1 from account_settings
+    where account_settings.user_id = ${creatives.userId}
+      and account_settings.is_public = false
+  )`;
+}
+
 export async function getApprovedCreatives(limit?: number) {
   const query = db
     .select(creativeCardColumns)
     .from(creatives)
-    .where(eq(creatives.status, "approved"))
+    .where(and(eq(creatives.status, "approved"), isDiscoverable()))
     .orderBy(asc(creatives.name));
 
   if (limit) {
@@ -349,6 +358,23 @@ export async function getSubmissions(options?: {
   };
 }
 
+export async function countPendingSubmissions() {
+  const [eventRow, creativeRow] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(events)
+      .where(eq(events.status, "pending"))
+      .then((rows) => rows[0]),
+    db
+      .select({ value: count() })
+      .from(creatives)
+      .where(eq(creatives.status, "pending"))
+      .then((rows) => rows[0]),
+  ]);
+
+  return Number(eventRow?.value ?? 0) + Number(creativeRow?.value ?? 0);
+}
+
 export type OverflowFeatureView = {
   creativeId: string;
   name: string;
@@ -465,6 +491,56 @@ export async function getNextOverflowNumber() {
     .limit(1);
 
   return (row?.number ?? 0) + 1;
+}
+
+export async function searchAdminRecords(query: string, limit = 12) {
+  const term = query.trim().replace(/^@+/, "");
+  if (term.length < 2) return [];
+
+  const pattern = `%${term.replace(/[%_\\]/g, "\\$&")}%`;
+
+  const [eventRows, creativeRows] = await Promise.all([
+    db
+      .select({
+        id: events.id,
+        label: events.title,
+        status: events.status,
+      })
+      .from(events)
+      .where(ilike(events.title, pattern))
+      .orderBy(asc(events.title))
+      .limit(limit),
+    db
+      .select({
+        id: creatives.id,
+        label: creatives.name,
+        status: creatives.status,
+      })
+      .from(creatives)
+      .where(
+        or(
+          ilike(creatives.name, pattern),
+          ilike(creatives.instagramHandle, pattern)
+        )
+      )
+      .orderBy(asc(creatives.name))
+      .limit(limit),
+  ]);
+
+  return [
+    ...eventRows.map((row) => ({
+      kind: "event" as const,
+      href: `/admin/events/${row.id}/edit`,
+      ...row,
+    })),
+    ...creativeRows.map((row) => ({
+      kind: "profile" as const,
+      href: `/admin/creatives/${row.id}/edit`,
+      ...row,
+    })),
+  ]
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .slice(0, limit);
 }
 
 export async function searchApprovedEventsByTitle(query: string, limit = 8) {

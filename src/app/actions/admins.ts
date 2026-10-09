@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import { admins } from "@/db/schema";
+import { getAccountsByIds } from "@/lib/accounts";
 import { getOwnerEmails, requireOwner, syncStaff } from "@/lib/admin";
 
 export type AdminActionResult =
@@ -15,48 +16,57 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
-export async function addAdminAction(
+export async function addAdminsAction(
   _prev: AdminActionResult | null,
   formData: FormData
 ): Promise<AdminActionResult> {
   const actor = await requireOwner();
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const userIds = formData
+    .getAll("userId")
+    .map((value) => String(value));
+  const accounts = await getAccountsByIds(userIds);
 
-  if (!email || !email.includes("@")) {
-    return { success: false, message: "Enter a valid email address." };
+  if (accounts.length === 0) {
+    return { success: false, message: "Select an account." };
   }
 
   await syncStaff();
 
-  const [existing] = await db
+  const existing = await db
     .select({ email: admins.email, role: admins.role })
-    .from(admins)
-    .where(eq(admins.email, email))
-    .limit(1);
+    .from(admins);
+  const staffByEmail = new Map(
+    existing.map((person) => [person.email, person.role])
+  );
 
-  if (existing) {
+  const toAdd = accounts.filter((account) => !staffByEmail.has(account.email));
+
+  if (toAdd.length === 0) {
     return {
       success: false,
-      message:
-        existing.role === "owner"
-          ? "That email is already an owner."
-          : "That email is already an admin.",
+      message: "Those accounts are already on the team.",
     };
   }
 
   try {
-    await db.insert(admins).values({
-      email,
-      role: "admin",
-      createdByEmail: actor.email?.toLowerCase() ?? null,
-    });
+    await db.insert(admins).values(
+      toAdd.map((account) => ({
+        email: account.email,
+        role: "admin" as const,
+        createdByEmail: actor.email?.toLowerCase() ?? null,
+      }))
+    );
     revalidatePath("/admin/team");
+    const names = toAdd.map((account) => account.name || account.email);
     return {
       success: true,
-      message: `${email} can moderate once they sign in with that email.`,
+      message:
+        names.length === 1
+          ? `${names[0]} can moderate.`
+          : `Added ${names.join(", ")}.`,
     };
   } catch (error) {
-    console.error("addAdminAction", error);
+    console.error("addAdminsAction", error);
     return { success: false, message: "Could not add admin." };
   }
 }

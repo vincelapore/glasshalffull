@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AdminFind } from "@/components/admin/admin-find";
+import { ModerationNewMenu } from "@/components/admin/moderation-new-menu";
 import {
   CreativeSubmissionCard,
   EventSubmissionCard,
 } from "@/components/admin/submission-cards";
-import { Button } from "@/components/ui/button";
-import { FilterChip } from "@/components/ui/filter-chip";
-import { ChipRow, EmptyState, Page, PageHeader } from "@/components/ui/page";
+import { EmptyState, Page, PageHeader } from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
-import { getSubmissions } from "@/lib/queries";
+import { countPendingSubmissions, getSubmissions } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { submissionStatuses } from "@/lib/validations";
 
 export const metadata: Metadata = {
@@ -20,23 +21,25 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
   status?: string;
-  type?: string;
 }>;
 
-const statusFilters = ["pending", "approved", "rejected", "all"] as const;
-const typeFilters = ["all", "events", "creatives"] as const;
+const queues = [
+  { status: "pending", label: "Needs review" },
+  { status: "approved", label: "Approved" },
+  { status: "rejected", label: "Rejected" },
+] as const;
 
-function isStatusFilter(
-  value: string | undefined
-): value is (typeof statusFilters)[number] {
-  return !!value && statusFilters.includes(value as (typeof statusFilters)[number]);
+type QueueStatus = (typeof queues)[number]["status"];
+
+function isQueueStatus(value: string | undefined): value is QueueStatus {
+  return !!value && queues.some((queue) => queue.status === value);
 }
 
-function isTypeFilter(
-  value: string | undefined
-): value is (typeof typeFilters)[number] {
-  return !!value && typeFilters.includes(value as (typeof typeFilters)[number]);
-}
+const emptyCopy: Record<QueueStatus, string> = {
+  pending: "Nothing waiting.",
+  approved: "Nothing approved yet.",
+  rejected: "Nothing rejected.",
+};
 
 export default async function AdminSubmissionsPage({
   searchParams,
@@ -46,88 +49,99 @@ export default async function AdminSubmissionsPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const status = isStatusFilter(params.status) ? params.status : "pending";
-  const type = isTypeFilter(params.type) ? params.type : "all";
+  const status: QueueStatus = isQueueStatus(params.status)
+    ? params.status
+    : "pending";
 
-  const { events, creatives } = await getSubmissions({
-    status: status === "all" ? "all" : (status as (typeof submissionStatuses)[number]),
-    type,
-  });
+  const [{ events, creatives }, pendingCount] = await Promise.all([
+    getSubmissions({
+      status: status as (typeof submissionStatuses)[number],
+      type: "all",
+    }),
+    countPendingSubmissions(),
+  ]);
 
-  const total = events.length + creatives.length;
+  const items = [
+    ...events.map((row) => ({
+      kind: "event" as const,
+      createdAt: row.event.createdAt,
+      ...row,
+    })),
+    ...creatives.map((creative) => ({
+      kind: "creative" as const,
+      createdAt: creative.createdAt,
+      creative,
+    })),
+  ].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   return (
-    <Page>
+    <Page width="narrow">
       <PageHeader
+        className="mb-6"
         title="Moderation"
-        description="Review, edit, approve, reject, or delete community submissions."
-        actions={
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              render={<Link href="/admin/creatives/new" />}
-            >
-              New profile
-            </Button>
-            <Button size="sm" render={<Link href="/admin/events/new" />}>
-              New event
-            </Button>
-          </>
-        }
+        description="Decide what goes on the site."
+        actions={<ModerationNewMenu />}
       />
 
-      <div className="mb-8 flex flex-col gap-4">
-        <ChipRow>
-          {statusFilters.map((filter) => (
-            <FilterChip
-              key={filter}
-              href={`/admin/submissions?status=${filter}&type=${type}`}
-              active={status === filter}
-              className="capitalize"
-            >
-              {filter}
-            </FilterChip>
-          ))}
-        </ChipRow>
-        <ChipRow>
-          {typeFilters.map((filter) => (
-            <FilterChip
-              key={filter}
-              href={`/admin/submissions?status=${status}&type=${filter}`}
-              active={type === filter}
-              tone="subtle"
-              className="capitalize"
-            >
-              {filter}
-            </FilterChip>
-          ))}
-        </ChipRow>
-      </div>
+      <AdminFind>
+        <nav
+          aria-label="Queue"
+          className="mb-8 flex gap-6 overflow-x-auto border-b border-border"
+        >
+          {queues.map((queue) => {
+            const active = status === queue.status;
 
-      {total === 0 ? (
-        <EmptyState align="center">
-          No {status === "all" ? "" : `${status} `}submissions
-          {type === "all" ? "" : ` in ${type}`} yet.
-        </EmptyState>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {type !== "creatives"
-            ? events.map(({ event, organisers }) => (
+            return (
+              <Link
+                key={queue.status}
+                href={
+                  queue.status === "pending"
+                    ? "/admin/submissions"
+                    : `/admin/submissions?status=${queue.status}`
+                }
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "-mb-px shrink-0 whitespace-nowrap border-b-2 pb-2.5 text-sm transition-colors",
+                  active
+                    ? "border-foreground font-medium text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {queue.label}
+                {queue.status === "pending" ? (
+                  <span className="ml-1.5 tabular-nums text-xs text-muted-foreground">
+                    {pendingCount}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {items.length === 0 ? (
+          <EmptyState>{emptyCopy[status]}</EmptyState>
+        ) : (
+          <div className="grid gap-4">
+            {items.map((item) =>
+              item.kind === "event" ? (
                 <EventSubmissionCard
-                  key={event.id}
-                  event={event}
-                  organisers={organisers}
+                  key={item.event.id}
+                  event={item.event}
+                  organisers={item.organisers}
                 />
-              ))
-            : null}
-          {type !== "events"
-            ? creatives.map((creative) => (
-                <CreativeSubmissionCard key={creative.id} creative={creative} />
-              ))
-            : null}
-        </div>
-      )}
+              ) : (
+                <CreativeSubmissionCard
+                  key={item.creative.id}
+                  creative={item.creative}
+                />
+              )
+            )}
+          </div>
+        )}
+      </AdminFind>
     </Page>
   );
 }

@@ -4,38 +4,46 @@ import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 
 import {
-  addAdminAction,
+  addAdminsAction,
   removeAdminAction,
   type AdminActionResult,
 } from "@/app/actions/admins";
+import type { AccountRecord } from "@/lib/accounts";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Choice, ChoiceControl } from "@/components/ui/choice";
 import type { Admin } from "@/db/schema";
 
-export function AddAdminForm() {
+export function GrantAdminForm({ accounts }: { accounts: AccountRecord[] }) {
   const [state, formAction, pending] = useActionState<
     AdminActionResult | null,
     FormData
-  >(addAdminAction, null);
+  >(addAdminsAction, null);
+
+  if (accounts.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Everyone with an account is already on the team. New people need to
+        sign up first.
+      </p>
+    );
+  }
 
   return (
     <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Admin email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          required
-          placeholder="friend@example.com"
-          autoComplete="email"
-        />
-        <p className="text-xs text-muted-foreground">
-          They must sign in with this email to moderate. They can’t change who
-          is an admin.
-        </p>
-      </div>
+      <fieldset className="space-y-2">
+        <legend className="sr-only">Accounts</legend>
+        {accounts.map((account) => (
+          <Choice key={account.id}>
+            <ChoiceControl type="checkbox" name="userId" value={account.id} />
+            <span className="min-w-0">
+              <span className="block font-medium">{account.name}</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {account.email}
+              </span>
+            </span>
+          </Choice>
+        ))}
+      </fieldset>
       {state ? (
         <p
           className={
@@ -87,9 +95,11 @@ export function RemoveAdminButton({ email }: { email: string }) {
 
 export function AdminList({
   staff,
+  namesByEmail,
   currentEmail,
 }: {
   staff: Admin[];
+  namesByEmail: Record<string, string>;
   currentEmail: string | null | undefined;
 }) {
   const current = currentEmail?.toLowerCase() ?? "";
@@ -99,13 +109,19 @@ export function AdminList({
       {staff.map((person) => {
         const isSelf = person.email === current;
         const isOwner = person.role === "owner";
+        const name = namesByEmail[person.email.toLowerCase()];
         return (
           <li
             key={person.email}
             className="flex items-center justify-between gap-4 px-4 py-3"
           >
-            <div>
-              <p className="font-medium">{person.email}</p>
+            <div className="min-w-0">
+              <p className="truncate font-medium">{name || person.email}</p>
+              {name ? (
+                <p className="truncate text-xs text-muted-foreground">
+                  {person.email}
+                </p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 {isOwner ? "Owner" : "Admin"}
                 {isSelf ? " · you" : null}

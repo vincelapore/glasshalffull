@@ -51,6 +51,27 @@ function sideRoom(header: Element | null | undefined) {
   );
 }
 
+function mobileOpenRoom(header: Element | null | undefined) {
+  const row = header?.firstElementChild;
+  if (!row) return Math.max(ICON_SIZE, window.innerWidth - 32);
+  const rect = row.getBoundingClientRect();
+  const style = getComputedStyle(row);
+  const pad = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  return Math.max(ICON_SIZE, Math.floor(rect.width - pad));
+}
+
+function openInnerWidth(anchor: HTMLElement, outer: number) {
+  const style = getComputedStyle(anchor);
+  const pad = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const border =
+    parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+  const icon =
+    anchor.querySelector(".nav-search-icon")?.getBoundingClientRect().width ??
+    16;
+  const gap = parseFloat(style.columnGap) || parseFloat(style.gap) || 0;
+  return Math.max(0, Math.floor(outer - pad - border - icon - gap));
+}
+
 export function MobileNavSearch() {
   const [open, setOpen] = useState(false);
   const [labeled, setLabeled] = useState(false);
@@ -64,6 +85,7 @@ export function MobileNavSearch() {
   const openRef = useRef(false);
   const [swap, setSwap] = useState(false);
   const [openWidth, setOpenWidth] = useState(ICON_SIZE);
+  const [openInner, setOpenInner] = useState(0);
   const pathname = usePathname();
   const bodyId = useId();
 
@@ -209,29 +231,39 @@ export function MobileNavSearch() {
     const anchor = anchorRef.current;
     const panel = panelRef.current;
     const search = panel?.querySelector<HTMLElement>(".nav-search");
-    if (!anchor || !search) return ICON_SIZE;
+    if (!anchor || !search) return { width: ICON_SIZE, inner: 0 };
 
-    const room = Math.min(
-      window.innerWidth - 24,
-      36 * 16,
-      sideRoom(anchor.closest("header")),
-    );
+    const header = anchor.closest("header");
+    const desktop = window.matchMedia("(min-width: 64rem)").matches;
+    if (!desktop) {
+      const width = mobileOpenRoom(header);
+      return { width, inner: openInnerWidth(anchor, width) };
+    }
+
+    const room = Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header));
     const text = Math.ceil(search.scrollWidth);
     const chrome = chromeRef.current || ICON_SIZE;
-    return Math.max(ICON_SIZE, Math.min(room, chrome + text));
+    return { width: Math.max(ICON_SIZE, Math.min(room, chrome + text)), inner: 0 };
   }
 
   useLayoutEffect(() => {
     if (!open) return;
-    const fit = () => setOpenWidth(measureOpenWidth());
+    const fit = () => {
+      const next = measureOpenWidth();
+      setOpenWidth(next.width);
+      setOpenInner(next.inner);
+    };
     fit();
     window.addEventListener("resize", fit);
+    document.fonts?.ready.then(fit).catch(() => {});
     return () => window.removeEventListener("resize", fit);
   }, [open]);
 
   function toggle() {
     if (!open) {
-      setOpenWidth(measureOpenWidth());
+      const next = measureOpenWidth();
+      setOpenWidth(next.width);
+      setOpenInner(next.inner);
       window.dispatchEvent(new Event(mobileNavEvents.closeMenu));
     }
     setOpen((value) => !value);
@@ -247,7 +279,10 @@ export function MobileNavSearch() {
         className="nav-search-anchor"
         data-open={open ? "" : undefined}
         data-labeled={labeled ? "" : undefined}
-        style={{ width: open ? openWidth : closedWidth }}
+        style={{
+          width: open ? openWidth : closedWidth,
+          "--open-inner": open && openInner > 0 ? `${openInner}px` : undefined,
+        }}
       >
         <span className="nav-search-icon" aria-hidden>
           <Search className="size-4" />

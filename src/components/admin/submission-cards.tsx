@@ -29,15 +29,8 @@ import {
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 
-function StatusBadge({ status }: { status: Creative["status"] | Event["status"] }) {
-  const variant =
-    status === "approved"
-      ? "default"
-      : status === "rejected"
-        ? "destructive"
-        : "secondary";
-
-  return <Badge variant={variant}>{statusLabels[status]}</Badge>;
+function TypeBadge({ children }: { children: string }) {
+  return <Badge variant="outline">{children}</Badge>;
 }
 
 export function EventSubmissionCard({
@@ -58,7 +51,7 @@ export function EventSubmissionCard({
               {event.location}
             </CardDescription>
           </div>
-          <StatusBadge status={event.status} />
+          <TypeBadge>Event</TypeBadge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -169,7 +162,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
               <CreativeWorkTags creative={creative} />
             </div>
           </div>
-          <StatusBadge status={creative.status} />
+          <TypeBadge>Profile</TypeBadge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

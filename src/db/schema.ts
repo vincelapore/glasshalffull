@@ -153,6 +153,16 @@ export const admins = pgTable("admins", {
   createdByEmail: text("created_by_email"),
 });
 
+/** Per-account directory visibility. Missing row means public. */
+export const accountSettings = pgTable("account_settings", {
+  userId: text("user_id").primaryKey(),
+  isPublic: boolean("is_public").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 export const eventLineup = pgTable(
   "event_lineup",
   {
@@ -262,6 +272,7 @@ export type EventLineup = typeof eventLineup.$inferSelect;
 export type NewEventLineup = typeof eventLineup.$inferInsert;
 export type Admin = typeof admins.$inferSelect;
 export type NewAdmin = typeof admins.$inferInsert;
+export type AccountSettings = typeof accountSettings.$inferSelect;
 export type OverflowEpisode = typeof overflowEpisodes.$inferSelect;
 export type NewOverflowEpisode = typeof overflowEpisodes.$inferInsert;
 export type OverflowFeature = typeof overflowFeatures.$inferSelect;

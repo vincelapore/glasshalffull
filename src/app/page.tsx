@@ -52,11 +52,12 @@ export default async function HomePage({
   const activeCity = parseCityFilter(city);
   const episodeSlug = episode?.trim() || null;
 
-  const [upcomingEvents, approvedCreatives, overflowEpisodes] = await Promise.all([
-    getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
-    getApprovedCreatives(activeCity === "all" ? 8 : 16),
-    getOverflowEpisodes(activeCity),
-  ]);
+  const [upcomingEvents, approvedCreatives, overflowEpisodes] =
+    await Promise.all([
+      getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
+      getApprovedCreatives(activeCity === "all" ? 8 : 16),
+      getOverflowEpisodes(activeCity),
+    ]);
 
   const openEpisode = episodeSlug
     ? (overflowEpisodes.find((item) => item.slug === episodeSlug) ??
@@ -69,7 +70,7 @@ export default async function HomePage({
       : upcomingEvents.filter((event) => event.city === activeCity)
   ).slice(0, 6);
   const organisersByEvent = await getOrganisersByEventIds(
-    featuredEvents.map((event) => event.id)
+    featuredEvents.map((event) => event.id),
   );
   const creatives = (
     activeCity === "all"
@@ -89,7 +90,7 @@ export default async function HomePage({
               : "Pouring back into Brisbane's creative scene."
         }
         titleClassName="max-w-3xl font-normal sm:text-4xl"
-        description="Events and the people making them."
+        description="GHF has just launched! Come support us by adding your profile, submitting events and bringing other creatives here."
         descriptionClassName="max-w-2xl"
       >
         <ChipRow>

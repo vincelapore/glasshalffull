@@ -11,6 +11,8 @@ import { ExternalImage } from "@/components/media/external-image";
 import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageTitle } from "@/components/ui/page";
+import { getAccountVisibility } from "@/lib/accounts";
+import { getSessionUser, isAdminEmail } from "@/lib/admin";
 import {
   cityLabels,
   formatInstagramHandle,
@@ -29,21 +31,37 @@ type CreativePageProps = {
   params: Promise<{ slug: string }>;
 };
 
+async function canViewPrivateProfile(userId: string | null) {
+  if (!userId) return true;
+  if (await getAccountVisibility(userId)) return true;
+  const user = await getSessionUser();
+  if (!user) return false;
+  if (user.id === userId) return true;
+  return isAdminEmail(user.email);
+}
+
 export async function generateMetadata({
   params,
 }: CreativePageProps): Promise<Metadata> {
   const { slug } = await params;
   const creative = await getCreativeByParam(slug);
-  return { title: creative?.name ?? "Creative" };
+  if (!creative || !(await canViewPrivateProfile(creative.userId))) {
+    return { title: "Creative" };
+  }
+  return { title: creative.name };
 }
 
 export default async function CreativeDetailPage({ params }: CreativePageProps) {
   const { slug } = await params;
   const creative = await getCreativeByParam(slug);
 
-  if (!creative) {
+  if (!creative || !(await canViewPrivateProfile(creative.userId))) {
     notFound();
   }
+
+  const isPrivate = creative.userId
+    ? !(await getAccountVisibility(creative.userId))
+    : false;
 
   if (slug !== creative.slug) {
     permanentRedirect(creativePath(creative.slug));
@@ -61,6 +79,10 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
         <Notice className="mb-6">
           This profile is <strong>{creative.status}</strong> and not listed
           publicly yet.
+        </Notice>
+      ) : isPrivate ? (
+        <Notice className="mb-6">
+          This profile is private and isn’t in the directory.
         </Notice>
       ) : null}
 

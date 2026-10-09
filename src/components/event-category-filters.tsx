@@ -83,21 +83,33 @@ export function EventCategoryFilters({
         })}
       </ChipRow>
       <AccordionReveal open={musicOpen} id="music-genre-filters">
-        <ChipRow className="pt-2">
-          {musicGenres.map((genre) => (
-            <FilterChip
-              key={genre}
-              href={eventsBrowsePath({
-                city: activeCity,
-                category: "music",
-                genre,
-              })}
-              active={activeGenre === genre}
-            >
-              {musicGenreLabels[genre]}
-            </FilterChip>
-          ))}
-        </ChipRow>
+        <div className="mt-2.5 ml-3 flex gap-3">
+          <div
+            aria-hidden
+            className="w-0.5 shrink-0 self-stretch rounded-full bg-foreground/20"
+          />
+          <div className="min-w-0" role="group" aria-label="Music genres">
+            <p className="mb-1 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Genre
+            </p>
+            <ChipRow>
+              {musicGenres.map((genre) => (
+                <FilterChip
+                  key={genre}
+                  size="sm"
+                  href={eventsBrowsePath({
+                    city: activeCity,
+                    category: "music",
+                    genre,
+                  })}
+                  active={activeGenre === genre}
+                >
+                  {musicGenreLabels[genre]}
+                </FilterChip>
+              ))}
+            </ChipRow>
+          </div>
+        </div>
       </AccordionReveal>
     </Section>
   );

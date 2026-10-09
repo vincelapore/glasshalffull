@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AccountShell } from "@/components/account-shell";
+import { AccountVisibilityToggle } from "@/components/account-visibility";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { Notice } from "@/components/ui/notice";
 import { SectionHeader, TextLink } from "@/components/ui/page";
+import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
 import { statusLabels } from "@/lib/labels";
@@ -24,10 +26,20 @@ export default async function AccountPage() {
   }
 
   const claim = await claimInvitedProfile(user);
-  const profile = await getCreativeByUserId(user.id);
+  const [profile, isPublic] = await Promise.all([
+    getCreativeByUserId(user.id),
+    getAccountVisibility(user.id),
+  ]);
 
   return (
     <AccountShell user={user}>
+      <section className="mb-10 space-y-4">
+        <SectionHeader
+          title="Visibility"
+          description="Choose whether people can find you in the public directory."
+        />
+        <AccountVisibilityToggle isPublic={isPublic} />
+      </section>
       <section className="space-y-4">
         <SectionHeader
           title="Profile"
