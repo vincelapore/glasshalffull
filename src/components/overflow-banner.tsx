@@ -32,6 +32,9 @@ const dwellMs = 3600;
 
 const urlPattern = /https?:\/\/[^\s<>"']+/g;
 
+const heroImageClass =
+  "aspect-[8/5] w-full object-cover sm:aspect-[5/2] lg:aspect-[3/1]";
+
 function homeHref(city: CityFilter, episode?: string) {
   const params = new URLSearchParams();
   if (city === "all") params.set("city", "all");
@@ -39,6 +42,14 @@ function homeHref(city: CityFilter, episode?: string) {
   if (episode) params.set("episode", episode);
   const query = params.toString();
   return query ? `/?${query}` : "/";
+}
+
+function episodeFaces(episode: OverflowEpisodeView) {
+  return episode.features.map((feature) => ({
+    id: feature.creativeId,
+    name: feature.name,
+    avatarKey: feature.avatarKey,
+  }));
 }
 
 function LinkifiedText({ text }: { text: string }) {
@@ -63,7 +74,7 @@ function LinkifiedText({ text }: { text: string }) {
         className="underline underline-offset-4"
       >
         {url}
-      </a>
+      </a>,
     );
     if (trailing) nodes.push(trailing);
     last = start + match[0].length;
@@ -152,24 +163,56 @@ function OverflowPoster({
       </span>
       <span className="pointer-events-none absolute inset-0 bg-black/25" />
       <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
-        <span className="font-mono text-sm">
-          the overflow #{episode.number}
-        </span>
+        <span className="font-mono text-sm">the overflow #{episode.number}</span>
         <span className="font-mono text-4xl tracking-wide uppercase">
           {episode.title}
         </span>
-        <span className="text-sm lowercase">
-          {cityShortLabels[episode.city]}
-        </span>
+        <span className="text-sm lowercase">{cityShortLabels[episode.city]}</span>
       </span>
       <EventOrganiserFaces
         className="bottom-4 left-1/2 -translate-x-1/2"
-        organisers={episode.features.map((feature) => ({
-          id: feature.creativeId,
-          name: feature.name,
-          avatarKey: feature.avatarKey,
-        }))}
+        organisers={episodeFaces(episode)}
       />
+    </button>
+  );
+}
+
+function OverflowHeroSlide({
+  episode,
+  onOpen,
+}: {
+  episode: OverflowEpisodeView;
+  onOpen: (slug: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="group overflow-poster relative block w-full overflow-hidden text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-ring"
+      aria-haspopup="dialog"
+      aria-label={`the overflow #${episode.number}, ${episode.title}`}
+      onClick={() => onOpen(episode.slug)}
+    >
+      <span className="poster-hover block">
+        <ExternalImage
+          src={mediaUrl(episode.coverKey)}
+          alt=""
+          className={heroImageClass}
+          fallback={<span className={cn("block bg-neutral-900", heroImageClass)} />}
+        />
+      </span>
+      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+      <span className="pointer-events-none absolute inset-x-0 bottom-14 px-4 text-white sm:bottom-16 sm:px-6">
+        <span className="font-mono text-xs tracking-[0.16em] uppercase">
+          the overflow #{episode.number}
+        </span>
+        <span className="mt-1 block font-mono text-2xl leading-none tracking-wide uppercase sm:text-4xl">
+          {episode.title}
+        </span>
+        <span className="mt-1 block text-sm lowercase">
+          {cityShortLabels[episode.city]}
+        </span>
+      </span>
+      <EventOrganiserFaces organisers={episodeFaces(episode)} />
     </button>
   );
 }
@@ -342,7 +385,7 @@ function OverflowTicker({
   return (
     <div
       ref={rootRef}
-      className="mx-auto w-full max-w-72"
+      className="w-full"
       role="region"
       aria-roledescription="carousel"
       aria-label="the overflow"
@@ -378,30 +421,32 @@ function OverflowTicker({
               inert={index === current ? undefined : true}
               aria-hidden={index !== current}
             >
-              <OverflowPoster episode={episode} framed={false} onOpen={onOpen} />
+              <OverflowHeroSlide episode={episode} onOpen={onOpen} />
             </div>
           ))}
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap justify-center" role="group" aria-label="Episodes">
-        {episodes.map((episode, index) => (
-          <button
-            key={episode.id}
-            type="button"
-            aria-label={`Show the overflow #${episode.number}, ${episode.title}`}
-            aria-current={index === current ? "true" : undefined}
-            className="flex size-8 items-center justify-center"
-            onClick={() => showRef.current(index)}
-          >
-            <span
-              className={cn(
-                "size-1.5 rounded-full transition-colors duration-150 ease-[var(--ease-out)]",
-                index === current ? "bg-foreground" : "bg-foreground/25",
-              )}
-            />
-          </button>
-        ))}
-      </div>
+      {episodes.length > 1 ? (
+        <div className="mt-3 flex flex-wrap justify-center" role="group" aria-label="Episodes">
+          {episodes.map((episode, index) => (
+            <button
+              key={episode.id}
+              type="button"
+              aria-label={`Show the overflow #${episode.number}, ${episode.title}`}
+              aria-current={index === current ? "true" : undefined}
+              className="flex size-8 items-center justify-center"
+              onClick={() => showRef.current(index)}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full transition-colors duration-150 ease-[var(--ease-out)]",
+                  index === current ? "bg-foreground" : "bg-foreground/25",
+                )}
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -437,28 +482,21 @@ export function OverflowBanner({
 
   return (
     <>
-      {episodes.length > 1 ? (
-        <div className="sm:hidden">
+      {episodes.length > 0 ? (
+        <div className="space-y-8">
           <OverflowTicker
             key={episodes.map((episode) => episode.id).join(":")}
             episodes={episodes}
             paused={Boolean(displayed)}
             onOpen={open}
           />
-        </div>
-      ) : null}
-      {episodes.length > 0 ? (
-        <div
-          className={cn(
-            "flex-wrap justify-center gap-6",
-            episodes.length > 1 ? "hidden sm:flex" : "flex",
-          )}
-        >
-          {episodes.map((episode) => (
-            <div key={episode.id} className="w-full max-w-72">
-              <OverflowPoster episode={episode} onOpen={open} />
-            </div>
-          ))}
+          <div className="flex flex-wrap justify-center gap-6">
+            {episodes.map((episode) => (
+              <div key={episode.id} className="w-full max-w-72">
+                <OverflowPoster episode={episode} onOpen={open} />
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -482,12 +520,9 @@ export function OverflowBanner({
               className="mb-4 aspect-[8/5] w-full rounded-lg object-cover"
               fallback={null}
             />
-            <DialogTitle className="pr-8 text-2xl">
-              {displayed.title}
-            </DialogTitle>
+            <DialogTitle className="pr-8 text-2xl">{displayed.title}</DialogTitle>
             <DialogDescription className="mt-1">
-              the overflow #{displayed.number} ·{" "}
-              {cityShortLabels[displayed.city]}
+              the overflow #{displayed.number} · {cityShortLabels[displayed.city]}
             </DialogDescription>
             <p className="mt-4 text-sm leading-relaxed whitespace-pre-wrap">
               <LinkifiedText text={displayed.body} />
@@ -495,7 +530,7 @@ export function OverflowBanner({
             <div className="mt-6 space-y-5">
               {overflowFeatureGroups.map((group) => {
                 const people = displayed.features.filter(
-                  (feature) => feature.role === group.role
+                  (feature) => feature.role === group.role,
                 );
                 if (people.length === 0) return null;
                 return (

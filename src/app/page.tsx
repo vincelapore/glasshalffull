@@ -8,18 +8,23 @@ import {
   EventListingCard,
   eventListingGridClassName,
 } from "@/components/event-listing";
+import { ExternalImage } from "@/components/media/external-image";
 import { OverflowBanner } from "@/components/overflow-banner";
 import { Button } from "@/components/ui/button";
-import { FilterChip } from "@/components/ui/filter-chip";
 import {
-  ChipRow,
   EmptyState,
   Page,
-  PageHeader,
   SectionHeader,
   TextLink,
 } from "@/components/ui/page";
-import { cityLabels, parseCityFilter, type CityFilter } from "@/lib/labels";
+import {
+  cityShortLabels,
+  formatEventListingDate,
+  parseCityFilter,
+  type CityFilter,
+} from "@/lib/labels";
+import { mediaUrl } from "@/lib/media";
+import { eventPath } from "@/lib/paths";
 import {
   getApprovedCreatives,
   getOrganisersByEventIds,
@@ -27,20 +32,62 @@ import {
   getOverflowEpisodes,
   getUpcomingApprovedEvents,
 } from "@/lib/queries";
-import { cities } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ city?: string; episode?: string }>;
 
-function buildHomeHref(city: CityFilter) {
-  if (city === "meanjin") return "/";
-  return `/?city=${city}`;
-}
-
 function cityBrowseHref(path: "/events" | "/creatives", city: CityFilter) {
   if (city === "meanjin") return path;
   return `${path}?city=${city}`;
+}
+
+function weekTitle(city: CityFilter) {
+  if (city === "all") return "This week";
+  return `This week in ${cityShortLabels[city]}`;
+}
+
+function EventLead({
+  event,
+}: {
+  event: {
+    slug: string;
+    title: string;
+    dateTime: Date;
+    location: string;
+    flyerKey: string | null;
+  };
+}) {
+  return (
+    <Link
+      href={eventPath(event.slug)}
+      className="group relative block overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:ring-white/15"
+    >
+      <span className="poster-hover block">
+        <ExternalImage
+          src={mediaUrl(event.flyerKey)}
+          alt=""
+          className="aspect-[8/5] w-full object-cover sm:aspect-[5/2] lg:aspect-[3/1]"
+          fallback={
+            <span className="block aspect-[8/5] w-full bg-neutral-900 sm:aspect-[5/2] lg:aspect-[3/1]" />
+          }
+        />
+      </span>
+      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4 text-white sm:px-6 sm:pb-5">
+        <span className="font-mono text-xs tracking-[0.16em] uppercase">
+          Next up
+        </span>
+        <span className="mt-1 block font-heading text-2xl leading-none sm:text-4xl">
+          {event.title}
+        </span>
+        <span className="mt-2 block font-mono text-xs">
+          {formatEventListingDate(event.dateTime)}
+          {event.location ? ` · ${event.location}` : ""}
+        </span>
+      </span>
+    </Link>
+  );
 }
 
 export default async function HomePage({
@@ -55,7 +102,7 @@ export default async function HomePage({
   const [upcomingEvents, approvedCreatives, overflowEpisodes] =
     await Promise.all([
       getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
-      getApprovedCreatives(activeCity === "all" ? 8 : 16),
+      getApprovedCreatives(),
       getOverflowEpisodes(activeCity),
     ]);
 
@@ -69,89 +116,43 @@ export default async function HomePage({
       ? upcomingEvents
       : upcomingEvents.filter((event) => event.city === activeCity)
   ).slice(0, 6);
+  const showOverflow = overflowEpisodes.length > 0 || openEpisode;
+  const leadEvent = showOverflow ? null : (featuredEvents[0] ?? null);
+  const weekEvents = leadEvent
+    ? featuredEvents.filter((event) => event.id !== leadEvent.id)
+    : featuredEvents;
   const organisersByEvent = await getOrganisersByEventIds(
-    featuredEvents.map((event) => event.id),
+    weekEvents.map((event) => event.id),
   );
-  const creatives = (
+  const creatives =
     activeCity === "all"
       ? approvedCreatives
-      : approvedCreatives.filter((creative) => creative.city === activeCity)
-  ).slice(0, 8);
+      : approvedCreatives.filter((creative) => creative.city === activeCity);
 
   return (
-    <Page className="flex flex-col gap-14 py-12">
-      <PageHeader
-        className="mb-0 space-y-5"
-        title={
-          activeCity === "naarm"
-            ? "Pouring back into Melbourne's creative scene."
-            : activeCity === "all"
-              ? "Pouring back into the creative scene."
-              : "Pouring back into Brisbane's creative scene."
-        }
-        titleClassName="max-w-3xl font-normal sm:text-4xl"
-        description="GHF has just launched! Come support us by adding your profile, submitting events and bringing other creatives here."
-        descriptionClassName="max-w-2xl"
-      >
-        <ChipRow>
-          {cities.map((cityOption) => (
-            <FilterChip
-              key={cityOption}
-              href={buildHomeHref(cityOption)}
-              active={activeCity === cityOption}
-            >
-              {cityLabels[cityOption]}
-            </FilterChip>
-          ))}
-          <FilterChip href={buildHomeHref("all")} active={activeCity === "all"}>
-            All
-          </FilterChip>
-        </ChipRow>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            render={<Link href={cityBrowseHref("/events", activeCity)} />}
-          >
-            Browse events
-          </Button>
-          <Button
-            variant="outline"
-            render={<Link href={cityBrowseHref("/creatives", activeCity)} />}
-          >
-            Meet creatives
-          </Button>
-        </div>
-      </PageHeader>
-
-      {overflowEpisodes.length > 0 || openEpisode ? (
+    <Page className="flex flex-col gap-16 py-8 sm:gap-20 sm:py-12">
+      {showOverflow ? (
         <OverflowBanner
           episodes={overflowEpisodes}
           openEpisode={openEpisode}
           activeCity={activeCity}
         />
+      ) : leadEvent ? (
+        <EventLead event={leadEvent} />
       ) : null}
 
-      <section className="space-y-5">
-        <SectionHeader
-          title="Featured Events"
-          description="Browse and find events that'll tickle your pick— uhh, fancy."
-          action={
-            <TextLink href={cityBrowseHref("/events", activeCity)}>
-              View all
-            </TextLink>
-          }
-        />
-
-        {featuredEvents.length === 0 ? (
-          <EmptyState>
-            No upcoming events yet.{" "}
-            <TextLink href="/account/events/new" variant="inline">
-              Submit one
-            </TextLink>
-            .
-          </EmptyState>
-        ) : (
+      {weekEvents.length > 0 ? (
+        <section className="space-y-5">
+          <SectionHeader
+            title={weekTitle(activeCity)}
+            action={
+              <TextLink href={cityBrowseHref("/events", activeCity)}>
+                View all
+              </TextLink>
+            }
+          />
           <div className={eventListingGridClassName}>
-            {featuredEvents.map((event) => (
+            {weekEvents.map((event) => (
               <EventListingCard
                 key={event.id}
                 event={event}
@@ -159,13 +160,23 @@ export default async function HomePage({
               />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      ) : leadEvent ? null : (
+        <section className="space-y-5">
+          <SectionHeader title={weekTitle(activeCity)} />
+          <EmptyState>
+            No upcoming events yet.{" "}
+            <TextLink href="/account/events/new" variant="inline">
+              Submit one
+            </TextLink>
+            .
+          </EmptyState>
+        </section>
+      )}
 
       <section className="space-y-5">
         <SectionHeader
-          title="Discover Creatives"
-          description="Find that missing piece to your project without asking a friend of a friend of a friend of a fr..."
+          title="Who's pouring in"
           action={
             <TextLink href={cityBrowseHref("/creatives", activeCity)}>
               View all
@@ -188,6 +199,24 @@ export default async function HomePage({
             ))}
           </ProfileListingGrid>
         )}
+      </section>
+
+      <section className="space-y-5 border-t border-border pt-12">
+        <h2 className="max-w-xl font-heading text-3xl font-normal tracking-tight">
+          Turn up, and pour back in.
+        </h2>
+        <p className="max-w-xl text-muted-foreground">
+          Behind every great night is a team that has poured time, money, and
+          love into making it happen. You&apos;re not just a ticket holder.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button render={<Link href="/account/events/new" />}>
+            Submit an event
+          </Button>
+          <Button variant="outline" render={<Link href="/account" />}>
+            Add your profile
+          </Button>
+        </div>
       </section>
     </Page>
   );

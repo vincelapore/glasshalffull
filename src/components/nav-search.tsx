@@ -411,6 +411,8 @@ export function MobileNavQuery({
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
   const [activeHit, setActiveHit] = useState(0);
+  const [noteOn, setNoteOn] = useState(false);
+  const [noteLeaving, setNoteLeaving] = useState(false);
   const hits = searchHits(query);
   const listOpen = active && query.trim().length > 0;
 
@@ -422,6 +424,21 @@ export function MobileNavQuery({
     setQuery("");
     setActiveHit(0);
   }, [active]);
+
+  useEffect(() => {
+    if (!noteAnchor) return;
+    if (active) {
+      setNoteLeaving(false);
+      setNoteOn(true);
+      return;
+    }
+    setNoteLeaving(true);
+    const timeout = window.setTimeout(() => {
+      setNoteOn(false);
+      setNoteLeaving(false);
+    }, 220);
+    return () => window.clearTimeout(timeout);
+  }, [active, noteAnchor]);
 
   useEffect(() => {
     if (!active || query.trim()) return;
@@ -547,9 +564,13 @@ export function MobileNavQuery({
           onPick={go}
         />
       ) : null}
-      {active && noteAnchor
+      {noteOn && noteAnchor
         ? createPortal(
-            <p className="nav-search-city-note">in {citySearchLabels[city]}</p>,
+            <p
+              className={`nav-search-city-note${noteLeaving ? " is-leaving" : ""}`}
+            >
+              in {citySearchLabels[city]}
+            </p>,
             noteAnchor,
           )
         : null}

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { CityPicker } from "@/components/city-picker";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileNavSearch } from "@/components/mobile-nav-search";
 import { ProfileMenu } from "@/components/profile-menu";
@@ -28,20 +30,30 @@ export async function SiteHeader() {
       <div
         className={`mx-auto flex h-14 ${pageWidths.wide} items-center gap-4 px-4 sm:px-6`}
       >
-        <Link
-          href="/"
-          aria-label="Glass Half Full"
-          className="pointer-events-auto shrink-0"
+        <div
+          data-nav-anchor
+          className="pointer-events-auto flex shrink-0 items-center gap-2.5"
         >
-          <Image
-            src="/mark.png"
-            alt=""
-            width={552}
-            height={608}
-            priority
-            className="h-8 w-auto drop-shadow-[0_0_10px_var(--background)] dark:invert"
-          />
-        </Link>
+          <Link href="/" aria-label="Glass Half Full" className="shrink-0">
+            <Image
+              src="/mark.png"
+              alt=""
+              width={552}
+              height={608}
+              priority
+              className="h-8 w-auto drop-shadow-[0_0_10px_var(--background)] dark:invert"
+            />
+          </Link>
+          <Suspense
+            fallback={
+              <span className="font-mono text-xs tracking-wide text-muted-foreground">
+                Meanjin
+              </span>
+            }
+          >
+            <CityPicker />
+          </Suspense>
+        </div>
 
         <MobileNavSearch />
 

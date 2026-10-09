@@ -32,9 +32,9 @@ const ICON_SIZE = 44;
 const WORD_INTERVAL_MS = 2600;
 
 function sideRoom(header: Element | null | undefined) {
-  const logo = header?.querySelector("a");
+  const anchor = header?.querySelector("[data-nav-anchor]");
   const cluster = header?.querySelector("[data-nav-cluster]");
-  if (!logo || !cluster) return window.innerWidth - 24;
+  if (!anchor || !cluster) return window.innerWidth - 24;
 
   const gap = 12;
   let right = cluster.getBoundingClientRect().left;
@@ -44,7 +44,7 @@ function sideRoom(header: Element | null | undefined) {
     if (rect.width > 1) right = Math.min(right, rect.left);
   }
 
-  const left = logo.getBoundingClientRect().right;
+  const left = anchor.getBoundingClientRect().right;
   const desktop = window.matchMedia("(min-width: 64rem)").matches;
   if (desktop) return right - left - 16 - gap;
 

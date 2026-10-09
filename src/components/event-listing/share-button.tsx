@@ -81,7 +81,7 @@ export function EventShareButton({
           collisionPadding={16}
           className="z-50 outline-none"
         >
-          <Popover.Popup className="w-56 origin-(--transform-origin) rounded-xl bg-popover p-1.5 text-popover-foreground shadow-glass ring-1 ring-foreground/10 outline-none transition-[opacity,transform] duration-200 [transition-timing-function:var(--ease-out)] data-ending-style:scale-[0.97] data-ending-style:opacity-0 data-starting-style:scale-[0.97] data-starting-style:opacity-0 motion-reduce:transition-none motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100">
+          <Popover.Popup className="w-56 origin-(--transform-origin) rounded-xl bg-background p-1.5 text-foreground shadow-glass ring-1 ring-foreground/10 outline-none transition-[opacity,transform] duration-200 [transition-timing-function:var(--ease-out)] data-ending-style:scale-[0.97] data-ending-style:opacity-0 data-starting-style:scale-[0.97] data-starting-style:opacity-0 motion-reduce:transition-none motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100">
             <Popover.Title className="px-2 pt-1.5 pb-1 font-mono text-[10px] font-medium tracking-[0.14em] text-muted-foreground lowercase">
               share
             </Popover.Title>
@@ -150,7 +150,7 @@ function networkHref(
     return `fb-messenger://share/?link=${encoded}`;
   }
 
-  return `https://www.facebook.com/dialog/send?link=${encoded}&redirect_uri=${encoded}&display=popup`;
+  return `https://www.facebook.com/share_as_message/?link=${encoded}`;
 }
 
 function IconFrame({ children }: { children: ReactNode }) {
@@ -211,8 +211,8 @@ function MessengerIcon() {
 function WhatsAppIcon() {
   return (
     <IconFrame>
-      <path d="M12 5.2a6.6 6.6 0 0 0-5.7 9.9L5.4 18.6l3.6-.9A6.6 6.6 0 1 0 12 5.2z" />
-      <path d="M9.4 10.2c.3 1.6 1.7 2.9 3.3 3.2" />
+      <path d="M12 5.4a6.4 6.4 0 0 0-5.5 9.7L5.5 19l3.4-1A6.4 6.4 0 1 0 12 5.4z" />
+      <path d="M9.2 11.6c.4.9 1.1 1.6 2 2l.8-.8c.2-.2.5-.2.7 0l.8.7" />
     </IconFrame>
   );
 }

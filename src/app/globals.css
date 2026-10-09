@@ -407,6 +407,12 @@
       overflow: clip;
     }
 
+    .nav-search-anchor:not([data-open]) .nav-search-panel {
+      visibility: hidden;
+      opacity: 0;
+      animation: none;
+    }
+
     .nav-search-anchor[data-open] {
       top: 2.85rem;
     }
@@ -678,6 +684,15 @@
     text-shadow:
       0 0 12px var(--background),
       0 0 4px var(--background);
+    animation: nav-search-note-in 420ms var(--ease-out) 90ms both;
+  }
+
+  .nav-search-city-note.is-leaving {
+    animation: nav-search-note-out 200ms var(--ease-out) forwards;
+  }
+
+  .nav-search-anchor:has(> .nav-search-city-note) {
+    overflow: visible;
   }
 
   .nav-search-anchor .is-in {
@@ -749,6 +764,23 @@
     to {
       opacity: 0;
       translate: 0 -100%;
+    }
+  }
+
+  @keyframes nav-search-note-in {
+    from {
+      opacity: 0;
+      translate: 0 0.4rem;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes nav-search-note-out {
+    to {
+      opacity: 0;
     }
   }
 
@@ -898,7 +930,9 @@
   }
 
   .nav-search-anchor .is-in,
-  .nav-search-anchor .is-out {
+  .nav-search-anchor .is-out,
+  .nav-search-city-note,
+  .nav-search-city-note.is-leaving {
     animation: none;
   }
 
