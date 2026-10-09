@@ -68,6 +68,10 @@ function isDesktopNav() {
   return window.matchMedia("(min-width: 64rem)").matches;
 }
 
+function isCompactNav() {
+  return window.matchMedia("(max-width: 47.999rem)").matches;
+}
+
 export function MobileNavSearch() {
   const [open, setOpen] = useState(false);
   const [labeled, setLabeled] = useState(false);
@@ -82,6 +86,7 @@ export function MobileNavSearch() {
   const [swap, setSwap] = useState(false);
   const [openWidth, setOpenWidth] = useState(ICON_SIZE);
   const [desktop, setDesktop] = useState(true);
+  const [compact, setCompact] = useState(false);
   const openedAt = useRef(0);
   const pathname = usePathname();
   const bodyId = useId();
@@ -91,11 +96,19 @@ export function MobileNavSearch() {
   }, [pathname]);
 
   useLayoutEffect(() => {
-    const media = window.matchMedia("(min-width: 64rem)");
-    const sync = () => setDesktop(media.matches);
+    const desktopMedia = window.matchMedia("(min-width: 64rem)");
+    const compactMedia = window.matchMedia("(max-width: 47.999rem)");
+    const sync = () => {
+      setDesktop(desktopMedia.matches);
+      setCompact(compactMedia.matches);
+    };
     sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    desktopMedia.addEventListener("change", sync);
+    compactMedia.addEventListener("change", sync);
+    return () => {
+      desktopMedia.removeEventListener("change", sync);
+      compactMedia.removeEventListener("change", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -239,10 +252,12 @@ export function MobileNavSearch() {
     if (!anchor) return ICON_SIZE;
 
     const header = anchor.closest("header");
-    if (!isDesktopNav()) return mobileOpenRoom(header);
+    if (isCompactNav()) return mobileOpenRoom(header);
     if (!search) return ICON_SIZE;
 
-    const room = Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header));
+    const room = isDesktopNav()
+      ? Math.min(window.innerWidth - 24, 36 * 16, sideRoom(header))
+      : mobileOpenRoom(header);
     const text = Math.ceil(search.scrollWidth);
     const chrome = chromeRef.current || ICON_SIZE;
     return Math.max(ICON_SIZE, Math.min(room, chrome + text));
@@ -255,7 +270,7 @@ export function MobileNavSearch() {
     window.addEventListener("resize", fit);
     document.fonts?.ready.then(fit).catch(() => {});
     return () => window.removeEventListener("resize", fit);
-  }, [open]);
+  }, [open, compact, desktop]);
 
   useEffect(() => {
     if (!open || desktop) return;
@@ -302,6 +317,7 @@ export function MobileNavSearch() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-14 lg:static lg:inset-auto lg:z-auto lg:h-auto lg:w-auto">
+      <div className="nav-search-veil" aria-hidden />
       <p className="nav-search-lead">I&apos;m looking for a</p>
       <div
         ref={anchorRef}
@@ -348,13 +364,17 @@ export function MobileNavSearch() {
           >
             <Suspense
               fallback={
-                desktop ? <NavSearchSkeleton bare hideIcon /> : <div className="nav-search-mobile" />
+                compact ? (
+                  <div className="nav-search-mobile" />
+                ) : (
+                  <NavSearchSkeleton bare hideIcon />
+                )
               }
             >
-              {desktop ? (
-                <NavSearch bare hideIcon />
-              ) : (
+              {compact ? (
                 <MobileNavQuery active={open} noteAnchor={anchorRef.current} />
+              ) : (
+                <NavSearch bare hideIcon />
               )}
             </Suspense>
           </div>

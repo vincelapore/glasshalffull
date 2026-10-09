@@ -388,6 +388,12 @@
       translate: 0 -50%;
     }
 
+    .nav-search-anchor[data-open] {
+      overflow: visible;
+    }
+  }
+
+  @media (max-width: 47.999rem) {
     .nav-search-anchor[data-open] .nav-search-slot,
     .nav-search-anchor[data-open] .nav-search-panel {
       width: 100%;
@@ -405,9 +411,28 @@
       top: 2.85rem;
     }
 
-    div:has(> .nav-search-anchor[data-open]) > .nav-search-lead {
+    div:has(> .nav-search-anchor[data-open]) > .nav-search-lead,
+    div:has(> .nav-search-anchor[data-open]) > .nav-search-veil {
       opacity: 1;
       visibility: visible;
+    }
+  }
+
+  @media (min-width: 48rem) and (max-width: 63.999rem) {
+    .nav-search-anchor[data-open] {
+      justify-content: center;
+    }
+
+    .nav-search-anchor[data-open] .nav-search-slot,
+    .nav-search-anchor[data-open] .nav-search-panel {
+      width: max-content;
+      max-width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .nav-search-anchor[data-open] .nav-search-panel {
+      justify-self: center;
     }
   }
 
@@ -436,14 +461,39 @@
       visibility 280ms;
   }
 
-  .dark .nav-search-lead {
-    color: #fff;
+  .nav-search-veil {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 0;
+    height: 10rem;
+    pointer-events: none;
+    background-color: transparent;
+    opacity: 0;
+    visibility: hidden;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 62%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+    transition:
+      opacity 280ms var(--ease-in-out),
+      visibility 280ms;
   }
 
-  @media (max-width: 63.999rem) {
+  @media (max-width: 47.999rem) {
     .nav-search-lead {
       display: flex;
     }
+  }
+
+  .dark .nav-search-lead {
+    color: #fff;
   }
 
   .nav-search-icon {
@@ -703,8 +753,10 @@
   }
 
   /*
-    Profile posters are squares. Each side matches the event poster height
-    in the same width row: events are minmax(15rem, 1fr) at 8/5, gap 1rem.
+    Profile squares fill the row. Column count is however many event-poster
+    heights fit across (events are minmax(15rem, 1fr) at 8/5, gap 1rem),
+    and each track is 1fr so a full row always spans the width. Narrow
+    screens stay two columns.
   */
   .profile-listing {
     container-type: inline-size;
@@ -714,42 +766,34 @@
     display: grid;
     column-gap: 1rem;
     row-gap: 2rem;
-    grid-template-columns: repeat(auto-fill, calc(100cqi * 5 / 8));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-listing-grid > * {
+    min-width: 0;
   }
 
   @container (width >= 31rem) {
     .profile-listing-grid {
-      grid-template-columns: repeat(
-        auto-fill,
-        calc((100cqi - 1rem) / 2 * 5 / 8)
-      );
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
   @container (width >= 47rem) {
     .profile-listing-grid {
-      grid-template-columns: repeat(
-        auto-fill,
-        calc((100cqi - 2rem) / 3 * 5 / 8)
-      );
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
 
   @container (width >= 63rem) {
     .profile-listing-grid {
-      grid-template-columns: repeat(
-        auto-fill,
-        calc((100cqi - 3rem) / 4 * 5 / 8)
-      );
+      grid-template-columns: repeat(6, minmax(0, 1fr));
     }
   }
 
   @container (width >= 79rem) {
     .profile-listing-grid {
-      grid-template-columns: repeat(
-        auto-fill,
-        calc((100cqi - 4rem) / 5 * 5 / 8)
-      );
+      grid-template-columns: repeat(8, minmax(0, 1fr));
     }
   }
 
@@ -765,6 +809,17 @@
 
   .poster-meta {
     transition: color 150ms var(--ease-out);
+  }
+
+  .poster-share {
+    transition:
+      opacity 150ms var(--ease-out),
+      scale 120ms var(--ease-out),
+      background-color 150ms var(--ease-out);
+  }
+
+  .poster-share:active {
+    scale: 0.94;
   }
 }
 
@@ -788,6 +843,18 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .poster-share {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .group:hover .poster-share,
+  .group:focus-within .poster-share,
+  .poster-share[data-popup-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .group:hover .poster-meta {
     color: var(--foreground);
   }
@@ -806,8 +873,13 @@
 @media (prefers-reduced-motion: reduce) {
   .poster-hover,
   .poster-avatar,
-  .poster-face {
+  .poster-face,
+  .poster-share {
     transition: none;
+  }
+
+  .poster-share:active {
+    scale: none;
   }
 
   .nav-search-anchor,
@@ -816,6 +888,7 @@
   .nav-search-panel,
   .nav-search-word-window,
   .nav-search-lead,
+  .nav-search-veil,
   .nav-search-anchor[data-open] .nav-search-panel,
   .nav-search-anchor:not([data-labeled]) .nav-search-icon,
   [data-site-header] > div > a,

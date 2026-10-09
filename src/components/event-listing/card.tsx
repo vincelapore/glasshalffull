@@ -5,6 +5,7 @@ import {
   type EventListingOrganiser,
 } from "@/components/event-listing/organiser-faces";
 import { EventPosterTag } from "@/components/event-listing/poster-tag";
+import { EventShareButton } from "@/components/event-listing/share-button";
 import { ExternalImage } from "@/components/media/external-image";
 import type { Event } from "@/db/schema";
 import {
@@ -35,11 +36,12 @@ export function EventListingCard({
 }: EventListingCardProps) {
   const when = eventRelativeLabel(event.dateTime);
 
+  const href = eventPath(event.slug);
+
   return (
-    <Link
-      href={eventPath(event.slug)}
+    <article
       className={cn(
-        "group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+        "group relative isolate has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-ring",
         className
       )}
     >
@@ -75,11 +77,21 @@ export function EventListingCard({
         ) : null}
 
         <EventOrganiserFaces organisers={organisers} />
+        <EventShareButton
+          title={event.title}
+          path={href}
+          className="absolute right-3 bottom-3 z-20"
+        />
       </div>
 
       <div className="mt-2.5">
         <h3 className="text-base leading-tight font-normal tracking-tight">
-          {event.title}
+          <Link
+            href={href}
+            className="outline-none after:absolute after:inset-0 after:z-10"
+          >
+            {event.title}
+          </Link>
         </h3>
         <p className="pt-1 text-sm leading-tight">
           {formatEventListingDate(event.dateTime)}
@@ -93,6 +105,6 @@ export function EventListingCard({
           </p>
         ) : null}
       </div>
-    </Link>
+    </article>
   );
 }
