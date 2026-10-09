@@ -59,34 +59,36 @@ function EventLead({
   };
 }) {
   return (
-    <Link
-      href={eventPath(event.slug)}
-      className="group relative block overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:ring-white/15"
-    >
-      <span className="poster-hover block">
-        <ExternalImage
-          src={mediaUrl(event.flyerKey)}
-          alt=""
-          className="aspect-[8/5] w-full object-cover sm:aspect-[5/2] lg:aspect-[3/1]"
-          fallback={
-            <span className="block aspect-[8/5] w-full bg-neutral-900 sm:aspect-[5/2] lg:aspect-[3/1]" />
-          }
-        />
-      </span>
-      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-      <span className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4 text-white sm:px-6 sm:pb-5">
-        <span className="font-mono text-xs tracking-[0.16em] uppercase">
+    <section className="grid items-center gap-6 md:grid-cols-2 md:gap-10">
+      <Link
+        href={eventPath(event.slug)}
+        className="group block overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:ring-white/15"
+      >
+        <span className="poster-hover block">
+          <ExternalImage
+            src={mediaUrl(event.flyerKey)}
+            alt=""
+            className="aspect-[4/5] max-h-[32rem] w-full object-cover"
+            fallback={
+              <span className="block aspect-[4/5] max-h-[32rem] w-full bg-neutral-900" />
+            }
+          />
+        </span>
+      </Link>
+      <div className="space-y-4">
+        <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
           Next up
-        </span>
-        <span className="mt-1 block font-heading text-2xl leading-none sm:text-4xl">
+        </p>
+        <h2 className="font-heading text-3xl font-normal tracking-tight sm:text-5xl">
           {event.title}
-        </span>
-        <span className="mt-2 block font-mono text-xs">
+        </h2>
+        <p className="font-mono text-sm text-muted-foreground">
           {formatEventListingDate(event.dateTime)}
           {event.location ? ` · ${event.location}` : ""}
-        </span>
-      </span>
-    </Link>
+        </p>
+        <TextLink href={eventPath(event.slug)}>See the night</TextLink>
+      </div>
+    </section>
   );
 }
 

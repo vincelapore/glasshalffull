@@ -44,6 +44,25 @@ export async function SiteHeader() {
               className="h-8 w-auto drop-shadow-[0_0_10px_var(--background)] dark:invert"
             />
           </Link>
+          <div className="lg:hidden">
+            <Suspense
+              fallback={
+                <span className="font-mono text-xs tracking-wide text-muted-foreground">
+                  Meanjin
+                </span>
+              }
+            >
+              <CityPicker />
+            </Suspense>
+          </div>
+        </div>
+
+        <MobileNavSearch />
+
+        <div
+          data-nav-city
+          className="pointer-events-auto hidden shrink-0 lg:flex"
+        >
           <Suspense
             fallback={
               <span className="font-mono text-xs tracking-wide text-muted-foreground">
@@ -54,8 +73,6 @@ export async function SiteHeader() {
             <CityPicker />
           </Suspense>
         </div>
-
-        <MobileNavSearch />
 
         <nav
           data-nav-links

@@ -46,7 +46,12 @@ function sideRoom(header: Element | null | undefined) {
 
   const left = anchor.getBoundingClientRect().right;
   const desktop = window.matchMedia("(min-width: 64rem)").matches;
-  if (desktop) return right - left - 16 - gap;
+  if (desktop) {
+    const city = header?.querySelector("[data-nav-city]");
+    const cityWidth = city ? Math.ceil(city.getBoundingClientRect().width) : 0;
+    const cityReserve = cityWidth > 1 ? cityWidth + 16 : 0;
+    return right - left - 16 - gap - cityReserve;
+  }
 
   const center = window.innerWidth / 2;
   return (
@@ -175,6 +180,8 @@ export function MobileNavSearch() {
     const observer = new ResizeObserver(measure);
     const header = anchorRef.current?.closest("header");
     if (header) observer.observe(header);
+    const city = header?.querySelector("[data-nav-city]");
+    if (city) observer.observe(city);
     observer.observe(document.documentElement);
     document.fonts?.ready.then(measure).catch(() => {});
     window.addEventListener("resize", measure);
@@ -267,9 +274,15 @@ export function MobileNavSearch() {
     if (!open) return;
     const fit = () => setOpenWidth(measureOpenWidth());
     fit();
+    const city = anchorRef.current?.closest("header")?.querySelector("[data-nav-city]");
+    const observer = new ResizeObserver(fit);
+    if (city) observer.observe(city);
     window.addEventListener("resize", fit);
     document.fonts?.ready.then(fit).catch(() => {});
-    return () => window.removeEventListener("resize", fit);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", fit);
+    };
   }, [open, compact, desktop]);
 
   useEffect(() => {

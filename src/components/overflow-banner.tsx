@@ -44,6 +44,15 @@ function homeHref(city: CityFilter, episode?: string) {
   return query ? `/?${query}` : "/";
 }
 
+function leadLine(body: string) {
+  const flat = body.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const end = flat.search(/[.!?](?:\s|$)/);
+  const sentence = end === -1 ? flat : flat.slice(0, end + 1);
+  if (sentence.length <= 200) return sentence;
+  return `${sentence.slice(0, 197).trimEnd()}…`;
+}
+
 function episodeFaces(episode: OverflowEpisodeView) {
   return episode.features.map((feature) => ({
     id: feature.creativeId,
@@ -214,6 +223,81 @@ function OverflowHeroSlide({
       </span>
       <EventOrganiserFaces organisers={episodeFaces(episode)} />
     </button>
+  );
+}
+
+function OverflowLatest({
+  episode,
+  rest,
+  onOpen,
+}: {
+  episode: OverflowEpisodeView;
+  rest: OverflowEpisodeView[];
+  onOpen: (slug: string) => void;
+}) {
+  const line = leadLine(episode.body);
+
+  return (
+    <section className="grid items-center gap-6 md:grid-cols-2 md:gap-10">
+      <button
+        type="button"
+        className="group block w-full overflow-hidden rounded-lg bg-neutral-900 text-left ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:ring-white/15"
+        aria-haspopup="dialog"
+        aria-label={`the overflow #${episode.number}, ${episode.title}`}
+        onClick={() => onOpen(episode.slug)}
+      >
+        <span className="poster-hover block">
+          <ExternalImage
+            src={mediaUrl(episode.coverKey)}
+            alt=""
+            className="aspect-[4/5] max-h-[32rem] w-full object-cover"
+            fallback={
+              <span className="block aspect-[4/5] max-h-[32rem] w-full bg-neutral-900" />
+            }
+          />
+        </span>
+      </button>
+      <div className="space-y-4">
+        <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          the overflow #{episode.number} · {cityShortLabels[episode.city]}
+        </p>
+        <h2 className="font-heading text-3xl font-normal tracking-tight sm:text-5xl">
+          {episode.title}
+        </h2>
+        {line ? (
+          <p className="max-w-md text-base leading-relaxed text-muted-foreground">
+            {line}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          className="text-sm underline underline-offset-4"
+          onClick={() => onOpen(episode.slug)}
+        >
+          Read it
+        </button>
+        {rest.length > 0 ? (
+          <div className="border-t border-border pt-4">
+            <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+              More from the overflow
+            </p>
+            <ul className="mt-2 space-y-1">
+              {rest.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className="text-left text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    onClick={() => onOpen(item.slug)}
+                  >
+                    #{item.number} {item.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -483,7 +567,7 @@ export function OverflowBanner({
   return (
     <>
       {episodes.length > 0 ? (
-        <div className="space-y-8">
+        <div className="space-y-16">
           <OverflowTicker
             key={episodes.map((episode) => episode.id).join(":")}
             episodes={episodes}
@@ -497,6 +581,11 @@ export function OverflowBanner({
               </div>
             ))}
           </div>
+          <OverflowLatest
+            episode={episodes[0]}
+            rest={episodes.slice(1)}
+            onOpen={open}
+          />
         </div>
       ) : null}
 
