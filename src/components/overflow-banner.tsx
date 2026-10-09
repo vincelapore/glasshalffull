@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 
 const flickMs = 280;
 const dwellMs = 3600;
+/** Cover, title, first line, and Read it. Hidden while the banner and posters are the comparison. */
+const showLatestEpisode = false;
 
 const urlPattern = /https?:\/\/[^\s<>"']+/g;
 
@@ -581,11 +583,13 @@ export function OverflowBanner({
               </div>
             ))}
           </div>
-          <OverflowLatest
-            episode={episodes[0]}
-            rest={episodes.slice(1)}
-            onOpen={open}
-          />
+          {showLatestEpisode ? (
+            <OverflowLatest
+              episode={episodes[0]}
+              rest={episodes.slice(1)}
+              onOpen={open}
+            />
+          ) : null}
         </div>
       ) : null}
 

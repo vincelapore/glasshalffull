@@ -67,15 +67,13 @@ export function SiteFooter() {
               </p>
               <div className="text-[11px] text-white/70">
                 <p>© {year} Glass Half Full</p>
-                <p>
-                  Website design by{" "}
-                  <Link
-                    href={creativePath("vince-lapore")}
-                    className="underline underline-offset-4 transition-opacity hover:opacity-60"
-                  >
-                    this guy
-                  </Link>
-                </p>
+                Website design by{" "}
+                <Link
+                  href={creativePath("vince-lapore")}
+                  className="underline underline-offset-4 transition-opacity hover:opacity-60"
+                >
+                  this guy
+                </Link>
               </div>
             </div>
           </div>
