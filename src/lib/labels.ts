@@ -35,8 +35,10 @@ export const craftCategoryLabels: Record<(typeof craftCategories)[number], strin
     model: "Model",
     dance: "Dance",
     film: "Film & video",
+    actor: "Actor",
     design: "Design",
     queer: "Queer",
+    organiser: "Event organiser",
     other: "Other",
   };
 
@@ -56,8 +58,10 @@ export const craftTagLabels: Record<
   model: "model",
   dance: "dance",
   film: "film",
+  actor: "actor",
   design: "design",
   queer: "queer",
+  organiser: "organiser",
   other: null,
 };
 

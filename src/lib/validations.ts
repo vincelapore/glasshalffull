@@ -19,8 +19,10 @@ export const craftCategories = [
   "model",
   "dance",
   "film",
+  "actor",
   "design",
   "queer",
+  "organiser",
   "other",
 ] as const;
 
@@ -60,6 +62,12 @@ export const eventRejectionReasons = [
   "doesnt_fit",
   "more_info",
 ] as const;
+
+export const profileRejectionReasons = [
+  "duplicate",
+  "doesnt_fit",
+  "more_info",
+] as const satisfies readonly (typeof eventRejectionReasons)[number][];
 
 const optionalUrl = z.union([
   z.literal(""),

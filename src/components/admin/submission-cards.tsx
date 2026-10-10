@@ -171,6 +171,7 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
         ) : (
           <p className="text-sm text-muted-foreground">No bio provided.</p>
         )}
+        <EventModerationNote note={creative.moderationNote} />
         <div className="flex flex-wrap gap-3 text-sm">
           {creative.instagramHandle ? (
             <a

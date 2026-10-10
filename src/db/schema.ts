@@ -29,8 +29,10 @@ export const craftCategoryEnum = pgEnum("craft_category", [
   "model",
   "dance",
   "film",
+  "actor",
   "design",
   "queer",
+  "organiser",
   "other",
 ]);
 
@@ -96,6 +98,8 @@ export const creatives = pgTable(
     openToTrade: boolean("open_to_trade").notNull().default(false),
     buildingPortfolio: boolean("building_portfolio").notNull().default(false),
     status: submissionStatusEnum("status").notNull().default("pending"),
+    /** Private review note. Visible to admins and the profile owner only. */
+    moderationNote: text("moderation_note"),
     /**
      * Email that can claim this profile by signing up or signing in.
      * Cleared once userId is set. Never shown on public pages.

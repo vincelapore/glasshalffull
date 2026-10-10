@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AccountShell } from "@/components/account-shell";
 import { AccountVisibilityToggle } from "@/components/account-visibility";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
+import { EventModerationNote } from "@/components/event-moderation-note";
 import { Notice } from "@/components/ui/notice";
 import { SectionHeader, TextLink } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
@@ -67,6 +68,7 @@ export default async function AccountPage() {
             one. An admin needs to sort that out.
           </Notice>
         ) : null}
+        {profile ? <EventModerationNote note={profile.moderationNote} /> : null}
         <CreativeSubmissionForm
           mode="profile"
           defaultValues={

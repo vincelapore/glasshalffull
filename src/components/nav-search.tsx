@@ -28,8 +28,10 @@ const craftSearchLabels: Record<(typeof craftCategories)[number], string> = {
   model: "model",
   dance: "dancer",
   film: "filmmaker",
+  actor: "actor",
   design: "graphic designer",
   queer: "queer artist",
+  organiser: "event organiser",
   other: "creative",
 };
 

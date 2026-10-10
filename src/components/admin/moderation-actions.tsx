@@ -30,7 +30,7 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
       const result =
         kind === "event"
           ? await updateEventStatusAction(id, next, rejection)
-          : await updateCreativeStatusAction(id, next);
+          : await updateCreativeStatusAction(id, next, rejection);
 
       if (!result.success) {
         window.alert(result.message);
@@ -60,13 +60,7 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
           size="sm"
           variant="destructive"
           disabled={pending}
-          onClick={() => {
-            if (kind === "event") {
-              setRejectOpen(true);
-              return;
-            }
-            run("rejected");
-          }}
+          onClick={() => setRejectOpen(true)}
         >
           Reject
         </Button>
@@ -82,14 +76,13 @@ export function ModerationActions({ kind, id, status }: ModerationActionsProps) 
           Mark pending
         </Button>
       ) : null}
-      {kind === "event" ? (
-        <EventRejectDialog
-          open={rejectOpen}
-          onOpenChange={setRejectOpen}
-          pending={pending}
-          onConfirm={(input) => run("rejected", input)}
-        />
-      ) : null}
+      <EventRejectDialog
+        kind={kind === "event" ? "event" : "profile"}
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        pending={pending}
+        onConfirm={(input) => run("rejected", input)}
+      />
     </div>
   );
 }

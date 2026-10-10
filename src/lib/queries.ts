@@ -18,9 +18,12 @@ type Status = (typeof submissionStatuses)[number];
 
 const publicCreativeColumns = omitInviteEmail(getTableColumns(creatives));
 
-function omitInviteEmail<T extends { inviteEmail: unknown }>(columns: T) {
-  const { inviteEmail, ...rest } = columns;
+function omitInviteEmail<
+  T extends { inviteEmail: unknown; moderationNote: unknown },
+>(columns: T) {
+  const { inviteEmail, moderationNote, ...rest } = columns;
   void inviteEmail;
+  void moderationNote;
   return rest;
 }
 
@@ -180,6 +183,15 @@ export async function getCreativeByUserId(userId: string) {
     .where(eq(creatives.userId, userId))
     .limit(1);
   return creative ?? null;
+}
+
+export async function getCreativeModerationNote(id: string) {
+  const [row] = await db
+    .select({ moderationNote: creatives.moderationNote })
+    .from(creatives)
+    .where(eq(creatives.id, id))
+    .limit(1);
+  return row?.moderationNote ?? null;
 }
 
 export async function getEventsByUserId(userId: string) {

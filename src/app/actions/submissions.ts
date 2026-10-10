@@ -416,16 +416,39 @@ export async function updateCreativeInviteEmailAction(
 
 export async function updateCreativeStatusAction(
   id: string,
-  status: "approved" | "rejected" | "pending"
+  status: "approved" | "rejected" | "pending",
+  rejection?: unknown
 ): Promise<ActionResult> {
   if (!(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
+  let moderationNote: string | null | undefined;
+
+  if (status === "rejected") {
+    const parsed = eventRejectionSchema.safeParse(rejection ?? {});
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message:
+          parsed.error.issues[0]?.message ?? "Pick a reason or add a note.",
+      };
+    }
+
+    moderationNote = composeModerationNote(
+      parsed.data.reasons,
+      parsed.data.extra
+    );
+  }
+
   try {
     const [updated] = await db
       .update(creatives)
-      .set({ status })
+      .set({
+        status,
+        ...(moderationNote !== undefined ? { moderationNote } : {}),
+      })
       .where(eq(creatives.id, id))
       .returning({ id: creatives.id, slug: creatives.slug });
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
+import { EventModerationNote } from "@/components/event-moderation-note";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import {
   EventListingCard,
@@ -23,6 +24,7 @@ import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
 import {
   getCreativeByParam,
+  getCreativeModerationNote,
   getCreativeUpcomingEvents,
   getOrganisersByEventIds,
 } from "@/lib/queries";
@@ -72,6 +74,14 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
     upcoming.map(({ event }) => event.id)
   );
   const isPublic = creative.status === "approved";
+  const viewer = await getSessionUser();
+  const showModerationNote = Boolean(
+    viewer &&
+      (viewer.id === creative.userId || (await isAdminEmail(viewer.email)))
+  );
+  const moderationNote = showModerationNote
+    ? await getCreativeModerationNote(creative.id)
+    : null;
 
   return (
     <Page>
@@ -84,6 +94,9 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
         <Notice className="mb-6">
           This profile is private and isn’t in the directory.
         </Notice>
+      ) : null}
+      {showModerationNote ? (
+        <EventModerationNote note={moderationNote} className="mb-6" />
       ) : null}
 
       <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">

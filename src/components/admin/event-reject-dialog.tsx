@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import {
   Dialog,
@@ -17,29 +17,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { eventRejectionReasonLabels } from "@/lib/labels";
 import {
   eventRejectionReasons,
+  profileRejectionReasons,
   type EventRejectionInput,
 } from "@/lib/validations";
 
+const copy = {
+  event: {
+    description:
+      "Organisers will see this on their event. Tick what’s wrong, or add a note.",
+    confirm: "Reject event",
+    reasons: eventRejectionReasons,
+  },
+  profile: {
+    description:
+      "They’ll see this on their account. Tick what’s wrong, or add a note.",
+    confirm: "Reject profile",
+    reasons: profileRejectionReasons,
+  },
+} as const;
+
 export function EventRejectDialog({
+  kind,
   open,
   onOpenChange,
   pending,
   onConfirm,
 }: {
+  kind: "event" | "profile";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pending: boolean;
   onConfirm: (input: EventRejectionInput) => void;
 }) {
+  const extraId = useId();
   const [reasons, setReasons] = useState<EventRejectionInput["reasons"]>([]);
   const [extra, setExtra] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const dialogCopy = copy[kind];
 
   function reset() {
     setReasons([]);
     setExtra("");
     setError(null);
   }
+
+  useEffect(() => {
+    if (open) return;
+    setReasons([]);
+    setExtra("");
+    setError(null);
+  }, [open]);
 
   function handleOpenChange(next: boolean) {
     if (!next) reset();
@@ -59,15 +86,14 @@ export function EventRejectDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup>
+      <DialogPopup className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogTitle>Why is this being rejected?</DialogTitle>
         <DialogDescription className="mt-1">
-          Organisers will see this on their event. Tick what’s wrong, or add a
-          note.
+          {dialogCopy.description}
         </DialogDescription>
 
         <Fieldset className="mt-5 space-y-2" legend="Reasons" legendClassName="sr-only">
-          {eventRejectionReasons.map((reason) => {
+          {dialogCopy.reasons.map((reason) => {
             const checked = reasons.includes(reason);
 
             return (
@@ -93,9 +119,9 @@ export function EventRejectDialog({
         </Fieldset>
 
         <Field className="mt-4">
-          <Label htmlFor="rejection-extra">Anything else? (optional)</Label>
+          <Label htmlFor={extraId}>Anything else? (optional)</Label>
           <Textarea
-            id="rejection-extra"
+            id={extraId}
             rows={3}
             value={extra}
             disabled={pending}
@@ -124,7 +150,7 @@ export function EventRejectDialog({
             disabled={pending}
             onClick={submit}
           >
-            {pending ? "Rejecting…" : "Reject event"}
+            {pending ? "Rejecting…" : dialogCopy.confirm}
           </Button>
         </div>
       </DialogPopup>
