@@ -82,6 +82,7 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
             city: "meanjin",
             coverKey: "",
             body: "",
+            link: "",
             eventId: "",
             features: [],
           },
@@ -139,7 +140,7 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
     setNames((current) => ({ ...current, [creativeId]: name }));
     form.setValue(
       "features",
-      [...features, { creativeId, role: "organiser", note: "" }],
+      [...features, { creativeId, role: "artist", note: "" }],
       { shouldDirty: true }
     );
   }
@@ -248,10 +249,19 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
           {...form.register("body")}
           aria-invalid={Boolean(form.formState.errors.body)}
         />
-        <p className="text-xs text-muted-foreground">
-          Paste the Instagram reel link in the writeup.
-        </p>
         <FieldError>{form.formState.errors.body?.message}</FieldError>
+      </Field>
+
+      <Field>
+        <Label htmlFor="link">Instagram reel</Label>
+        <Input
+          id="link"
+          type="url"
+          placeholder="https://www.instagram.com/reel/…"
+          {...form.register("link")}
+          aria-invalid={Boolean(form.formState.errors.link)}
+        />
+        <FieldError>{form.formState.errors.link?.message}</FieldError>
       </Field>
 
       <EventPicker

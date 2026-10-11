@@ -156,7 +156,7 @@ export const organiserStubSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(200),
 });
 
-export const overflowFeatureRoles = ["organiser", "wall", "music"] as const;
+export const overflowFeatureRoles = ["artist", "interviewee"] as const;
 
 const overflowFeatureSchema = z.object({
   creativeId: z.string().uuid(),
@@ -180,6 +180,7 @@ export const overflowEpisodeSchema = z.object({
     .min(1, "Upload a poster")
     .regex(flyerKeyPattern, "Upload a valid poster"),
   body: z.string().trim().min(1, "Write a short recap").max(4000),
+  link: optionalUrl,
   eventId: z.union([z.literal(""), z.string().uuid()]),
   features: z
     .array(overflowFeatureSchema)

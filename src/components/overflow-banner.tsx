@@ -29,7 +29,9 @@ import { cn } from "@/lib/utils";
 
 const flickMs = 280;
 const dwellMs = 3600;
-/** Cover, title, first line, and Read it. Hidden while the banner and posters are the comparison. */
+/** Square title posters under the carousel. */
+const showOverflowLineup = false;
+/** Cover, title, first line, and Read it. */
 const showLatestEpisode = false;
 
 const urlPattern = /https?:\/\/[^\s<>"']+/g;
@@ -142,6 +144,26 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function WatchEpisode({
+  href,
+  className,
+}: {
+  href: string | null;
+  className?: string;
+}) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={cn("underline underline-offset-4", className)}
+    >
+      Watch episode
+    </a>
+  );
+}
+
 function OverflowPoster({
   episode,
   onOpen,
@@ -152,6 +174,7 @@ function OverflowPoster({
   framed?: boolean;
 }) {
   return (
+    <div className="relative">
     <button
       type="button"
       className={cn(
@@ -185,6 +208,11 @@ function OverflowPoster({
         organisers={episodeFaces(episode)}
       />
     </button>
+    <WatchEpisode
+      href={episode.link}
+      className="absolute bottom-14 left-1/2 z-20 -translate-x-1/2 font-mono text-xs text-white"
+    />
+    </div>
   );
 }
 
@@ -196,6 +224,7 @@ function OverflowHeroSlide({
   onOpen: (slug: string) => void;
 }) {
   return (
+    <div className="relative">
     <button
       type="button"
       className="group overflow-poster relative block w-full overflow-hidden text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-ring"
@@ -225,6 +254,11 @@ function OverflowHeroSlide({
       </span>
       <EventOrganiserFaces organisers={episodeFaces(episode)} />
     </button>
+    <WatchEpisode
+      href={episode.link}
+      className="absolute right-4 bottom-4 z-20 font-mono text-xs text-white sm:right-6"
+    />
+    </div>
   );
 }
 
@@ -271,13 +305,16 @@ function OverflowLatest({
             {line}
           </p>
         ) : null}
-        <button
-          type="button"
-          className="text-sm underline underline-offset-4"
-          onClick={() => onOpen(episode.slug)}
-        >
-          Read it
-        </button>
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <button
+            type="button"
+            className="text-sm underline underline-offset-4"
+            onClick={() => onOpen(episode.slug)}
+          >
+            Read it
+          </button>
+          <WatchEpisode href={episode.link} className="text-sm" />
+        </div>
         {rest.length > 0 ? (
           <div className="border-t border-border pt-4">
             <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
@@ -576,13 +613,15 @@ export function OverflowBanner({
             paused={Boolean(displayed)}
             onOpen={open}
           />
-          <div className="flex flex-wrap justify-center gap-6">
-            {episodes.map((episode) => (
-              <div key={episode.id} className="w-full max-w-72">
-                <OverflowPoster episode={episode} onOpen={open} />
-              </div>
-            ))}
-          </div>
+          {showOverflowLineup ? (
+            <div className="flex flex-wrap justify-center gap-6">
+              {episodes.map((episode) => (
+                <div key={episode.id} className="w-full max-w-72">
+                  <OverflowPoster episode={episode} onOpen={open} />
+                </div>
+              ))}
+            </div>
+          ) : null}
           {showLatestEpisode ? (
             <OverflowLatest
               episode={episodes[0]}
@@ -617,6 +656,10 @@ export function OverflowBanner({
             <DialogDescription className="mt-1">
               the overflow #{displayed.number} · {cityShortLabels[displayed.city]}
             </DialogDescription>
+            <WatchEpisode
+              href={displayed.link}
+              className="mt-4 inline-block text-sm"
+            />
             <p className="mt-4 text-sm leading-relaxed whitespace-pre-wrap">
               <LinkifiedText text={displayed.body} />
             </p>

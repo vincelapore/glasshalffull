@@ -61,6 +61,7 @@ export default async function EditOverflowEpisodePage({
           city: episode.city,
           coverKey: episode.coverKey,
           body: episode.body,
+          link: episode.link ?? "",
           eventId: episode.event?.id ?? "",
           features: episode.features.map((feature) => ({
             creativeId: feature.creativeId,

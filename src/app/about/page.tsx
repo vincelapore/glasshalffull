@@ -49,10 +49,9 @@ export default function AboutPage() {
         </p>
         <p>
           Behind every great night is a team that has poured thousands of
-          dollars, hours, and love into making it happen. Turn up and commit,
-          and you&apos;re not just a ticket holder. You&apos;re part of this
-          community. It&apos;s time we all pour back in and let this glass
-          overflow.
+          dollars, hundreds of hours, and an immeasurable amount of love into
+          making it happen. But they can&apos;t keep pouring from an empty cup.
+          We all need to pour back in and let this glass overflow.
         </p>
       </div>
     </Page>

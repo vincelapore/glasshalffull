@@ -171,6 +171,7 @@ export async function createOverflowEpisodeAction(
         city: parsed.data.city,
         coverKey: parsed.data.coverKey,
         body: parsed.data.body.trim(),
+        link: emptyToNull(parsed.data.link),
         eventId: parsed.data.eventId || null,
       })
       .returning({ id: overflowEpisodes.id });
@@ -224,6 +225,7 @@ export async function updateOverflowEpisodeAction(
         city: parsed.data.city,
         coverKey: parsed.data.coverKey,
         body: parsed.data.body.trim(),
+        link: emptyToNull(parsed.data.link),
         eventId: parsed.data.eventId || null,
       })
       .where(eq(overflowEpisodes.id, id))

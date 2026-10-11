@@ -405,6 +405,7 @@ export type OverflowEpisodeView = {
   city: OverflowEpisode["city"];
   coverKey: string;
   body: string;
+  link: string | null;
   features: OverflowFeatureView[];
   event: { id: string; slug: string; title: string } | null;
 };
@@ -456,6 +457,7 @@ async function hydrateOverflowEpisodes(
     city: episode.city,
     coverKey: episode.coverKey,
     body: episode.body,
+    link: episode.link,
     features: featureRows
       .filter((feature) => feature.episodeId === episode.id)
       .map(({ episodeId: _episodeId, ...feature }) => feature),

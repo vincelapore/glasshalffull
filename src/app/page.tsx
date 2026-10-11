@@ -18,7 +18,6 @@ import {
   TextLink,
 } from "@/components/ui/page";
 import {
-  cityShortLabels,
   formatEventListingDate,
   parseCityFilter,
   type CityFilter,
@@ -40,11 +39,6 @@ type SearchParams = Promise<{ city?: string; episode?: string }>;
 function cityBrowseHref(path: "/events" | "/creatives", city: CityFilter) {
   if (city === "meanjin") return path;
   return `${path}?city=${city}`;
-}
-
-function weekTitle(city: CityFilter) {
-  if (city === "all") return "This week";
-  return `This week in ${cityShortLabels[city]}`;
 }
 
 function EventLead({
@@ -146,7 +140,7 @@ export default async function HomePage({
       {weekEvents.length > 0 ? (
         <section className="space-y-5">
           <SectionHeader
-            title={weekTitle(activeCity)}
+            title="Upcoming events"
             action={
               <TextLink href={cityBrowseHref("/events", activeCity)}>
                 View all
@@ -165,7 +159,7 @@ export default async function HomePage({
         </section>
       ) : leadEvent ? null : (
         <section className="space-y-5">
-          <SectionHeader title={weekTitle(activeCity)} />
+          <SectionHeader title="Upcoming events" />
           <EmptyState>
             No upcoming events yet.{" "}
             <TextLink href="/account/events/new" variant="inline">
@@ -208,8 +202,10 @@ export default async function HomePage({
           Turn up, and pour back in.
         </h2>
         <p className="max-w-xl text-muted-foreground">
-          Behind every great night is a team that has poured time, money, and
-          love into making it happen. You&apos;re not just a ticket holder.
+          Behind every great night is a team that has poured thousands of
+          dollars, hundreds of hours, and an immeasurable amount of love into
+          making it happen. But they can&apos;t keep pouring from an empty cup.
+          We all need to pour back in and let this glass overflow.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button render={<Link href="/account/events/new" />}>

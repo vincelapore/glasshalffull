@@ -70,9 +70,8 @@ export const lineupRoleEnum = pgEnum("lineup_role", [
 ]);
 
 export const overflowFeatureRoleEnum = pgEnum("overflow_feature_role", [
-  "organiser",
-  "wall",
-  "music",
+  "artist",
+  "interviewee",
 ]);
 
 /** One public creative profile per Neon Auth account (unique userId). */
@@ -193,6 +192,8 @@ export const overflowEpisodes = pgTable("overflow_episodes", {
   city: cityEnum("city").notNull(),
   coverKey: text("cover_key").notNull(),
   body: text("body").notNull(),
+  /** Instagram reel. Empty when the episode has not been posted yet. */
+  link: text("link"),
   eventId: uuid("event_id").references(() => events.id, {
     onDelete: "set null",
   }),
@@ -205,7 +206,7 @@ export const overflowEpisodes = pgTable("overflow_episodes", {
     .$onUpdate(() => new Date()),
 });
 
-/** One creative per episode. Role is how they showed up in the episode. */
+/** One creative per episode. They are either a featured artist or the interviewee. */
 export const overflowFeatures = pgTable(
   "overflow_features",
   {

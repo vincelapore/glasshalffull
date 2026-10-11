@@ -141,16 +141,14 @@ export const overflowFeatureRoleLabels: Record<
   (typeof overflowFeatureRoles)[number],
   string
 > = {
-  organiser: "Organiser",
-  wall: "On the wall",
-  music: "Music",
+  artist: "Featured artist",
+  interviewee: "Interviewee",
 };
 
 /** Section headings in the episode popup, in display order. */
 export const overflowFeatureGroups = [
-  { role: "wall", label: "On the wall" },
-  { role: "music", label: "In the room" },
-  { role: "organiser", label: "With" },
+  { role: "artist", label: "Featured artist" },
+  { role: "interviewee", label: "Interviewee" },
 ] as const satisfies ReadonlyArray<{
   role: (typeof overflowFeatureRoles)[number];
   label: string;
