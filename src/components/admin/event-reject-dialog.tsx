@@ -140,6 +140,7 @@ export function EventRejectDialog({
             type="button"
             variant="outline"
             disabled={pending}
+            nativeButton
             render={<DialogClose />}
           >
             Cancel
