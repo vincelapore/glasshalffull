@@ -24,10 +24,17 @@ function DialogBackdrop({
   );
 }
 
-function DialogPopup({ className, children, ...props }: DialogPrimitive.Popup.Props) {
+function DialogPopup({
+  className,
+  children,
+  backdropClassName,
+  ...props
+}: DialogPrimitive.Popup.Props & {
+  backdropClassName?: string;
+}) {
   return (
     <DialogPrimitive.Portal>
-      <DialogBackdrop />
+      <DialogBackdrop className={backdropClassName} />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

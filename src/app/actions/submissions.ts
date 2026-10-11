@@ -208,7 +208,10 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
 function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: string[]) {
   return {
     name: data.name,
-    craftCategories: data.craftCategories,
+    disciplines: data.disciplines,
+    roles: data.roles,
+    specialty: emptyToNull(data.specialty),
+    isQueer: data.isQueer,
     city: data.city || null,
     pronouns: emptyToNull(data.pronouns),
     bio: emptyToNull(data.bio),

@@ -14,29 +14,47 @@ import { createPortal } from "react-dom";
 import { cityShortLabels } from "@/lib/labels";
 import { eventsBrowsePath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
-import { cities, craftCategories } from "@/lib/validations";
+import { cities, disciplines } from "@/lib/validations";
 
-const craftSearchLabels: Record<(typeof craftCategories)[number], string> = {
-  dj: "DJ",
-  musician: "musician",
-  producer: "producer",
-  tattoo: "tattoo artist",
+type Discipline = (typeof disciplines)[number];
+type NavCity = (typeof cities)[number] | "all";
+
+/** Selected-state label for each discipline in the nav search. */
+const disciplineSearchLabels: Record<Discipline, string> = {
+  music: "musician",
   visual_art: "visual artist",
   photography: "photographer",
-  fashion: "fashion designer",
-  makeup: "makeup artist",
-  model: "model",
-  dance: "dancer",
+  fashion: "fashion creative",
+  performance: "performer",
   film: "filmmaker",
-  actor: "actor",
+  writing: "writer",
   design: "graphic designer",
-  queer: "queer artist",
-  organiser: "event organiser",
-  other: "creative",
+  tattoo: "tattoo artist",
+  community: "event organiser",
 };
 
-type Craft = (typeof craftCategories)[number];
-type NavCity = (typeof cities)[number] | "all";
+/** Role-style phrases that resolve to a browse discipline. */
+const searchPhrases: { label: string; discipline: Discipline }[] = [
+  { label: "musician", discipline: "music" },
+  { label: "DJ", discipline: "music" },
+  { label: "producer", discipline: "music" },
+  { label: "visual artist", discipline: "visual_art" },
+  { label: "photographer", discipline: "photography" },
+  { label: "fashion creative", discipline: "fashion" },
+  { label: "stylist", discipline: "fashion" },
+  { label: "makeup artist", discipline: "fashion" },
+  { label: "model", discipline: "fashion" },
+  { label: "performer", discipline: "performance" },
+  { label: "dancer", discipline: "performance" },
+  { label: "actor", discipline: "performance" },
+  { label: "filmmaker", discipline: "film" },
+  { label: "writer", discipline: "writing" },
+  { label: "poet", discipline: "writing" },
+  { label: "graphic designer", discipline: "design" },
+  { label: "creative director", discipline: "design" },
+  { label: "tattoo artist", discipline: "tattoo" },
+  { label: "event organiser", discipline: "community" },
+];
 
 const citySearchLabels: Record<NavCity, string> = {
   ...cityShortLabels,
@@ -45,16 +63,16 @@ const citySearchLabels: Record<NavCity, string> = {
 
 const cityOptions: NavCity[] = [...cities, "all"];
 
-function isCraft(value: string | null): value is Craft {
-  return craftCategories.includes(value as Craft);
+function isDiscipline(value: string | null): value is Discipline {
+  return disciplines.includes(value as Discipline);
 }
 
 function isNavCity(value: string | null): value is NavCity {
   return value === "all" || cities.includes(value as (typeof cities)[number]);
 }
 
-function creativesHref(category: Craft, city: NavCity) {
-  const params = new URLSearchParams({ category, city });
+function creativesHref(discipline: Discipline, city: NavCity) {
+  const params = new URLSearchParams({ discipline, city });
   return `/creatives?${params.toString()}`;
 }
 
@@ -69,13 +87,15 @@ export function NavSearch({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
+  const disciplineParam = searchParams.get("discipline");
   const cityParam = searchParams.get("city");
-  const category = isCraft(categoryParam) ? categoryParam : "design";
+  const discipline = isDiscipline(disciplineParam)
+    ? disciplineParam
+    : "design";
   const city = isNavCity(cityParam) ? cityParam : "meanjin";
 
-  function go(nextCategory: Craft, nextCity: NavCity) {
-    router.push(creativesHref(nextCategory, nextCity));
+  function go(nextDiscipline: Discipline, nextCity: NavCity) {
+    router.push(creativesHref(nextDiscipline, nextCity));
   }
 
   return (
@@ -86,7 +106,7 @@ export function NavSearch({
         )}
         <span className="shrink-0 text-muted-foreground">i&apos;m looking for a</span>
         <CraftInput
-          value={category}
+          value={discipline}
           onPick={(next) => go(next, city)}
         />
       </span>
@@ -100,7 +120,7 @@ export function NavSearch({
             label: citySearchLabels[value],
           }))}
           onValueChange={(value) => {
-            if (isNavCity(value)) go(category, value);
+            if (isNavCity(value)) go(discipline, value);
           }}
         />
       </span>
@@ -140,14 +160,18 @@ export function NavSearchSkeleton({
   );
 }
 
-function matchingCrafts(query: string, selected: Craft) {
-  const selectedLabel = craftSearchLabels[selected];
+function matchingPhrases(query: string, selected: Discipline) {
+  const selectedLabel = disciplineSearchLabels[selected];
   const normalized = query.trim().toLowerCase();
   if (!normalized || normalized === selectedLabel.toLowerCase()) {
-    return [...craftCategories];
+    return searchPhrases.filter(
+      (phrase, index, list) =>
+        list.findIndex((item) => item.discipline === phrase.discipline) ===
+        index
+    );
   }
-  return craftCategories.filter((craft) =>
-    craftSearchLabels[craft].toLowerCase().includes(normalized),
+  return searchPhrases.filter((phrase) =>
+    phrase.label.toLowerCase().includes(normalized)
   );
 }
 
@@ -155,30 +179,32 @@ function CraftInput({
   value,
   onPick,
 }: {
-  value: Craft;
-  onPick: (craft: Craft) => void;
+  value: Discipline;
+  onPick: (discipline: Discipline) => void;
 }) {
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const anchorRef = useRef<HTMLLabelElement>(null);
-  const [query, setQuery] = useState(craftSearchLabels[value]);
+  const [query, setQuery] = useState(disciplineSearchLabels[value]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const suggestions = matchingCrafts(query, value);
+  const suggestions = matchingPhrases(query, value);
 
   useEffect(() => {
-    setQuery(craftSearchLabels[value]);
+    setQuery(disciplineSearchLabels[value]);
   }, [value]);
 
-  function choose(craft: Craft) {
-    setQuery(craftSearchLabels[craft]);
+  function choose(discipline: Discipline) {
+    setQuery(disciplineSearchLabels[discipline]);
     setOpen(false);
-    onPick(craft);
+    onPick(discipline);
   }
 
   function onFocus() {
     setOpen(true);
-    const index = suggestions.indexOf(value);
+    const index = suggestions.findIndex(
+      (phrase) => phrase.discipline === value
+    );
     setActive(index >= 0 ? index : 0);
     requestAnimationFrame(() => inputRef.current?.select());
   }
@@ -196,13 +222,13 @@ function CraftInput({
         <input
           ref={inputRef}
           role="combobox"
-          aria-label="Craft"
+          aria-label="Discipline"
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={
             open && suggestions[active]
-              ? `${listId}-${suggestions[active]}`
+              ? `${listId}-${suggestions[active].discipline}-${active}`
               : undefined
           }
           size={1}
@@ -214,7 +240,7 @@ function CraftInput({
           onFocus={onFocus}
           onBlur={() => {
             setOpen(false);
-            setQuery(craftSearchLabels[value]);
+            setQuery(disciplineSearchLabels[value]);
           }}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -234,11 +260,11 @@ function CraftInput({
               setActive((index) => Math.max(index - 1, 0));
             } else if (event.key === "Enter") {
               event.preventDefault();
-              const craft = suggestions[active];
-              if (craft) choose(craft);
+              const phrase = suggestions[active];
+              if (phrase) choose(phrase.discipline);
             } else if (event.key === "Escape") {
               setOpen(false);
-              setQuery(craftSearchLabels[value]);
+              setQuery(disciplineSearchLabels[value]);
               inputRef.current?.blur();
             }
           }}
@@ -251,7 +277,7 @@ function CraftInput({
           suggestions={suggestions}
           active={active}
           onHover={setActive}
-          onPick={choose}
+          onPick={(phrase) => choose(phrase.discipline)}
         />
       ) : null}
     </label>
@@ -268,10 +294,10 @@ function SuggestionList({
 }: {
   id: string;
   anchor: HTMLElement | null;
-  suggestions: readonly Craft[];
+  suggestions: readonly { label: string; discipline: Discipline }[];
   active: number;
   onHover: (index: number) => void;
-  onPick: (craft: Craft) => void;
+  onPick: (phrase: { label: string; discipline: Discipline }) => void;
 }) {
   const [box, setBox] = useState<{ top: number; left: number; width: number }>();
   const listRef = useRef<HTMLUListElement>(null);
@@ -321,10 +347,10 @@ function SuggestionList({
       {suggestions.length === 0 ? (
         <li className="px-2.5 py-1.5 text-muted-foreground">No matches</li>
       ) : (
-        suggestions.map((craft, index) => (
-          <li key={craft} role="presentation">
+        suggestions.map((phrase, index) => (
+          <li key={`${phrase.discipline}-${phrase.label}`} role="presentation">
             <button
-              id={`${id}-${craft}`}
+              id={`${id}-${phrase.discipline}-${index}`}
               type="button"
               role="option"
               aria-selected={index === active}
@@ -335,9 +361,9 @@ function SuggestionList({
               )}
               onMouseEnter={() => onHover(index)}
               onMouseDown={(event) => event.preventDefault()}
-              onClick={() => onPick(craft)}
+              onClick={() => onPick(phrase)}
             >
-              {craftSearchLabels[craft]}
+              {phrase.label}
             </button>
           </li>
         ))
@@ -359,7 +385,7 @@ const PLACEHOLDER_WORDS = [
 
 type SearchHit =
   | { kind: "events" }
-  | { kind: "craft"; craft: Craft };
+  | { kind: "discipline"; discipline: Discipline; label: string };
 
 function useNavCity() {
   const searchParams = useSearchParams();
@@ -375,25 +401,34 @@ function searchHits(query: string): SearchHit[] {
   if ("events".startsWith(normalized) || normalized === "event") {
     hits.push({ kind: "events" });
   }
-  const crafts = craftCategories.filter((craft) =>
-    craftSearchLabels[craft].toLowerCase().includes(normalized),
+  const phrases = searchPhrases.filter((phrase) =>
+    phrase.label.toLowerCase().includes(normalized)
   );
-  crafts.sort((a, b) => {
-    const aStart = craftSearchLabels[a].toLowerCase().startsWith(normalized);
-    const bStart = craftSearchLabels[b].toLowerCase().startsWith(normalized);
+  phrases.sort((a, b) => {
+    const aStart = a.label.toLowerCase().startsWith(normalized);
+    const bStart = b.label.toLowerCase().startsWith(normalized);
     if (aStart === bStart) return 0;
     return aStart ? -1 : 1;
   });
-  for (const craft of crafts) hits.push({ kind: "craft", craft });
+  const seen = new Set<Discipline>();
+  for (const phrase of phrases) {
+    if (seen.has(phrase.discipline)) continue;
+    seen.add(phrase.discipline);
+    hits.push({
+      kind: "discipline",
+      discipline: phrase.discipline,
+      label: phrase.label,
+    });
+  }
   return hits;
 }
 
 function hitLabel(hit: SearchHit) {
-  return hit.kind === "events" ? "events" : craftSearchLabels[hit.craft];
+  return hit.kind === "events" ? "events" : hit.label;
 }
 
 function hitKey(hit: SearchHit) {
-  return hit.kind === "events" ? "events" : hit.craft;
+  return hit.kind === "events" ? "events" : hit.discipline;
 }
 
 export function MobileNavQuery({
@@ -469,7 +504,7 @@ export function MobileNavQuery({
       router.push(eventsBrowsePath({ city }));
       return;
     }
-    router.push(creativesHref(hit.craft, city));
+    router.push(creativesHref(hit.discipline, city));
   }
 
   function chooseCity(next: string) {

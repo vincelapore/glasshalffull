@@ -186,7 +186,8 @@ export async function inviteEventOrganiserAction(
           userId: null,
           slug: await uniqueCreativeSlug(parsed.data.name),
           name: parsed.data.name,
-          craftCategories: ["other"],
+          disciplines: ["community"],
+          roles: [],
           inviteEmail: email,
           status: "approved",
         })

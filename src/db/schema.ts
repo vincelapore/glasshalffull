@@ -17,23 +17,37 @@ export const submissionStatusEnum = pgEnum("submission_status", [
   "rejected",
 ]);
 
-export const craftCategoryEnum = pgEnum("craft_category", [
-  "dj",
-  "musician",
-  "producer",
-  "tattoo",
+export const disciplineEnum = pgEnum("discipline", [
+  "music",
   "visual_art",
   "photography",
   "fashion",
+  "performance",
+  "film",
+  "writing",
+  "design",
+  "tattoo",
+  "community",
+]);
+
+export const creativeRoleEnum = pgEnum("creative_role", [
+  "dj",
+  "musician",
+  "producer",
+  "stylist",
   "makeup",
   "model",
-  "dance",
-  "film",
+  "dancer",
   "actor",
-  "design",
-  "queer",
+  "poet",
+  "writer",
+  "creative_director",
   "organiser",
-  "other",
+  "host",
+  "designer",
+  "filmmaker",
+  "photographer",
+  "tattoo_artist",
 ]);
 
 export const eventCategoryEnum = pgEnum("event_category", [
@@ -83,9 +97,10 @@ export const creatives = pgTable(
     userId: text("user_id"),
     slug: text("slug").notNull().unique(),
     name: text("name").notNull(),
-    craftCategories: craftCategoryEnum("craft_categories")
-      .array()
-      .notNull(),
+    disciplines: disciplineEnum("disciplines").array().notNull().default([]),
+    roles: creativeRoleEnum("roles").array().notNull().default([]),
+    specialty: text("specialty"),
+    isQueer: boolean("is_queer").notNull().default(false),
     city: cityEnum("city"),
     pronouns: text("pronouns"),
     bio: text("bio"),

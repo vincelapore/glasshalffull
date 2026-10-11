@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { EventPosterTag } from "@/components/event-listing/poster-tag";
 import { ExternalImage } from "@/components/media/external-image";
 import type { Creative } from "@/db/schema";
-import { cityShortLabels, primaryCraftTag } from "@/lib/labels";
+import { cityShortLabels, primaryDisciplineTag } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ export function ProfileListingGrid({ children }: { children: ReactNode }) {
 type CreativeListingCardProps = {
   creative: Pick<
     Creative,
-    "slug" | "name" | "craftCategories" | "city" | "avatarKey"
+    "slug" | "name" | "disciplines" | "city" | "avatarKey"
   > & {
     coverWorkPhotoKey: string | null;
   };
@@ -31,7 +31,7 @@ export function CreativeListingCard({
   creative,
   className,
 }: CreativeListingCardProps) {
-  const tag = primaryCraftTag(creative.craftCategories);
+  const tag = primaryDisciplineTag(creative.disciplines);
   const initial = creative.name.slice(0, 1).toUpperCase();
 
   return (

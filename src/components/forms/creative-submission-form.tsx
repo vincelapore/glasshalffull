@@ -27,16 +27,18 @@ import { Notice } from "@/components/ui/notice";
 import { Textarea } from "@/components/ui/textarea";
 import {
   cityLabels,
-  craftCategoryLabels,
+  disciplineLabels,
   parsePronounSelection,
+  roleLabels,
   serializePronounSelection,
   workOpportunityTagLabels,
 } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   cities,
-  craftCategories,
+  creativeRoles,
   creativeSubmissionSchema,
+  disciplines,
   pronounPresets,
   workOpportunityTags,
   type CreativeSubmissionInput,
@@ -44,7 +46,10 @@ import {
 
 const emptyProfileValues: CreativeSubmissionInput = {
   name: "",
-  craftCategories: [],
+  disciplines: [],
+  roles: [],
+  specialty: "",
+  isQueer: false,
   city: "",
   pronouns: "",
   bio: "",
@@ -286,28 +291,28 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <Controller
         control={form.control}
-        name="craftCategories"
+        name="disciplines"
         render={({ field, fieldState }) => (
-          <Fieldset legend="Categories">
+          <Fieldset legend="Discipline">
             <div className="grid gap-2 sm:grid-cols-2">
-              {craftCategories.map((category) => {
-                const checked = field.value?.includes(category) ?? false;
+              {disciplines.map((discipline) => {
+                const checked = field.value?.includes(discipline) ?? false;
 
                 return (
-                  <Choice key={category}>
+                  <Choice key={discipline}>
                     <ChoiceControl
                       checked={checked}
                       onChange={(event) => {
                         const next = event.target.checked
-                          ? [...(field.value ?? []), category]
+                          ? [...(field.value ?? []), discipline]
                           : (field.value ?? []).filter(
-                              (value) => value !== category
+                              (value) => value !== discipline
                             );
                         field.onChange(next);
                       }}
                     />
                     <span className="text-sm">
-                      {craftCategoryLabels[category]}
+                      {disciplineLabels[discipline]}
                     </span>
                   </Choice>
                 );
@@ -315,6 +320,66 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             </div>
             <FieldError>{fieldState.error?.message}</FieldError>
           </Fieldset>
+        )}
+      />
+
+      <Controller
+        control={form.control}
+        name="roles"
+        render={({ field, fieldState }) => (
+          <Fieldset legend="Role (optional)">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {creativeRoles.map((role) => {
+                const checked = field.value?.includes(role) ?? false;
+
+                return (
+                  <Choice key={role}>
+                    <ChoiceControl
+                      checked={checked}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...(field.value ?? []), role]
+                          : (field.value ?? []).filter(
+                              (value) => value !== role
+                            );
+                        field.onChange(next);
+                      }}
+                    />
+                    <span className="text-sm">{roleLabels[role]}</span>
+                  </Choice>
+                );
+              })}
+            </div>
+            <FieldError>{fieldState.error?.message}</FieldError>
+          </Fieldset>
+        )}
+      />
+
+      <Field>
+        <Label htmlFor="specialty">Specialty (optional)</Label>
+        <Input
+          id="specialty"
+          placeholder="e.g. drag king, lighting"
+          autoComplete="off"
+          {...form.register("specialty")}
+          aria-invalid={Boolean(form.formState.errors.specialty)}
+        />
+        <FieldError>{form.formState.errors.specialty?.message}</FieldError>
+      </Field>
+
+      <Controller
+        control={form.control}
+        name="isQueer"
+        render={({ field }) => (
+          <Choice>
+            <ChoiceControl
+              checked={field.value}
+              onChange={(event) => field.onChange(event.target.checked)}
+              onBlur={field.onBlur}
+              ref={field.ref}
+            />
+            <span className="text-sm">Queer community</span>
+          </Choice>
         )}
       />
 

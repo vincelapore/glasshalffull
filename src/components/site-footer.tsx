@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { creativePath } from "@/lib/paths";
 
 const instagramHref = "https://instagram.com/glasshalffull_brisbane";
+const emailHref = "mailto:hello.glasshalffull@gmail.com";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -28,15 +29,24 @@ export function SiteFooter() {
                 Pour back in. Stay connected,{" "}
                 <span className="whitespace-nowrap">muchacho. 🚰</span>
               </p>
-              <a
-                href={instagramHref}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                className="mt-4 inline-flex transition-opacity hover:opacity-60"
-              >
-                <InstagramIcon />
-              </a>
+              <div className="mt-4 flex items-center gap-3">
+                <a
+                  href={instagramHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="inline-flex transition-opacity hover:opacity-60"
+                >
+                  <InstagramIcon />
+                </a>
+                <a
+                  href={emailHref}
+                  aria-label="Email"
+                  className="inline-flex transition-opacity hover:opacity-60"
+                >
+                  <EmailIcon />
+                </a>
+              </div>
             </div>
 
             <nav className="flex flex-col items-start gap-1.5 text-xs">
@@ -96,6 +106,22 @@ function InstagramIcon() {
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 7 9-7" />
     </svg>
   );
 }

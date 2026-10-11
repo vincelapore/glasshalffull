@@ -11,23 +11,39 @@ import { coerceWebsiteUrl } from "@/lib/urls";
 
 export { coerceWebsiteUrl };
 
-export const craftCategories = [
-  "dj",
-  "musician",
-  "producer",
-  "tattoo",
+/** Browse / required. */
+export const disciplines = [
+  "music",
   "visual_art",
   "photography",
   "fashion",
+  "performance",
+  "film",
+  "writing",
+  "design",
+  "tattoo",
+  "community",
+] as const;
+
+/** Detail / optional. */
+export const creativeRoles = [
+  "dj",
+  "musician",
+  "producer",
+  "stylist",
   "makeup",
   "model",
-  "dance",
-  "film",
+  "dancer",
   "actor",
-  "design",
-  "queer",
+  "poet",
+  "writer",
+  "creative_director",
   "organiser",
-  "other",
+  "host",
+  "designer",
+  "filmmaker",
+  "photographer",
+  "tattoo_artist",
 ] as const;
 
 export const eventCategories = [
@@ -123,9 +139,12 @@ const optionalAudioUrl = z.union([
 
 export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
-  craftCategories: z
-    .array(z.enum(craftCategories))
-    .min(1, "Pick at least one category"),
+  disciplines: z
+    .array(z.enum(disciplines))
+    .min(1, "Pick at least one discipline"),
+  roles: z.array(z.enum(creativeRoles)),
+  specialty: z.union([z.literal(""), z.string().trim().max(60)]),
+  isQueer: z.boolean(),
   city: z.union([z.literal(""), z.enum(cities)]),
   pronouns: z.union([z.literal(""), z.string().trim().max(80)]),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),

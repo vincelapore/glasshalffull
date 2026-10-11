@@ -6,6 +6,7 @@ import { createUploadUrlAction } from "@/app/actions/upload";
 import {
   AVATAR_CROP_SOURCE_EDGE,
   AVATAR_MAX_EDGE,
+  FLYER_MAX_BYTES,
   FLYER_MAX_EDGE,
   MAX_COMPRESSED_BYTES,
   MAX_WORK_PHOTO_BYTES,
@@ -44,9 +45,9 @@ const OUTPUT: Record<
     minQuality: 0.45,
   },
   flyer: {
-    maxBytes: MAX_COMPRESSED_BYTES,
+    maxBytes: FLYER_MAX_BYTES,
     maxEdge: FLYER_MAX_EDGE,
-    minEdge: 480,
+    minEdge: 960,
     quality: 0.8,
     minQuality: 0.45,
   },

@@ -7,7 +7,7 @@ Browse upcoming events, meet local creatives, and submit events for moderation b
 ## Features
 
 - **Events** — upcoming nights with category, location, tickets, and flyer images
-- **Creatives** — artist profiles with craft category, bio, links, and work-opportunity tags (live on save)
+- **Creatives** — artist profiles with discipline/role, bio, links, and work-opportunity tags (live on save)
 - **Accounts** — Neon Auth sign-up / sign-in with email verification code; one editable creative profile per account
 - **Event submissions** — from `/account` (pending until approved)
 - **Admin moderation** — same login; owners manage the admin list, admins review event submissions
@@ -128,7 +128,7 @@ Designed for [Vercel](https://vercel.com) with a Neon database:
 
 ## Photo uploads
 
-Photos and flyers never pass through Next.js. The browser compresses to WebP (720px avatars / 1080px flyers / 1200px work examples, about 600 KB each, at most 6 per profile), then PUTs directly to R2 with a short-lived presigned URL. Neon stores only the object key (`avatars/{uuid}.webp`, `flyers/{uuid}.webp`, or `work/{userId}/{uuid}.webp`). Removed work photos are deleted from R2. The public origin is `NEXT_PUBLIC_MEDIA_BASE_URL` so the CDN domain can change without rewriting rows.
+Photos and flyers never pass through Next.js. The browser compresses to WebP (720px avatars / 2048px flyers (~1280 KB) / 1600px work examples (~900 KB each, at most 6 per profile)), then PUTs directly to R2 with a short-lived presigned URL. Neon stores only the object key (`avatars/{uuid}.webp`, `flyers/{uuid}.webp`, or `work/{userId}/{uuid}.webp`). Removed work photos are deleted from R2. The public origin is `NEXT_PUBLIC_MEDIA_BASE_URL` so the CDN domain can change without rewriting rows.
 
 Avatars and flyers render with `next/image` `unoptimized` (also set globally in `next.config.ts`). Work examples use a plain lazy `<img>` of that single stored file. Vercel Image Optimization is never used. Directory pages do not load work photos.
 

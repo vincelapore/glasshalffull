@@ -1,14 +1,38 @@
 import { Badge } from "@/components/ui/badge";
 import type { Creative } from "@/db/schema";
-import { craftCategoryLabels } from "@/lib/labels";
+import { disciplineLabels, roleLabels } from "@/lib/labels";
 
 type CreativeCraftTagsProps = {
-  creative: Pick<Creative, "craftCategories">;
+  creative: Pick<
+    Creative,
+    "disciplines" | "roles" | "specialty" | "isQueer"
+  >;
   className?: string;
   variant?: "outline" | "secondary";
   /** Soften display for compact list rows (e.g. muted text instead of badges). */
   asText?: boolean;
 };
+
+function tagLabels(
+  creative: Pick<Creative, "disciplines" | "roles" | "specialty" | "isQueer">
+) {
+  const labels: string[] = [];
+
+  for (const discipline of creative.disciplines ?? []) {
+    labels.push(disciplineLabels[discipline]);
+  }
+  for (const role of creative.roles ?? []) {
+    labels.push(roleLabels[role]);
+  }
+  if (creative.specialty?.trim()) {
+    labels.push(creative.specialty.trim());
+  }
+  if (creative.isQueer) {
+    labels.push("Queer");
+  }
+
+  return labels;
+}
 
 export function CreativeCraftTags({
   creative,
@@ -16,25 +40,21 @@ export function CreativeCraftTags({
   variant = "outline",
   asText = false,
 }: CreativeCraftTagsProps) {
-  const categories = creative.craftCategories ?? [];
+  const labels = tagLabels(creative);
 
-  if (categories.length === 0) {
+  if (labels.length === 0) {
     return null;
   }
 
   if (asText) {
-    return (
-      <span className={className}>
-        {categories.map((category) => craftCategoryLabels[category]).join(" · ")}
-      </span>
-    );
+    return <span className={className}>{labels.join(" · ")}</span>;
   }
 
   return (
     <div className={className ?? "flex flex-wrap gap-1.5"}>
-      {categories.map((category) => (
-        <Badge key={category} variant={variant} className="text-xs">
-          {craftCategoryLabels[category]}
+      {labels.map((label, index) => (
+        <Badge key={`${label}-${index}`} variant={variant} className="text-xs">
+          {label}
         </Badge>
       ))}
     </div>

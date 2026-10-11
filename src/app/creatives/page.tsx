@@ -15,31 +15,53 @@ import {
 } from "@/components/ui/page";
 import {
   cityLabels,
-  craftCategoryLabels,
   creativeMatchesWorkTag,
+  disciplineLabels,
   parseCityFilter,
   workOpportunityTagLabels,
   type CityFilter,
 } from "@/lib/labels";
 import { getApprovedCreatives } from "@/lib/queries";
-import {
-  cities,
-  craftCategories,
-  workOpportunityTags,
-} from "@/lib/validations";
+import { cities, disciplines, workOpportunityTags } from "@/lib/validations";
 
 export const metadata: Metadata = {
   title: "Creatives",
 };
 
 type SearchParams = Promise<{
+  discipline?: string;
+  /** @deprecated Prefer `discipline`. Mapped from old craft category links. */
   category?: string;
   tag?: string;
   city?: string;
 }>;
 
+const legacyCategoryToDiscipline: Record<string, (typeof disciplines)[number]> =
+  {
+    dj: "music",
+    musician: "music",
+    producer: "music",
+    tattoo: "tattoo",
+    visual_art: "visual_art",
+    photography: "photography",
+    fashion: "fashion",
+    stylist: "fashion",
+    makeup: "fashion",
+    model: "fashion",
+    dance: "performance",
+    film: "film",
+    actor: "performance",
+    poetry: "writing",
+    writer: "writing",
+    design: "design",
+    creative_director: "design",
+    organiser: "community",
+    queer: "community",
+    other: "community",
+  };
+
 function buildCreativesHref(options: {
-  category?: string | null;
+  discipline?: string | null;
   tag?: string | null;
   city?: CityFilter | null;
 }) {
@@ -51,8 +73,8 @@ function buildCreativesHref(options: {
     params.set("city", options.city);
   }
 
-  if (options.category) {
-    params.set("category", options.category);
+  if (options.discipline) {
+    params.set("discipline", options.discipline);
   }
 
   if (options.tag) {
@@ -68,12 +90,16 @@ export default async function CreativesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { category, tag, city } = await searchParams;
-  const activeCategory =
-    category &&
-    craftCategories.includes(category as (typeof craftCategories)[number])
-      ? (category as (typeof craftCategories)[number])
+  const { discipline, category, tag, city } = await searchParams;
+  const fromLegacy =
+    category && legacyCategoryToDiscipline[category]
+      ? legacyCategoryToDiscipline[category]
       : null;
+  const activeDiscipline =
+    discipline &&
+    disciplines.includes(discipline as (typeof disciplines)[number])
+      ? (discipline as (typeof disciplines)[number])
+      : fromLegacy;
   const activeTag =
     tag &&
     workOpportunityTags.includes(tag as (typeof workOpportunityTags)[number])
@@ -87,7 +113,10 @@ export default async function CreativesPage({
       return false;
     }
 
-    if (activeCategory && !creative.craftCategories.includes(activeCategory)) {
+    if (
+      activeDiscipline &&
+      !creative.disciplines.includes(activeDiscipline)
+    ) {
       return false;
     }
 
@@ -112,7 +141,7 @@ export default async function CreativesPage({
               key={cityOption}
               href={buildCreativesHref({
                 city: cityOption,
-                category: activeCategory,
+                discipline: activeDiscipline,
                 tag: activeTag,
               })}
               active={activeCity === cityOption}
@@ -123,7 +152,7 @@ export default async function CreativesPage({
           <FilterChip
             href={buildCreativesHref({
               city: "all",
-              category: activeCategory,
+              discipline: activeDiscipline,
               tag: activeTag,
             })}
             active={activeCity === "all"}
@@ -133,29 +162,29 @@ export default async function CreativesPage({
         </ChipRow>
       </Section>
 
-      <Section label="Category">
+      <Section label="Discipline">
         <ChipRow>
           <FilterChip
             href={buildCreativesHref({
               city: activeCity,
-              category: null,
+              discipline: null,
               tag: activeTag,
             })}
-            active={!activeCategory}
+            active={!activeDiscipline}
           >
             All
           </FilterChip>
-          {craftCategories.map((cat) => (
+          {disciplines.map((item) => (
             <FilterChip
-              key={cat}
+              key={item}
               href={buildCreativesHref({
                 city: activeCity,
-                category: cat,
+                discipline: item,
                 tag: activeTag,
               })}
-              active={activeCategory === cat}
+              active={activeDiscipline === item}
             >
-              {craftCategoryLabels[cat]}
+              {disciplineLabels[item]}
             </FilterChip>
           ))}
         </ChipRow>
@@ -166,7 +195,7 @@ export default async function CreativesPage({
           <FilterChip
             href={buildCreativesHref({
               city: activeCity,
-              category: activeCategory,
+              discipline: activeDiscipline,
               tag: null,
             })}
             active={!activeTag}
@@ -178,7 +207,7 @@ export default async function CreativesPage({
               key={workTag}
               href={buildCreativesHref({
                 city: activeCity,
-                category: activeCategory,
+                discipline: activeDiscipline,
                 tag: workTag,
               })}
               active={activeTag === workTag}

@@ -1,8 +1,9 @@
 import type { Creative, Event, EventLineup } from "@/db/schema";
 import {
   cities,
+  creativeRoles,
   DEFAULT_CITY,
-  craftCategories,
+  disciplines,
   eventCategories,
   eventRejectionReasons,
   musicGenres,
@@ -23,55 +24,60 @@ export function parseCityFilter(city?: string | null): CityFilter {
   return DEFAULT_CITY;
 }
 
-export const craftCategoryLabels: Record<(typeof craftCategories)[number], string> =
-  {
-    dj: "DJ",
-    musician: "Musician",
-    producer: "Producer",
-    tattoo: "Tattoo",
-    visual_art: "Visual art",
-    photography: "Photography",
-    fashion: "Fashion",
-    makeup: "Makeup",
-    model: "Model",
-    dance: "Dance",
-    film: "Film & video",
-    actor: "Actor",
-    design: "Design",
-    queer: "Queer",
-    organiser: "Event organiser",
-    other: "Other",
-  };
-
-/** One-word pill on a directory card. `other` has no pill. */
-export const craftTagLabels: Record<
-  (typeof craftCategories)[number],
-  string | null
-> = {
-  dj: "DJ",
-  musician: "music",
-  producer: "music",
-  tattoo: "tattoo",
-  visual_art: "art",
-  photography: "photo",
-  fashion: "fashion",
-  makeup: "makeup",
-  model: "model",
-  dance: "dance",
-  film: "film",
-  actor: "actor",
-  design: "design",
-  queer: "queer",
-  organiser: "organiser",
-  other: null,
+export const disciplineLabels: Record<(typeof disciplines)[number], string> = {
+  music: "Music",
+  visual_art: "Visual art",
+  photography: "Photography",
+  fashion: "Fashion & beauty",
+  performance: "Performance",
+  film: "Film & video",
+  writing: "Writing",
+  design: "Design",
+  tattoo: "Tattoo",
+  community: "Community",
 };
 
-/** First craft that fits the card pill. */
-export function primaryCraftTag(
-  categories: readonly (typeof craftCategories)[number][] | null | undefined
+/** One-word pill on a directory card. */
+export const disciplineTagLabels: Record<(typeof disciplines)[number], string> =
+  {
+    music: "music",
+    visual_art: "art",
+    photography: "photo",
+    fashion: "fashion",
+    performance: "performance",
+    film: "film",
+    writing: "writing",
+    design: "design",
+    tattoo: "tattoo",
+    community: "community",
+  };
+
+export const roleLabels: Record<(typeof creativeRoles)[number], string> = {
+  dj: "DJ",
+  musician: "Musician",
+  producer: "Producer",
+  stylist: "Stylist",
+  makeup: "Makeup",
+  model: "Model",
+  dancer: "Dancer",
+  actor: "Actor",
+  poet: "Poet",
+  writer: "Writer",
+  creative_director: "Creative director",
+  organiser: "Organiser",
+  host: "Host",
+  designer: "Designer",
+  filmmaker: "Filmmaker",
+  photographer: "Photographer",
+  tattoo_artist: "Tattoo artist",
+};
+
+/** First discipline that fits the card pill. */
+export function primaryDisciplineTag(
+  values: readonly (typeof disciplines)[number][] | null | undefined
 ) {
-  for (const category of categories ?? []) {
-    const tag = craftTagLabels[category];
+  for (const discipline of values ?? []) {
+    const tag = disciplineTagLabels[discipline];
     if (tag) return tag;
   }
   return null;

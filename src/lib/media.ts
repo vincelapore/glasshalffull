@@ -7,10 +7,16 @@ export const PRESIGN_TTL_SECONDS = 60;
 export const AVATAR_MAX_EDGE = 720;
 /** Device-only framing image. Discarded after crop and never uploaded. */
 export const AVATAR_CROP_SOURCE_EDGE = AVATAR_MAX_EDGE * 2;
-export const FLYER_MAX_EDGE = 1080;
 
 /**
- * Overflow posters. Sharper than a flyer, still one WebP in the flyers prefix.
+ * Event flyers: hero-sized WebP (homepage / event detail). Byte cap keeps R2 lean.
+ * Same edge budget as overflow; quality stays at 0.8 so most files land under the cap.
+ */
+export const FLYER_MAX_EDGE = 2048;
+export const FLYER_MAX_BYTES = 1280 * 1024;
+
+/**
+ * Overflow posters. One WebP in the flyers prefix.
  * The byte cap stops a phone original from being stored.
  */
 export const OVERFLOW_MAX_EDGE = 2048;
@@ -20,8 +26,8 @@ export const OVERFLOW_QUALITY = 0.84;
 
 /** Profile work examples: one WebP each, never a second rendition. */
 export const MAX_WORK_PHOTOS = 6;
-export const MAX_WORK_PHOTO_BYTES = 600 * 1024;
-export const WORK_PHOTO_MAX_EDGE = 1200;
+export const MAX_WORK_PHOTO_BYTES = 900 * 1024;
+export const WORK_PHOTO_MAX_EDGE = 1600;
 export const WORK_PHOTO_QUALITY = 0.8;
 
 export type UploadKind = "avatar" | "flyer" | "work" | "overflow";

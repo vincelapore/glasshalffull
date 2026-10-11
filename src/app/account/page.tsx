@@ -75,7 +75,10 @@ export default async function AccountPage() {
             profile
               ? {
                   name: profile.name,
-                  craftCategories: profile.craftCategories,
+                  disciplines: profile.disciplines,
+                  roles: profile.roles,
+                  specialty: profile.specialty ?? "",
+                  isQueer: profile.isQueer,
                   city: profile.city ?? "",
                   pronouns: profile.pronouns ?? "",
                   bio: profile.bio ?? "",
