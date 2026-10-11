@@ -148,7 +148,7 @@ export const overflowFeatureRoleLabels: Record<
   (typeof overflowFeatureRoles)[number],
   string
 > = {
-  artist: "Featured artist/s",
+  artist: "Featured artist",
   interviewee: "Interviewee",
 };
 

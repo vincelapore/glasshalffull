@@ -27,6 +27,7 @@ import {
 } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
+import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import {
   getCreativeByParam,
   getCreativeModerationNote,
@@ -38,12 +39,20 @@ type CreativePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-async function canViewPrivateProfile(userId: string | null) {
-  if (!userId) return true;
-  if (await getAccountVisibility(userId)) return true;
+async function canViewCreativeProfile(creative: {
+  userId: string | null;
+  bio: string | null;
+  avatarKey: string | null;
+  workPhotoKeys: string[];
+}) {
+  const accountPublic = creative.userId
+    ? await getAccountVisibility(creative.userId)
+    : true;
+  if (accountPublic && isProfileReadyForPublic(creative)) return true;
+
   const user = await getSessionUser();
   if (!user) return false;
-  if (user.id === userId) return true;
+  if (creative.userId && user.id === creative.userId) return true;
   return isAdminEmail(user.email);
 }
 
@@ -52,7 +61,7 @@ export async function generateMetadata({
 }: CreativePageProps): Promise<Metadata> {
   const { slug } = await params;
   const creative = await getCreativeByParam(slug);
-  if (!creative || !(await canViewPrivateProfile(creative.userId))) {
+  if (!creative || !(await canViewCreativeProfile(creative))) {
     return { title: "Creative" };
   }
   return { title: creative.name };
@@ -62,13 +71,14 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const { slug } = await params;
   const creative = await getCreativeByParam(slug);
 
-  if (!creative || !(await canViewPrivateProfile(creative.userId))) {
+  if (!creative || !(await canViewCreativeProfile(creative))) {
     notFound();
   }
 
-  const isPrivate = creative.userId
+  const optedPrivate = creative.userId
     ? !(await getAccountVisibility(creative.userId))
     : false;
+  const incomplete = !isProfileReadyForPublic(creative);
 
   if (slug !== creative.slug) {
     permanentRedirect(creativePath(creative.slug));
@@ -78,7 +88,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const organisersByEvent = await getOrganisersByEventIds(
     upcoming.map(({ event }) => event.id)
   );
-  const isPublic = creative.status === "approved";
+  const isApproved = creative.status === "approved";
   const viewer = await getSessionUser();
   const showModerationNote = Boolean(
     viewer &&
@@ -96,14 +106,19 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
 
   return (
     <Page>
-      {!isPublic ? (
+      {!isApproved ? (
         <Notice className="mb-6">
           This profile is <strong>{creative.status}</strong> and not listed
           publicly yet.
         </Notice>
-      ) : isPrivate ? (
+      ) : optedPrivate ? (
         <Notice className="mb-6">
           This profile is private and isn’t in the directory.
+        </Notice>
+      ) : incomplete ? (
+        <Notice className="mb-6">
+          This profile isn’t public yet. Add a bio, a profile picture, and at
+          least one work photo to appear in the directory.
         </Notice>
       ) : null}
       {showModerationNote ? (

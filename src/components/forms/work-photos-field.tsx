@@ -52,6 +52,7 @@ export async function uploadWorkSlots(
 type WorkPhotosFieldProps = {
   slots: WorkSlot[];
   onChange: (slots: WorkSlot[]) => void;
+  description?: string;
   error?: string;
   disabled?: boolean;
 };
@@ -59,6 +60,7 @@ type WorkPhotosFieldProps = {
 export function WorkPhotosField({
   slots,
   onChange,
+  description,
   error,
   disabled,
 }: WorkPhotosFieldProps) {
@@ -128,7 +130,7 @@ export function WorkPhotosField({
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">Examples of your work</legend>
       <p className="text-sm text-muted-foreground">
-        Up to {MAX_WORK_PHOTOS} photos.
+        {description ?? `Up to ${MAX_WORK_PHOTOS} photos.`}
       </p>
       <input
         id="workPhotos"

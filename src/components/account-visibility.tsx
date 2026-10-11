@@ -5,7 +5,13 @@ import { useState, useTransition } from "react";
 import { setAccountVisibilityAction } from "@/app/actions/visibility";
 import { Choice, ChoiceControl } from "@/components/ui/choice";
 
-export function AccountVisibilityToggle({ isPublic }: { isPublic: boolean }) {
+export function AccountVisibilityToggle({
+  isPublic,
+  profileReady,
+}: {
+  isPublic: boolean;
+  profileReady: boolean;
+}) {
   const [value, setValue] = useState(isPublic);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +43,9 @@ export function AccountVisibilityToggle({ isPublic }: { isPublic: boolean }) {
         <span>
           <span className="block text-sm font-medium">Public</span>
           <span className="block text-xs text-muted-foreground">
-            People can find you in the directory once your profile is approved.
+            {profileReady
+              ? "People can find you in the directory once your profile is approved."
+              : "You’ll appear in the directory once approved, after you add a bio, profile picture, and a work photo."}
           </span>
         </span>
       </Choice>

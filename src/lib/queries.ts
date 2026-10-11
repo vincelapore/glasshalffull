@@ -71,13 +71,24 @@ const creativeCardColumns = {
   status: creatives.status,
 };
 
-/** Approved profiles that belong in the public directory. */
+/**
+ * Approved profiles that belong in the public directory.
+ * Needs bio, avatar, and a work photo; account-owned profiles also respect
+ * the private visibility toggle.
+ */
 function isDiscoverable() {
-  return sql`${creatives.userId} is null or not exists (
-    select 1 from account_settings
-    where account_settings.user_id = ${creatives.userId}
-      and account_settings.is_public = false
-  )`;
+  return sql`
+    coalesce(nullif(btrim(${creatives.bio}), ''), null) is not null
+    and coalesce(nullif(btrim(${creatives.avatarKey}), ''), null) is not null
+    and cardinality(${creatives.workPhotoKeys}) >= 1
+    and (
+      ${creatives.userId} is null or not exists (
+        select 1 from account_settings
+        where account_settings.user_id = ${creatives.userId}
+          and account_settings.is_public = false
+      )
+    )
+  `;
 }
 
 export async function getApprovedCreatives(limit?: number) {

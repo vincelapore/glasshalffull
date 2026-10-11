@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 type PhotoUploadFieldProps = {
   id: string;
   label: string;
+  description?: string;
   storedKey?: string;
   file: File | null;
   onFileChange: (file: File | null) => void;
@@ -33,6 +34,7 @@ type PhotoUploadFieldProps = {
 export function PhotoUploadField({
   id,
   label,
+  description,
   storedKey = "",
   file,
   onFileChange,
@@ -113,6 +115,9 @@ export function PhotoUploadField({
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
       <input
         id={id}
         ref={inputRef}

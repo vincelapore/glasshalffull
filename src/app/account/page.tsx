@@ -12,6 +12,7 @@ import { getSessionUser } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
 import { statusLabels } from "@/lib/labels";
 import { creativePath } from "@/lib/paths";
+import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { getCreativeByUserId } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -31,30 +32,44 @@ export default async function AccountPage() {
     getCreativeByUserId(user.id),
     getAccountVisibility(user.id),
   ]);
+  const profileReady = profile ? isProfileReadyForPublic(profile) : false;
+  const canViewPublicPage =
+    profile?.status === "approved" && profileReady && isPublic;
 
   return (
     <AccountShell user={user}>
       <section className="mb-10 space-y-4">
         <SectionHeader
           title="Visibility"
-          description="Choose whether people can find you in the public directory."
+          description="Public only lists you once your profile is approved and the essentials below are done."
         />
-        <AccountVisibilityToggle isPublic={isPublic} />
+        <AccountVisibilityToggle
+          isPublic={isPublic}
+          profileReady={profileReady}
+        />
       </section>
       <section className="space-y-4">
         <SectionHeader
           title="Profile"
-          description={profile ? undefined : "So people can find you."}
+          description="Directory essentials are listed at the top of the form."
           action={
             profile ? (
               <p className="text-sm text-muted-foreground">
                 {statusLabels[profile.status]}
-                {profile.status === "approved" ? (
+                {canViewPublicPage ? (
                   <>
                     {" "}
                     ·{" "}
                     <TextLink href={creativePath(profile.slug)} variant="hover">
                       View public page
+                    </TextLink>
+                  </>
+                ) : profile.status === "approved" ? (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <TextLink href={creativePath(profile.slug)} variant="hover">
+                      Preview page
                     </TextLink>
                   </>
                 ) : null}

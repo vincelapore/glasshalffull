@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import {
   createAdminCreativeAction,
@@ -18,6 +18,7 @@ import {
   workSlotsFromKeys,
   type WorkSlot,
 } from "@/components/forms/work-photos-field";
+import { ProfileDirectoryEssentials } from "@/components/profile-visibility-checklist";
 import { Button } from "@/components/ui/button";
 import { Choice, ChoiceControl } from "@/components/ui/choice";
 import { Field, FieldError, Fieldset } from "@/components/ui/field";
@@ -33,6 +34,8 @@ import {
   serializePronounSelection,
   workOpportunityTagLabels,
 } from "@/lib/labels";
+import { MAX_WORK_PHOTOS } from "@/lib/media";
+import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   cities,
@@ -168,9 +171,31 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   });
 
   const instagramHandleField = form.register("instagramHandle");
+  const watchedBio = useWatch({ control: form.control, name: "bio" });
+  const watchedAvatarKey = useWatch({
+    control: form.control,
+    name: "avatarKey",
+  });
+  const essentialsProfile =
+    mode === "profile"
+      ? {
+          bio: watchedBio ?? "",
+          avatarKey: pendingPhoto ? "pending" : (watchedAvatarKey ?? ""),
+          workPhotoKeys: workSlots.map((slot) =>
+            slot.source === "stored" ? slot.key : slot.id
+          ),
+        }
+      : null;
+  const essentialsReady = essentialsProfile
+    ? isProfileReadyForPublic(essentialsProfile)
+    : false;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      {essentialsProfile ? (
+        <ProfileDirectoryEssentials profile={essentialsProfile} />
+      ) : null}
+
       {mode === "admin-create" ? (
         <Field>
           <Label htmlFor="inviteEmail">Invite email (optional)</Label>
@@ -385,6 +410,11 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
 
       <Field>
         <Label htmlFor="bio">Bio</Label>
+        {mode === "profile" ? (
+          <p className="text-sm text-muted-foreground">
+            Needed to appear in the directory.
+          </p>
+        ) : null}
         <Textarea
           id="bio"
           rows={5}
@@ -510,6 +540,11 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           <PhotoUploadField
             id="avatarKey"
             label="Profile Picture"
+            description={
+              mode === "profile"
+                ? "Needed to appear in the directory."
+                : undefined
+            }
             storedKey={field.value}
             file={pendingPhoto}
             onFileChange={setPendingPhoto}
@@ -523,34 +558,54 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
       <WorkPhotosField
         slots={workSlots}
         onChange={setWorkSlots}
+        description={
+          mode === "profile"
+            ? `At least one photo is needed to appear in the directory. Up to ${MAX_WORK_PHOTOS} photos.`
+            : undefined
+        }
         error={form.formState.errors.workPhotoKeys?.message}
         disabled={pending}
       />
 
       {formError ? <Notice variant="destructive">{formError}</Notice> : null}
 
-      {savedMessage ? <Notice variant="muted">{savedMessage}</Notice> : null}
-
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          {pending
-            ? mode === "admin-create"
-              ? "Creating…"
-              : "Saving…"
-            : mode === "admin-create"
-              ? "Create profile"
-              : "Save profile"}
-        </Button>
-        {mode === "admin" || mode === "admin-create" ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pending}
-            onClick={() => router.push("/admin/submissions")}
-          >
-            Cancel
-          </Button>
+      <div className="space-y-3 border-t border-border pt-6">
+        {savedMessage ? (
+          essentialsProfile ? (
+            <Notice>
+              <p className="font-medium">Profile saved.</p>
+              <p className="mt-1 text-muted-foreground">
+                {essentialsReady
+                  ? "Essentials are done. You’ll appear in the directory once approved and set to Public."
+                  : "Finish the essentials above to appear in the directory."}
+              </p>
+            </Notice>
+          ) : (
+            <Notice variant="muted">{savedMessage}</Notice>
+          )
         ) : null}
+
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+            {pending
+              ? mode === "admin-create"
+                ? "Creating…"
+                : "Saving…"
+              : mode === "admin-create"
+                ? "Create profile"
+                : "Save profile"}
+          </Button>
+          {mode === "admin" || mode === "admin-create" ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => router.push("/admin/submissions")}
+            >
+              Cancel
+            </Button>
+          ) : null}
+        </div>
       </div>
     </form>
   );

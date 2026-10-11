@@ -19,7 +19,7 @@ export default async function NewAdminEventPage() {
     <Page width="narrow">
       <PageHeader
         title="New event"
-        description="Published straight away. Organisers are optional — add them on the next screen if you want."
+        description="Published straight away. Organisers are optional; add them on the next screen if you want."
         actions={
           <Button
             size="sm"
