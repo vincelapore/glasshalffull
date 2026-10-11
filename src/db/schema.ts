@@ -87,9 +87,14 @@ export const creatives = pgTable(
       .array()
       .notNull(),
     city: cityEnum("city"),
+    pronouns: text("pronouns"),
     bio: text("bio"),
     instagramHandle: text("instagram_handle"),
     portfolioUrl: text("portfolio_url"),
+    /** YouTube or Vimeo link for a featured video. */
+    videoUrl: text("video_url"),
+    /** SoundCloud or Bandcamp link for a featured track / set. */
+    audioUrl: text("audio_url"),
     avatarKey: text("avatar_key"),
     /** Ordered work-example object keys. At most 6. Empty on listing queries' rendered output. */
     workPhotoKeys: text("work_photo_keys").array().notNull().default([]),

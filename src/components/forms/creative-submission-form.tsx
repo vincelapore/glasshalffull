@@ -28,6 +28,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   cityLabels,
   craftCategoryLabels,
+  parsePronounSelection,
+  serializePronounSelection,
   workOpportunityTagLabels,
 } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
@@ -35,6 +37,7 @@ import {
   cities,
   craftCategories,
   creativeSubmissionSchema,
+  pronounPresets,
   workOpportunityTags,
   type CreativeSubmissionInput,
 } from "@/lib/validations";
@@ -43,9 +46,12 @@ const emptyProfileValues: CreativeSubmissionInput = {
   name: "",
   craftCategories: [],
   city: "",
+  pronouns: "",
   bio: "",
   instagramHandle: "",
   portfolioUrl: "",
+  videoUrl: "",
+  audioUrl: "",
   avatarKey: "",
   workPhotoKeys: [],
   openToPaidWork: false,
@@ -187,6 +193,59 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         />
         <FieldError>{form.formState.errors.name?.message}</FieldError>
       </Field>
+
+      <Controller
+        control={form.control}
+        name="pronouns"
+        render={({ field, fieldState }) => {
+          const { selected, custom } = parsePronounSelection(field.value);
+
+          return (
+            <Fieldset legend="Pronouns (optional)">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {pronounPresets.map((preset) => {
+                  const checked = selected.includes(preset);
+
+                  return (
+                    <Choice key={preset}>
+                      <ChoiceControl
+                        checked={checked}
+                        onChange={(event) => {
+                          const nextSelected = event.target.checked
+                            ? [...selected, preset]
+                            : selected.filter((value) => value !== preset);
+                          field.onChange(
+                            serializePronounSelection(nextSelected, custom)
+                          );
+                        }}
+                        onBlur={field.onBlur}
+                      />
+                      <span className="text-sm">{preset}</span>
+                    </Choice>
+                  );
+                })}
+              </div>
+              <Field>
+                <Label htmlFor="pronouns-custom">Self-describe</Label>
+                <Input
+                  id="pronouns-custom"
+                  placeholder="e.g. xe/xem, she/they"
+                  autoComplete="off"
+                  value={custom}
+                  onChange={(event) => {
+                    field.onChange(
+                      serializePronounSelection(selected, event.target.value)
+                    );
+                  }}
+                  onBlur={field.onBlur}
+                  aria-invalid={Boolean(fieldState.error)}
+                />
+              </Field>
+              <FieldError>{fieldState.error?.message}</FieldError>
+            </Fieldset>
+          );
+        }}
+      />
 
       <Controller
         control={form.control}
@@ -336,12 +395,46 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           <Label htmlFor="portfolioUrl">Website</Label>
           <Input
             id="portfolioUrl"
-            type="url"
-            placeholder="https://"
+            type="text"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="example.com"
             {...form.register("portfolioUrl")}
             aria-invalid={Boolean(form.formState.errors.portfolioUrl)}
           />
           <FieldError>{form.formState.errors.portfolioUrl?.message}</FieldError>
+        </Field>
+        <Field>
+          <Label htmlFor="videoUrl">Video</Label>
+          <Input
+            id="videoUrl"
+            type="text"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="youtube.com/… or vimeo.com/…"
+            {...form.register("videoUrl")}
+            aria-invalid={Boolean(form.formState.errors.videoUrl)}
+          />
+          <FieldError>{form.formState.errors.videoUrl?.message}</FieldError>
+        </Field>
+        <Field>
+          <Label htmlFor="audioUrl">Audio</Label>
+          <Input
+            id="audioUrl"
+            type="text"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="soundcloud.com/… or bandcamp.com/…"
+            {...form.register("audioUrl")}
+            aria-invalid={Boolean(form.formState.errors.audioUrl)}
+          />
+          <FieldError>{form.formState.errors.audioUrl?.message}</FieldError>
         </Field>
       </div>
 
@@ -351,7 +444,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         render={({ field, fieldState }) => (
           <PhotoUploadField
             id="avatarKey"
-            label="Photo (optional)"
+            label="Profile Picture"
             storedKey={field.value}
             file={pendingPhoto}
             onFileChange={setPendingPhoto}

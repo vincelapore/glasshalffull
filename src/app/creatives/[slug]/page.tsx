@@ -8,12 +8,17 @@ import {
   EventListingCard,
   eventListingGridClassName,
 } from "@/components/event-listing";
+import { CreativeMediaEmbeds } from "@/components/media/creative-media-embeds";
 import { ExternalImage } from "@/components/media/external-image";
 import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageTitle } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
+import {
+  resolveAudioEmbed,
+  resolveVideoEmbed,
+} from "@/lib/creative-media";
 import {
   cityLabels,
   formatInstagramHandle,
@@ -82,6 +87,12 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const moderationNote = showModerationNote
     ? await getCreativeModerationNote(creative.id)
     : null;
+  const video = creative.videoUrl
+    ? resolveVideoEmbed(creative.videoUrl)
+    : null;
+  const audio = creative.audioUrl
+    ? resolveAudioEmbed(creative.audioUrl)
+    : null;
 
   return (
     <Page>
@@ -120,6 +131,11 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
               <PageTitle className="break-words sm:text-4xl">
                 {creative.name}
               </PageTitle>
+              {creative.pronouns ? (
+                <p className="text-sm text-muted-foreground">
+                  {creative.pronouns}
+                </p>
+              ) : null}
               {creative.city ? (
                 <p className="text-muted-foreground">
                   {cityLabels[creative.city]}
@@ -155,6 +171,26 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
                 Portfolio
               </a>
             ) : null}
+            {video ? (
+              <a
+                href={video.href}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 transition-colors hover:text-primary"
+              >
+                {video.label}
+              </a>
+            ) : null}
+            {audio ? (
+              <a
+                href={audio.href}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 transition-colors hover:text-primary"
+              >
+                {audio.label}
+              </a>
+            ) : null}
           </div>
         </div>
 
@@ -182,6 +218,10 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
       </div>
 
       <WorkPhotoGrid name={creative.name} keys={creative.workPhotoKeys} />
+      <CreativeMediaEmbeds
+        videoUrl={creative.videoUrl}
+        audioUrl={creative.audioUrl}
+      />
     </Page>
   );
 }

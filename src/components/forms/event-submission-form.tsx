@@ -321,8 +321,12 @@ export function EventSubmissionForm(props: EventSubmissionFormProps) {
         <Label htmlFor="ticketLink">Ticket / RSVP link</Label>
         <Input
           id="ticketLink"
-          type="url"
-          placeholder="https://"
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="example.com/tickets"
           {...form.register("ticketLink")}
           aria-invalid={Boolean(form.formState.errors.ticketLink)}
         />

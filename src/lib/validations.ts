@@ -1,11 +1,15 @@
 import { z } from "zod";
 
+import { isAudioMediaUrl, isVideoMediaUrl } from "@/lib/creative-media";
 import {
   avatarKeyPattern,
   flyerKeyPattern,
   MAX_WORK_PHOTOS,
   workKeyPattern,
 } from "@/lib/media";
+import { coerceWebsiteUrl } from "@/lib/urls";
+
+export { coerceWebsiteUrl };
 
 export const craftCategories = [
   "dj",
@@ -47,6 +51,12 @@ export const musicGenres = [
 
 export const cities = ["meanjin", "naarm"] as const;
 
+/**
+ * Common pronoun sets (VA.gov / inclusive form guidance).
+ * Multi-select + a free-text self-describe field covers the rest.
+ */
+export const pronounPresets = ["she/her", "he/him", "they/them"] as const;
+
 /** Default city for browse filters (Brisbane / Meanjin). */
 export const DEFAULT_CITY = "meanjin" as const;
 
@@ -71,7 +81,13 @@ export const profileRejectionReasons = [
 
 const optionalUrl = z.union([
   z.literal(""),
-  z.string().trim().url("Enter a valid URL"),
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => z.string().url().safeParse(coerceWebsiteUrl(value)).success,
+      { message: "Enter a valid URL" }
+    ),
 ]);
 
 const optionalInstagramHandle = z.union([
@@ -85,15 +101,38 @@ const optionalInstagramHandle = z.union([
     ),
 ]);
 
+const optionalVideoUrl = z.union([
+  z.literal(""),
+  z
+    .string()
+    .trim()
+    .refine((value) => isVideoMediaUrl(value), {
+      message: "Use a YouTube or Vimeo link",
+    }),
+]);
+
+const optionalAudioUrl = z.union([
+  z.literal(""),
+  z
+    .string()
+    .trim()
+    .refine((value) => isAudioMediaUrl(value), {
+      message: "Use a SoundCloud or Bandcamp link",
+    }),
+]);
+
 export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
   craftCategories: z
     .array(z.enum(craftCategories))
     .min(1, "Pick at least one category"),
   city: z.union([z.literal(""), z.enum(cities)]),
+  pronouns: z.union([z.literal(""), z.string().trim().max(80)]),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
   instagramHandle: optionalInstagramHandle,
   portfolioUrl: optionalUrl,
+  videoUrl: optionalVideoUrl,
+  audioUrl: optionalAudioUrl,
   avatarKey: z.union([
     z.literal(""),
     z.string().regex(avatarKeyPattern, "Upload a valid photo"),

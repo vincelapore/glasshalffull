@@ -256,8 +256,12 @@ export function OverflowEpisodeForm(props: OverflowEpisodeFormProps) {
         <Label htmlFor="link">Instagram reel</Label>
         <Input
           id="link"
-          type="url"
-          placeholder="https://www.instagram.com/reel/…"
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="instagram.com/reel/…"
           {...form.register("link")}
           aria-invalid={Boolean(form.formState.errors.link)}
         />

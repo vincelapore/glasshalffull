@@ -7,6 +7,7 @@ import {
   eventRejectionReasons,
   musicGenres,
   overflowFeatureRoles,
+  pronounPresets,
   submissionStatuses,
   workOpportunityTags,
 } from "@/lib/validations";
@@ -141,17 +142,26 @@ export const overflowFeatureRoleLabels: Record<
   (typeof overflowFeatureRoles)[number],
   string
 > = {
-  artist: "Featured artist",
+  artist: "Featured artist/s",
   interviewee: "Interviewee",
 };
 
 /** Section headings in the episode popup, in display order. */
 export const overflowFeatureGroups = [
-  { role: "artist", label: "Featured artist" },
-  { role: "interviewee", label: "Interviewee" },
+  {
+    role: "artist",
+    singular: "Featured artist",
+    plural: "Featured artists",
+  },
+  {
+    role: "interviewee",
+    singular: "Interviewee",
+    plural: "Interviewees",
+  },
 ] as const satisfies ReadonlyArray<{
   role: (typeof overflowFeatureRoles)[number];
-  label: string;
+  singular: string;
+  plural: string;
 }>;
 
 export const statusLabels: Record<(typeof submissionStatuses)[number], string> = {
@@ -364,6 +374,44 @@ export function toDateTimeLocalValue(value: Date | string) {
 export function emptyToNull(value?: string | null) {
   if (!value || value.trim() === "") return null;
   return value.trim();
+}
+
+const pronounPresetSet = new Set<string>(pronounPresets);
+
+/** Split a stored pronouns string into preset ticks + self-describe text. */
+export function parsePronounSelection(value?: string | null) {
+  const parts = (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const selected = pronounPresets.filter((preset) => parts.includes(preset));
+  const custom = parts
+    .filter((part) => !pronounPresetSet.has(part))
+    .join(", ");
+
+  return { selected, custom };
+}
+
+/** Join preset ticks and optional self-describe text for storage/display. */
+export function serializePronounSelection(
+  selected: readonly string[],
+  custom: string
+) {
+  const customTrimmed = custom.trim();
+  const parts: string[] = pronounPresets.filter((preset) =>
+    selected.includes(preset)
+  );
+
+  if (customTrimmed) {
+    if (pronounPresetSet.has(customTrimmed)) {
+      if (!parts.includes(customTrimmed)) parts.push(customTrimmed);
+    } else {
+      parts.push(customTrimmed);
+    }
+  }
+
+  return parts.join(", ");
 }
 
 export function normalizeInstagramHandle(value?: string | null) {

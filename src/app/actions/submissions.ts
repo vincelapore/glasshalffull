@@ -5,12 +5,17 @@ import { revalidatePath } from "next/cache";
 
 import { getSessionUser, isAdminAuthenticated } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
-import { composeModerationNote, emptyToNull, normalizeInstagramHandle } from "@/lib/labels";
+import {
+  composeModerationNote,
+  emptyToNull,
+  normalizeInstagramHandle,
+} from "@/lib/labels";
 import { flyerKeyPattern } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import { deleteMediaObjects } from "@/lib/r2";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
 import {
+  coerceWebsiteUrl,
   creativeSubmissionSchema,
   eventRejectionSchema,
   eventSubmissionSchema,
@@ -28,7 +33,9 @@ export type ActionResult =
   | { success: false; message: string; fieldErrors?: Record<string, string[]> };
 
 function normalizeOptionalUrl(value?: string) {
-  return emptyToNull(value);
+  const trimmed = emptyToNull(value);
+  if (!trimmed) return null;
+  return coerceWebsiteUrl(trimmed);
 }
 
 /** Create or update the signed-in user's single creative profile. */
@@ -75,17 +82,7 @@ export async function saveMyProfileAction(
     }
 
     const profileValues = {
-      name: data.name,
-      craftCategories: data.craftCategories,
-      city: data.city || null,
-      bio: emptyToNull(data.bio),
-      instagramHandle: normalizeInstagramHandle(data.instagramHandle),
-      portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-      avatarKey: emptyToNull(data.avatarKey),
-      workPhotoKeys: workPhotos.keys,
-      openToPaidWork: data.openToPaidWork,
-      openToTrade: data.openToTrade,
-      buildingPortfolio: data.buildingPortfolio,
+      ...creativeProfileValues(data, workPhotos.keys),
       status: "approved" as const,
     };
 
@@ -213,9 +210,12 @@ function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: str
     name: data.name,
     craftCategories: data.craftCategories,
     city: data.city || null,
+    pronouns: emptyToNull(data.pronouns),
     bio: emptyToNull(data.bio),
     instagramHandle: normalizeInstagramHandle(data.instagramHandle),
     portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
+    videoUrl: normalizeOptionalUrl(data.videoUrl),
+    audioUrl: normalizeOptionalUrl(data.audioUrl),
     avatarKey: emptyToNull(data.avatarKey),
     workPhotoKeys,
     openToPaidWork: data.openToPaidWork,
@@ -579,18 +579,8 @@ export async function updateCreativeAction(
     const [updated] = await db
       .update(creatives)
       .set({
-        name: data.name,
+        ...creativeProfileValues(data, workPhotos.keys),
         slug: await uniqueCreativeSlug(data.name, id),
-        craftCategories: data.craftCategories,
-        city: data.city || null,
-        bio: emptyToNull(data.bio),
-        instagramHandle: normalizeInstagramHandle(data.instagramHandle),
-        portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-        avatarKey: emptyToNull(data.avatarKey),
-        workPhotoKeys: workPhotos.keys,
-        openToPaidWork: data.openToPaidWork,
-        openToTrade: data.openToTrade,
-        buildingPortfolio: data.buildingPortfolio,
       })
       .where(eq(creatives.id, id))
       .returning({ id: creatives.id, slug: creatives.slug });

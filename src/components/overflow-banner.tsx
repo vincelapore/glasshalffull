@@ -671,7 +671,9 @@ export function OverflowBanner({
                 if (people.length === 0) return null;
                 return (
                   <section key={group.role} className="space-y-2">
-                    <h2 className="text-sm font-medium">{group.label}</h2>
+                    <h2 className="text-sm font-medium">
+                      {people.length === 1 ? group.singular : group.plural}
+                    </h2>
                     <FeatureList people={people} />
                   </section>
                 );

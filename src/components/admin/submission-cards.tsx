@@ -166,6 +166,9 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {creative.pronouns ? (
+          <p className="text-sm text-muted-foreground">{creative.pronouns}</p>
+        ) : null}
         {creative.bio ? (
           <p className="text-sm text-muted-foreground">{creative.bio}</p>
         ) : (
@@ -191,6 +194,26 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
               className="underline-offset-4 hover:underline"
             >
               Portfolio
+            </a>
+          ) : null}
+          {creative.videoUrl ? (
+            <a
+              href={creative.videoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline-offset-4 hover:underline"
+            >
+              Video
+            </a>
+          ) : null}
+          {creative.audioUrl ? (
+            <a
+              href={creative.audioUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline-offset-4 hover:underline"
+            >
+              Audio
             </a>
           ) : null}
         </div>
