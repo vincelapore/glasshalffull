@@ -5,6 +5,7 @@ import { AccountShell } from "@/components/account-shell";
 import { AccountVisibilityToggle } from "@/components/account-visibility";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { EventModerationNote } from "@/components/event-moderation-note";
+import { ProfileEssentialsAttention } from "@/components/profile-visibility-checklist";
 import { Notice } from "@/components/ui/notice";
 import { SectionHeader, TextLink } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
@@ -37,8 +38,20 @@ export default async function AccountPage() {
   const canViewPublicPage =
     profile?.status === "approved" && profileReady && isPublic;
 
+  const essentialsProfile = profile
+    ? {
+        bio: profile.bio,
+        avatarKey: profile.avatarKey,
+        workPhotoKeys: profile.workPhotoKeys,
+      }
+    : { bio: null, avatarKey: null, workPhotoKeys: [] };
+
   return (
     <AccountShell user={user}>
+      <ProfileEssentialsAttention
+        profile={essentialsProfile}
+        className="mb-8"
+      />
       <section className="mb-10 space-y-4">
         <SectionHeader
           title="Visibility"
@@ -52,7 +65,11 @@ export default async function AccountPage() {
       <section className="space-y-4">
         <SectionHeader
           title="Profile"
-          description="Directory essentials are listed at the top of the form."
+          description={
+            profileReady
+              ? "Directory essentials are listed at the top of the form."
+              : "Finish the essentials marked below — bio, profile picture, and a work photo — before you can appear publicly."
+          }
           action={
             profile ? (
               <p className="text-sm text-muted-foreground">

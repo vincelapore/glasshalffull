@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { MAX_WORK_PHOTOS, mediaUrl } from "@/lib/media";
 import { compressAndUploadPhoto, compressPhoto, isAcceptedImage } from "@/lib/upload-photo";
+import { cn } from "@/lib/utils";
 
 export type WorkSlot =
   | { id: string; source: "stored"; key: string }
@@ -55,6 +56,8 @@ type WorkPhotosFieldProps = {
   description?: string;
   error?: string;
   disabled?: boolean;
+  /** Emphasize that at least one work photo is still required. */
+  attention?: boolean;
 };
 
 export function WorkPhotosField({
@@ -63,6 +66,7 @@ export function WorkPhotosField({
   description,
   error,
   disabled,
+  attention = false,
 }: WorkPhotosFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -127,9 +131,39 @@ export function WorkPhotosField({
   }
 
   return (
-    <fieldset className="space-y-3">
-      <legend className="text-sm font-medium">Examples of your work</legend>
-      <p className="text-sm text-muted-foreground">
+    <fieldset
+      className={cn(
+        "space-y-3",
+        attention &&
+          "rounded-xl border border-destructive/35 bg-destructive/5 p-3"
+      )}
+    >
+      <legend
+        className={cn(
+          "text-sm font-medium",
+          attention && "px-1 text-destructive"
+        )}
+      >
+        {attention ? (
+          <span className="inline-flex items-center gap-1.5">
+            Examples of your work
+            <span
+              className="flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold leading-none text-white"
+              aria-hidden
+            >
+              !
+            </span>
+          </span>
+        ) : (
+          "Examples of your work"
+        )}
+      </legend>
+      <p
+        className={cn(
+          "text-sm",
+          attention ? "text-destructive/90" : "text-muted-foreground"
+        )}
+      >
         {description ?? `Up to ${MAX_WORK_PHOTOS} photos.`}
       </p>
       <input
@@ -197,7 +231,12 @@ export function WorkPhotosField({
                 event.preventDefault();
                 addFiles(event.dataTransfer.files);
               }}
-              className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border bg-muted/20 text-muted-foreground transition-colors hover:bg-muted/30 disabled:pointer-events-none disabled:opacity-50"
+              className={cn(
+                "flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed transition-colors disabled:pointer-events-none disabled:opacity-50",
+                attention
+                  ? "border-destructive/45 bg-background text-destructive hover:bg-destructive/5"
+                  : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/30"
+              )}
             >
               <ImagePlus className="size-5" />
               <span className="text-xs">

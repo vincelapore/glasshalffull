@@ -12,6 +12,7 @@ import { pageWidths } from "@/components/ui/page";
 import { getSessionUser, getStaffRole } from "@/lib/admin";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
+import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { getCreativeByUserId } from "@/lib/queries";
 
 export async function SiteHeader() {
@@ -22,6 +23,8 @@ export async function SiteHeader() {
         getStaffRole(user.email),
       ])
     : [null, null];
+  const needsEssentials =
+    Boolean(user) && (!profile || !isProfileReadyForPublic(profile));
 
   return (
     <header
@@ -109,6 +112,7 @@ export async function SiteHeader() {
               name={user.name ?? ""}
               email={user.email ?? ""}
               avatarUrl={mediaUrl(profile?.avatarKey)}
+              needsEssentials={needsEssentials}
               publicProfileHref={
                 profile?.status === "approved"
                   ? creativePath(profile.slug)

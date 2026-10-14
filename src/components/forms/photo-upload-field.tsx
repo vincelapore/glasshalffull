@@ -25,6 +25,8 @@ type PhotoUploadFieldProps = {
   onFileChange: (file: File | null) => void;
   error?: string;
   disabled?: boolean;
+  /** Emphasize that this field is still required for a public profile. */
+  attention?: boolean;
   /** Profile photos: frame a square crop before the file is kept. */
   crop?: boolean;
   /** Shrunk in the browser as soon as the file is chosen. */
@@ -40,6 +42,7 @@ export function PhotoUploadField({
   onFileChange,
   error,
   disabled,
+  attention = false,
   crop = false,
   kind,
 }: PhotoUploadFieldProps) {
@@ -113,10 +116,37 @@ export function PhotoUploadField({
   }
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+    <div
+      className={cn(
+        "space-y-2",
+        attention &&
+          "rounded-xl border border-destructive/35 bg-destructive/5 p-3"
+      )}
+    >
+      <Label htmlFor={id} className={attention ? "text-destructive" : undefined}>
+        {attention ? (
+          <span className="inline-flex items-center gap-1.5">
+            {label}
+            <span
+              className="flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold leading-none text-white"
+              aria-hidden
+            >
+              !
+            </span>
+          </span>
+        ) : (
+          label
+        )}
+      </Label>
       {description ? (
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p
+          className={cn(
+            "text-sm",
+            attention ? "text-destructive/90" : "text-muted-foreground"
+          )}
+        >
+          {description}
+        </p>
       ) : null}
       <input
         id={id}
@@ -157,7 +187,9 @@ export function PhotoUploadField({
               : "min-h-40 w-full rounded-xl",
           dragging
             ? "border-foreground/50 bg-muted/40"
-            : "border-border bg-muted/20 hover:bg-muted/30",
+            : attention
+              ? "border-destructive/45 bg-background hover:bg-destructive/5"
+              : "border-border bg-muted/20 hover:bg-muted/30",
           busy && "pointer-events-none opacity-50"
         )}
       >

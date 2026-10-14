@@ -41,8 +41,12 @@ import {
   workOpportunityTagLabels,
 } from "@/lib/labels";
 import { MAX_WORK_PHOTOS } from "@/lib/media";
-import { isProfileReadyForPublic } from "@/lib/profile-visibility";
+import {
+  getProfileVisibilityChecklist,
+  isProfileReadyForPublic,
+} from "@/lib/profile-visibility";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
+import { cn } from "@/lib/utils";
 import {
   cities,
   creativeRoles,
@@ -193,6 +197,18 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const essentialsReady = essentialsProfile
     ? isProfileReadyForPublic(essentialsProfile)
     : false;
+  const essentialsChecklist = essentialsProfile
+    ? getProfileVisibilityChecklist(essentialsProfile)
+    : null;
+  const needsBio = essentialsChecklist?.some(
+    (item) => item.id === "bio" && !item.done
+  );
+  const needsAvatar = essentialsChecklist?.some(
+    (item) => item.id === "avatar" && !item.done
+  );
+  const needsWorkPhoto = essentialsChecklist?.some(
+    (item) => item.id === "workPhoto" && !item.done
+  );
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -412,10 +428,38 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         )}
       />
 
-      <Field>
-        <Label htmlFor="bio">Bio</Label>
+      <Field
+        className={
+          needsBio
+            ? "rounded-xl border border-destructive/35 bg-destructive/5 p-3"
+            : undefined
+        }
+      >
+        <Label
+          htmlFor="bio"
+          className={needsBio ? "text-destructive" : undefined}
+        >
+          {needsBio ? (
+            <span className="inline-flex items-center gap-1.5">
+              Bio
+              <span
+                className="flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold leading-none text-white"
+                aria-hidden
+              >
+                !
+              </span>
+            </span>
+          ) : (
+            "Bio"
+          )}
+        </Label>
         {mode === "profile" ? (
-          <p className="text-sm text-muted-foreground">
+          <p
+            className={cn(
+              "text-sm",
+              needsBio ? "text-destructive/90" : "text-muted-foreground"
+            )}
+          >
             Needed to appear in the directory.
           </p>
         ) : null}
@@ -423,6 +467,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           id="bio"
           rows={5}
           placeholder="Who you are, what you make, where people find you."
+          aria-invalid={needsBio || Boolean(form.formState.errors.bio)}
           {...form.register("bio")}
         />
         <FieldError>{form.formState.errors.bio?.message}</FieldError>
@@ -529,6 +574,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             onFileChange={setPendingPhoto}
             error={fieldState.error?.message}
             disabled={pending}
+            attention={Boolean(needsAvatar)}
             crop
           />
         )}
@@ -544,6 +590,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         }
         error={form.formState.errors.workPhotoKeys?.message}
         disabled={pending}
+        attention={Boolean(needsWorkPhoto)}
       />
 
       {formError ? <Notice variant="destructive">{formError}</Notice> : null}
