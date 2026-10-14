@@ -10,6 +10,7 @@ import { SectionHeader, TextLink } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
+import { socialsFromLegacy } from "@/lib/creative-socials";
 import { statusLabels } from "@/lib/labels";
 import { creativePath } from "@/lib/paths";
 import { isProfileReadyForPublic } from "@/lib/profile-visibility";
@@ -97,10 +98,13 @@ export default async function AccountPage() {
                   city: profile.city ?? "",
                   pronouns: profile.pronouns ?? "",
                   bio: profile.bio ?? "",
-                  instagramHandle: profile.instagramHandle ?? "",
-                  portfolioUrl: profile.portfolioUrl ?? "",
-                  videoUrl: profile.videoUrl ?? "",
-                  audioUrl: profile.audioUrl ?? "",
+                  socials: socialsFromLegacy(profile),
+                  videoUrls: profile.videoUrls.length
+                    ? profile.videoUrls
+                    : [""],
+                  audioUrls: profile.audioUrls.length
+                    ? profile.audioUrls
+                    : [""],
                   avatarKey: profile.avatarKey ?? "",
                   workPhotoKeys: profile.workPhotoKeys,
                   openToPaidWork: profile.openToPaidWork,

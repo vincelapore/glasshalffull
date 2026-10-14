@@ -1,6 +1,18 @@
 import { z } from "zod";
 
-import { isAudioMediaUrl, isVideoMediaUrl } from "@/lib/creative-media";
+import {
+  isAudioMediaUrl,
+  isVideoMediaUrl,
+  MAX_CREATIVE_AUDIO_URLS,
+  MAX_CREATIVE_VIDEO_URLS,
+} from "@/lib/creative-media";
+import {
+  isSocialProfileUrl,
+  MAX_CREATIVE_SOCIALS,
+  socialProviderLabels,
+  socialProviders,
+  type SocialProvider,
+} from "@/lib/creative-socials";
 import {
   avatarKeyPattern,
   flyerKeyPattern,
@@ -106,36 +118,19 @@ const optionalUrl = z.union([
     ),
 ]);
 
-const optionalInstagramHandle = z.union([
-  z.literal(""),
-  z
-    .string()
-    .trim()
-    .regex(
-      /^@?[A-Za-z0-9._]{1,30}$/,
-      "Enter a valid Instagram handle"
-    ),
-]);
+const videoUrlEntry = z
+  .string()
+  .trim()
+  .refine((value) => !value || isVideoMediaUrl(value), {
+    message: "Use a YouTube or Vimeo link",
+  });
 
-const optionalVideoUrl = z.union([
-  z.literal(""),
-  z
-    .string()
-    .trim()
-    .refine((value) => isVideoMediaUrl(value), {
-      message: "Use a YouTube or Vimeo link",
-    }),
-]);
-
-const optionalAudioUrl = z.union([
-  z.literal(""),
-  z
-    .string()
-    .trim()
-    .refine((value) => isAudioMediaUrl(value), {
-      message: "Use a SoundCloud or Bandcamp link",
-    }),
-]);
+const audioUrlEntry = z
+  .string()
+  .trim()
+  .refine((value) => !value || isAudioMediaUrl(value), {
+    message: "Use a Spotify, Apple Music, SoundCloud, or Bandcamp link",
+  });
 
 export const creativeSubmissionSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
@@ -148,10 +143,46 @@ export const creativeSubmissionSchema = z.object({
   city: z.union([z.literal(""), z.enum(cities)]),
   pronouns: z.union([z.literal(""), z.string().trim().max(80)]),
   bio: z.union([z.literal(""), z.string().trim().max(2000)]),
-  instagramHandle: optionalInstagramHandle,
-  portfolioUrl: optionalUrl,
-  videoUrl: optionalVideoUrl,
-  audioUrl: optionalAudioUrl,
+  socials: z
+    .array(
+      z
+        .object({
+          provider: z.enum(socialProviders),
+          url: z.string().trim().min(1, "Add a link"),
+        })
+        .superRefine((value, ctx) => {
+          if (!isSocialProfileUrl(value.provider as SocialProvider, value.url)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Enter a valid ${socialProviderLabels[value.provider]} profile link`,
+              path: ["url"],
+            });
+          }
+        })
+    )
+    .max(
+      MAX_CREATIVE_SOCIALS,
+      `You can add up to ${MAX_CREATIVE_SOCIALS} socials`
+    )
+    .superRefine((socials, ctx) => {
+      const seen = new Set<string>();
+      for (const [index, social] of socials.entries()) {
+        if (seen.has(social.provider)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "That account is already added",
+            path: [index, "provider"],
+          });
+        }
+        seen.add(social.provider);
+      }
+    }),
+  videoUrls: z
+    .array(videoUrlEntry)
+    .max(MAX_CREATIVE_VIDEO_URLS, `You can add up to ${MAX_CREATIVE_VIDEO_URLS} videos`),
+  audioUrls: z
+    .array(audioUrlEntry)
+    .max(MAX_CREATIVE_AUDIO_URLS, `You can add up to ${MAX_CREATIVE_AUDIO_URLS} listen links`),
   avatarKey: z.union([
     z.literal(""),
     z.string().regex(avatarKeyPattern, "Upload a valid photo"),

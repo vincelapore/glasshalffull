@@ -45,7 +45,7 @@ export default async function AccountEventOrganisersPage({
       <section className="space-y-4">
         <SectionHeader
           title="Organisers"
-          description={`Who’s listed on ${event.title}. Invite someone with the email they’ll use to sign up.`}
+          description={`Who’s listed on ${event.title}. Add people already in the directory.`}
         />
         <EventOrganisersPanel
           eventId={event.id}

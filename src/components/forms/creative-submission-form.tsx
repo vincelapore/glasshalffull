@@ -12,6 +12,8 @@ import {
 } from "@/app/actions/submissions";
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
+import { MediaUrlsField } from "@/components/forms/media-urls-field";
+import { SocialsField } from "@/components/forms/socials-field";
 import {
   uploadWorkSlots,
   WorkPhotosField,
@@ -26,6 +28,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Notice } from "@/components/ui/notice";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  MAX_CREATIVE_AUDIO_URLS,
+  MAX_CREATIVE_VIDEO_URLS,
+} from "@/lib/creative-media";
 import {
   cityLabels,
   disciplineLabels,
@@ -56,10 +62,9 @@ const emptyProfileValues: CreativeSubmissionInput = {
   city: "",
   pronouns: "",
   bio: "",
-  instagramHandle: "",
-  portfolioUrl: "",
-  videoUrl: "",
-  audioUrl: "",
+  socials: [],
+  videoUrls: [""],
+  audioUrls: [""],
   avatarKey: "",
   workPhotoKeys: [],
   openToPaidWork: false,
@@ -170,7 +175,6 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
     });
   });
 
-  const instagramHandleField = form.register("instagramHandle");
   const watchedBio = useWatch({ control: form.control, name: "bio" });
   const watchedAvatarKey = useWatch({
     control: form.control,
@@ -454,83 +458,58 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         </div>
       </Fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field>
-          <Label htmlFor="instagramHandle">Instagram handle</Label>
-          <div className="flex h-8 items-center rounded-lg border border-input bg-transparent pl-2.5 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-3 has-[[aria-invalid=true]]:ring-destructive/20 dark:has-[[aria-invalid=true]]:border-destructive/50 dark:has-[[aria-invalid=true]]:ring-destructive/40">
-            <span
-              aria-hidden="true"
-              className="cursor-text select-none text-sm text-muted-foreground"
-              onMouseDown={(event) => {
-                event.preventDefault();
-                document.getElementById("instagramHandle")?.focus();
-              }}
-            >
-              @
-            </span>
-            <Input
-              id="instagramHandle"
-              className="h-full min-w-0 flex-1 border-0 bg-transparent py-1 pr-2.5 pl-0.5 shadow-none focus-visible:border-transparent focus-visible:ring-0 aria-invalid:border-0 aria-invalid:ring-0 dark:bg-transparent dark:aria-invalid:border-0 dark:aria-invalid:ring-0"
-              placeholder="yourhandle"
-              autoComplete="off"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              {...instagramHandleField}
-              onChange={(event) => {
-                event.target.value = event.target.value.replace(/^@+/, "");
-                instagramHandleField.onChange(event);
-              }}
-              aria-invalid={Boolean(form.formState.errors.instagramHandle)}
-            />
-          </div>
-          <FieldError>{form.formState.errors.instagramHandle?.message}</FieldError>
-        </Field>
-        <Field>
-          <Label htmlFor="portfolioUrl">Website</Label>
-          <Input
-            id="portfolioUrl"
-            type="text"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="example.com"
-            {...form.register("portfolioUrl")}
-            aria-invalid={Boolean(form.formState.errors.portfolioUrl)}
-          />
-          <FieldError>{form.formState.errors.portfolioUrl?.message}</FieldError>
-        </Field>
-        <Field>
-          <Label htmlFor="videoUrl">Video</Label>
-          <Input
-            id="videoUrl"
-            type="text"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="youtube.com/… or vimeo.com/…"
-            {...form.register("videoUrl")}
-            aria-invalid={Boolean(form.formState.errors.videoUrl)}
-          />
-          <FieldError>{form.formState.errors.videoUrl?.message}</FieldError>
-        </Field>
-        <Field>
-          <Label htmlFor="audioUrl">Audio</Label>
-          <Input
-            id="audioUrl"
-            type="text"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="soundcloud.com/… or bandcamp.com/…"
-            {...form.register("audioUrl")}
-            aria-invalid={Boolean(form.formState.errors.audioUrl)}
-          />
-          <FieldError>{form.formState.errors.audioUrl?.message}</FieldError>
-        </Field>
+      <SocialsField
+        control={form.control}
+        setValue={form.setValue}
+        name="socials"
+        errorMessage={
+          typeof form.formState.errors.socials?.message === "string"
+            ? form.formState.errors.socials.message
+            : undefined
+        }
+      />
+
+      <div className="space-y-4">
+        <MediaUrlsField
+          control={form.control}
+          register={form.register}
+          setValue={form.setValue}
+          name="videoUrls"
+          label="Videos"
+          placeholder="youtube.com/… or vimeo.com/…"
+          help="YouTube or Vimeo links play on your public profile."
+          max={MAX_CREATIVE_VIDEO_URLS}
+          errors={
+            form.formState.errors.videoUrls as
+              | Array<{ message?: string } | undefined>
+              | undefined
+          }
+          rootError={
+            typeof form.formState.errors.videoUrls?.message === "string"
+              ? form.formState.errors.videoUrls.message
+              : undefined
+          }
+        />
+        <MediaUrlsField
+          control={form.control}
+          register={form.register}
+          setValue={form.setValue}
+          name="audioUrls"
+          label="Listen"
+          placeholder="spotify.com/…, music.apple.com/…, soundcloud.com/…, or bandcamp.com/…"
+          help="Spotify, Apple Music, and SoundCloud embed players. Bandcamp opens in a listen card."
+          max={MAX_CREATIVE_AUDIO_URLS}
+          errors={
+            form.formState.errors.audioUrls as
+              | Array<{ message?: string } | undefined>
+              | undefined
+          }
+          rootError={
+            typeof form.formState.errors.audioUrls?.message === "string"
+              ? form.formState.errors.audioUrls.message
+              : undefined
+          }
+        />
       </div>
 
       <Controller

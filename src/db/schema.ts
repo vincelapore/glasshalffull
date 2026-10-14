@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -10,6 +11,8 @@ import {
   primaryKey,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+
+import type { CreativeSocial } from "@/lib/creative-socials";
 
 export const submissionStatusEnum = pgEnum("submission_status", [
   "pending",
@@ -104,12 +107,25 @@ export const creatives = pgTable(
     city: cityEnum("city"),
     pronouns: text("pronouns"),
     bio: text("bio"),
+    /**
+     * Profile social accounts (one URL per provider). Shown as SVG icons.
+     * Legacy instagramHandle / portfolioUrl stay in sync for older reads.
+     */
+    socials: jsonb("socials")
+      .$type<CreativeSocial[]>()
+      .notNull()
+      .default([]),
+    /** @deprecated Prefer socials[instagram]. Kept synced on save. */
     instagramHandle: text("instagram_handle"),
+    /** @deprecated Prefer socials[website]. Kept synced on save. */
     portfolioUrl: text("portfolio_url"),
-    /** YouTube or Vimeo link for a featured video. */
-    videoUrl: text("video_url"),
-    /** SoundCloud or Bandcamp link for a featured track / set. */
-    audioUrl: text("audio_url"),
+    /** YouTube / Vimeo links for featured videos (at most 3). */
+    videoUrls: text("video_urls").array().notNull().default([]),
+    /**
+     * Listen links: Spotify, Apple Music, SoundCloud, or Bandcamp
+     * (at most 3). Featured media — not social account icons.
+     */
+    audioUrls: text("audio_urls").array().notNull().default([]),
     avatarKey: text("avatar_key"),
     /** Ordered work-example object keys. At most 6. Empty on listing queries' rendered output. */
     workPhotoKeys: text("work_photo_keys").array().notNull().default([]),

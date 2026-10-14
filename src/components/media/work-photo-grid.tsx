@@ -15,14 +15,19 @@ import { cn } from "@/lib/utils";
 export function WorkPhotoGrid({
   name,
   keys,
+  /** Absolute image URLs (e.g. example showcase). Prefer `keys` for real profiles. */
+  srcs,
 }: {
   name: string;
-  keys: readonly string[];
+  keys?: readonly string[];
+  srcs?: readonly string[];
 }) {
-  const photos = keys.flatMap((key) => {
-    const src = mediaUrl(key);
-    return src ? [{ key, src }] : [];
-  });
+  const photos = srcs?.length
+    ? srcs.map((src, index) => ({ key: `src-${index}`, src }))
+    : (keys ?? []).flatMap((key) => {
+        const src = mediaUrl(key);
+        return src ? [{ key, src }] : [];
+      });
   const [index, setIndex] = useState<number | null>(null);
 
   useEffect(() => {

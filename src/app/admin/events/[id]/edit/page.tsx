@@ -69,6 +69,7 @@ export default async function EditEventPage({
         />
         <EventOrganisersPanel
           eventId={event.id}
+          allowInvite
           organisers={organisers.map(({ creative }) => ({
             id: creative.id,
             name: creative.name,

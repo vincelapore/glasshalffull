@@ -5,15 +5,21 @@ import { revalidatePath } from "next/cache";
 
 import { getSessionUser, isAdminAuthenticated } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
-import {
-  composeModerationNote,
-  emptyToNull,
-  normalizeInstagramHandle,
-} from "@/lib/labels";
+import { composeModerationNote, emptyToNull } from "@/lib/labels";
 import { flyerKeyPattern } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import { deleteMediaObjects } from "@/lib/r2";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
+import {
+  MAX_CREATIVE_AUDIO_URLS,
+  MAX_CREATIVE_VIDEO_URLS,
+  normalizeMediaUrlList,
+} from "@/lib/creative-media";
+import {
+  instagramHandleFromSocials,
+  normalizeSocials,
+  websiteFromSocials,
+} from "@/lib/creative-socials";
 import {
   coerceWebsiteUrl,
   creativeSubmissionSchema,
@@ -206,6 +212,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
 }
 
 function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: string[]) {
+  const socials = normalizeSocials(data.socials);
   return {
     name: data.name,
     disciplines: data.disciplines,
@@ -215,10 +222,20 @@ function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: str
     city: data.city || null,
     pronouns: emptyToNull(data.pronouns),
     bio: emptyToNull(data.bio),
-    instagramHandle: normalizeInstagramHandle(data.instagramHandle),
-    portfolioUrl: normalizeOptionalUrl(data.portfolioUrl),
-    videoUrl: normalizeOptionalUrl(data.videoUrl),
-    audioUrl: normalizeOptionalUrl(data.audioUrl),
+    socials,
+    // Keep legacy columns in sync for older list/query surfaces.
+    instagramHandle: instagramHandleFromSocials(socials),
+    portfolioUrl: websiteFromSocials(socials),
+    videoUrls: normalizeMediaUrlList(
+      data.videoUrls,
+      "video",
+      MAX_CREATIVE_VIDEO_URLS
+    ),
+    audioUrls: normalizeMediaUrlList(
+      data.audioUrls,
+      "audio",
+      MAX_CREATIVE_AUDIO_URLS
+    ),
     avatarKey: emptyToNull(data.avatarKey),
     workPhotoKeys,
     openToPaidWork: data.openToPaidWork,

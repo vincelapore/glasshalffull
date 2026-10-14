@@ -40,8 +40,8 @@ export async function SiteHeader() {
             <Image
               src="/mark.png"
               alt=""
-              width={552}
-              height={608}
+              width={487}
+              height={542}
               priority
               className="h-8 w-auto drop-shadow-[0_0_10px_var(--background)] dark:invert"
             />

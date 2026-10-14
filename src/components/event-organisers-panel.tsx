@@ -33,9 +33,12 @@ type SearchHit = {
 export function EventOrganisersPanel({
   eventId,
   organisers,
+  allowInvite = false,
 }: {
   eventId: string;
   organisers: Organiser[];
+  /** Admin only — creates an unclaimed profile with an invite email. */
+  allowInvite?: boolean;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -189,35 +192,37 @@ export function EventOrganisersPanel({
         ) : null}
       </form>
 
-      <form onSubmit={onInvite} className="space-y-3">
-        <Field>
-          <Label htmlFor="invite-name">Invite someone new</Label>
-          <Input
-            id="invite-name"
-            value={inviteName}
-            onChange={(event) => setInviteName(event.target.value)}
-            placeholder="Name"
-          />
-        </Field>
-        <Field>
-          <Label htmlFor="invite-email">Email</Label>
-          <Input
-            id="invite-email"
-            type="email"
-            autoComplete="off"
-            value={inviteEmail}
-            onChange={(event) => setInviteEmail(event.target.value)}
-            placeholder="name@example.com"
-          />
-          <p className="text-sm text-muted-foreground">
-            Ask them to sign up with this email. The profile becomes theirs
-            when they do.
-          </p>
-        </Field>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Add organiser"}
-        </Button>
-      </form>
+      {allowInvite ? (
+        <form onSubmit={onInvite} className="space-y-3">
+          <Field>
+            <Label htmlFor="invite-name">Invite someone new</Label>
+            <Input
+              id="invite-name"
+              value={inviteName}
+              onChange={(event) => setInviteName(event.target.value)}
+              placeholder="Name"
+            />
+          </Field>
+          <Field>
+            <Label htmlFor="invite-email">Email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              autoComplete="off"
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              placeholder="name@example.com"
+            />
+            <p className="text-sm text-muted-foreground">
+              Ask them to sign up with this email. The profile becomes theirs
+              when they do.
+            </p>
+          </Field>
+          <Button type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Add organiser"}
+          </Button>
+        </form>
+      ) : null}
 
       {error ? <Notice variant="destructive">{error}</Notice> : null}
       {message ? <Notice variant="muted">{message}</Notice> : null}

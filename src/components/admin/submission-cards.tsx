@@ -196,24 +196,24 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
               Portfolio
             </a>
           ) : null}
-          {creative.videoUrl ? (
+          {creative.videoUrls[0] ? (
             <a
-              href={creative.videoUrl}
+              href={creative.videoUrls[0]}
               target="_blank"
               rel="noreferrer"
               className="underline-offset-4 hover:underline"
             >
-              Video
+              Video{creative.videoUrls.length > 1 ? ` (${creative.videoUrls.length})` : ""}
             </a>
           ) : null}
-          {creative.audioUrl ? (
+          {creative.audioUrls[0] ? (
             <a
-              href={creative.audioUrl}
+              href={creative.audioUrls[0]}
               target="_blank"
               rel="noreferrer"
               className="underline-offset-4 hover:underline"
             >
-              Audio
+              Audio{creative.audioUrls.length > 1 ? ` (${creative.audioUrls.length})` : ""}
             </a>
           ) : null}
         </div>

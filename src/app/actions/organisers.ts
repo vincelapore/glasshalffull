@@ -152,8 +152,16 @@ export async function inviteEventOrganiserAction(
   eventId: string,
   input: unknown
 ): Promise<OrganiserActionResult> {
-  const access = await requireOrganiserManager(eventId);
-  if (!access.ok) return { success: false, message: access.message };
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, message: "Sign in to manage organisers." };
+  }
+  if (!(await isAdminEmail(user.email))) {
+    return {
+      success: false,
+      message: "Only admins can invite someone new.",
+    };
+  }
 
   const parsed = organiserStubSchema.safeParse(input);
   if (!parsed.success) {

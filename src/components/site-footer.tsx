@@ -17,8 +17,8 @@ export function SiteFooter() {
         <Image
           src="/mark.png"
           alt=""
-          width={552}
-          height={608}
+          width={487}
+          height={542}
           aria-hidden
           className="pointer-events-none absolute -bottom-10 -left-10 h-[16rem] w-auto max-w-none opacity-45 select-none sm:-bottom-14 sm:-left-14 sm:h-[22rem]"
         />

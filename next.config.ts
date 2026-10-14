@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 function mediaRemotePatterns(): { protocol: "https"; hostname: string }[] {
   const patterns: { protocol: "https"; hostname: string }[] = [
     { protocol: "https", hostname: "*.r2.dev" },
+    { protocol: "https", hostname: "images.unsplash.com" },
   ];
 
   const base = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;

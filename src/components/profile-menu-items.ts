@@ -4,13 +4,20 @@ export type ProfileMenuIconName =
   | "view"
   | "moderation"
   | "overflow"
-  | "team";
+  | "team"
+  | "analytics";
 
 export type ProfileMenuLinkItem = {
   href: string;
   label: string;
   icon: ProfileMenuIconName;
 };
+
+const adminStaffRoots = [
+  "/admin/team",
+  "/admin/overflow",
+  "/admin/analytics",
+] as const;
 
 export function getProfileMenuLinks(options: {
   publicProfileHref?: string;
@@ -55,6 +62,14 @@ export function getProfileMenuLinks(options: {
     });
   }
 
+  if (options.canModerate) {
+    staff.push({
+      href: "/admin/analytics",
+      label: "Analytics",
+      icon: "analytics",
+    });
+  }
+
   return { account, staff };
 }
 
@@ -62,13 +77,16 @@ export function isProfileMenuLinkActive(pathname: string, href: string) {
   if (href === "/admin/submissions") {
     return (
       pathname.startsWith("/admin") &&
-      !pathname.startsWith("/admin/team") &&
-      !pathname.startsWith("/admin/overflow")
+      !adminStaffRoots.some((root) => pathname.startsWith(root))
     );
   }
 
   if (href === "/admin/overflow") {
     return pathname.startsWith("/admin/overflow");
+  }
+
+  if (href === "/admin/analytics") {
+    return pathname.startsWith("/admin/analytics");
   }
 
   if (href === "/account") {

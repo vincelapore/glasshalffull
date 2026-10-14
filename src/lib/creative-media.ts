@@ -1,5 +1,8 @@
 import { coerceWebsiteUrl } from "@/lib/urls";
 
+export const MAX_CREATIVE_VIDEO_URLS = 3;
+export const MAX_CREATIVE_AUDIO_URLS = 3;
+
 const VIDEO_ROOT_HOSTS = [
   "youtube.com",
   "youtu.be",
@@ -7,10 +10,19 @@ const VIDEO_ROOT_HOSTS = [
   "vimeo.com",
 ] as const;
 
-const AUDIO_ROOT_HOSTS = ["soundcloud.com", "bandcamp.com"] as const;
+const AUDIO_ROOT_HOSTS = [
+  "soundcloud.com",
+  "bandcamp.com",
+  "spotify.com",
+  "music.apple.com",
+] as const;
 
 export type VideoProvider = "youtube" | "vimeo";
-export type AudioProvider = "soundcloud" | "bandcamp";
+export type AudioProvider =
+  | "soundcloud"
+  | "bandcamp"
+  | "spotify"
+  | "apple_music";
 
 export type VideoEmbed = {
   provider: VideoProvider;
@@ -24,6 +36,8 @@ export type AudioEmbed = {
   href: string;
   embedSrc: string | null;
   label: string;
+  /** iframe height in px when embedSrc is set */
+  embedHeight: number;
 };
 
 function parseHttpUrl(value: string): URL | null {
@@ -52,7 +66,15 @@ export function isVideoMediaUrl(value: string) {
 
 export function isAudioMediaUrl(value: string) {
   const url = parseHttpUrl(value);
-  return Boolean(url && hostMatches(url.hostname, AUDIO_ROOT_HOSTS));
+  if (!url) return false;
+  const host = rootHost(url.hostname);
+  if (host === "music.apple.com" || host.endsWith(".music.apple.com")) {
+    return true;
+  }
+  if (host === "open.spotify.com" || host === "spotify.com") {
+    return true;
+  }
+  return hostMatches(url.hostname, ["soundcloud.com", "bandcamp.com"]);
 }
 
 function youtubeId(url: URL): string | null {
@@ -127,12 +149,82 @@ export function resolveVideoEmbed(value: string): VideoEmbed | null {
   };
 }
 
+const SPOTIFY_EMBED_TYPES = new Set([
+  "track",
+  "album",
+  "playlist",
+  "artist",
+  "episode",
+  "show",
+]);
+
+function spotifyEmbed(url: URL): AudioEmbed | null {
+  const host = rootHost(url.hostname);
+  if (host !== "open.spotify.com" && host !== "spotify.com") return null;
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  // /embed/track/id or /track/id (intl prefix like /intl-en/track/id)
+  let type: string | undefined;
+  let id: string | undefined;
+  for (let i = 0; i < parts.length; i += 1) {
+    const part = parts[i]!;
+    if (part === "embed") continue;
+    if (SPOTIFY_EMBED_TYPES.has(part) && parts[i + 1]) {
+      type = part;
+      id = parts[i + 1]!.split("?")[0];
+      break;
+    }
+  }
+  if (!type || !id) return null;
+
+  const href = url.toString();
+  const compact = type === "track" || type === "episode";
+  return {
+    provider: "spotify",
+    href,
+    embedSrc: `https://open.spotify.com/embed/${type}/${encodeURIComponent(id)}?utm_source=generator`,
+    label: "Spotify",
+    embedHeight: compact ? 152 : 352,
+  };
+}
+
+function appleMusicEmbed(url: URL): AudioEmbed | null {
+  const host = rootHost(url.hostname);
+  if (host !== "music.apple.com" && !host.endsWith(".music.apple.com")) {
+    return null;
+  }
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  // /au/album/slug/id or /au/song/slug/id
+  if (parts.length < 3) return null;
+
+  const embed = new URL(url.toString());
+  embed.hostname = "embed.music.apple.com";
+  const trackParam = url.searchParams.get("i");
+  const isSong =
+    parts[1] === "song" || (parts[1] === "album" && Boolean(trackParam));
+
+  return {
+    provider: "apple_music",
+    href: url.toString(),
+    embedSrc: embed.toString(),
+    label: "Apple Music",
+    embedHeight: isSong ? 175 : 450,
+  };
+}
+
 export function resolveAudioEmbed(value: string): AudioEmbed | null {
   const url = parseHttpUrl(value);
-  if (!url || !hostMatches(url.hostname, AUDIO_ROOT_HOSTS)) return null;
+  if (!url) return null;
 
   const href = url.toString();
   const host = rootHost(url.hostname);
+
+  const spotify = spotifyEmbed(url);
+  if (spotify) return spotify;
+
+  const apple = appleMusicEmbed(url);
+  if (apple) return apple;
 
   if (host === "soundcloud.com" || host.endsWith(".soundcloud.com")) {
     const params = new URLSearchParams({
@@ -149,14 +241,57 @@ export function resolveAudioEmbed(value: string): AudioEmbed | null {
       href,
       embedSrc: `https://w.soundcloud.com/player/?${params.toString()}`,
       label: "SoundCloud",
+      embedHeight: 166,
     };
   }
 
-  return {
-    provider: "bandcamp",
-    href,
-    // Bandcamp needs an album/track id for iframes; link out from the URL alone.
-    embedSrc: null,
-    label: "Bandcamp",
-  };
+  if (host === "bandcamp.com" || host.endsWith(".bandcamp.com")) {
+    return {
+      provider: "bandcamp",
+      href,
+      // Bandcamp needs an album/track id for iframes; show a listen card instead.
+      embedSrc: null,
+      label: "Bandcamp",
+      embedHeight: 0,
+    };
+  }
+
+  return null;
+}
+
+/** Append autoplay (and related) params for in-app expanded playback. */
+export function withEmbedAutoplay(embedSrc: string) {
+  const url = new URL(embedSrc);
+  url.searchParams.set("autoplay", "1");
+  if (url.hostname.includes("youtube")) {
+    url.searchParams.set("playsinline", "1");
+    url.searchParams.set("rel", "0");
+  }
+  if (url.hostname.includes("vimeo")) {
+    url.searchParams.set("autoplay", "1");
+  }
+  return url.toString();
+}
+
+/** Drop empties, coerce, dedupe, cap. */
+export function normalizeMediaUrlList(
+  values: readonly string[] | null | undefined,
+  kind: "video" | "audio",
+  max: number
+) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values ?? []) {
+    const trimmed = raw?.trim();
+    if (!trimmed) continue;
+    const href = coerceWebsiteUrl(trimmed);
+    const ok = kind === "video" ? isVideoMediaUrl(href) : isAudioMediaUrl(href);
+    if (!ok) continue;
+    const key = href.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(href);
+    if (out.length >= max) break;
+  }
+  return out;
 }

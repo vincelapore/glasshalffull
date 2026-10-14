@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageHeader } from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
+import { socialsFromLegacy } from "@/lib/creative-socials";
 import { getCreativeById } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -67,10 +68,9 @@ export default async function EditCreativePage({
           city: creative.city ?? "",
           pronouns: creative.pronouns ?? "",
           bio: creative.bio ?? "",
-          instagramHandle: creative.instagramHandle ?? "",
-          portfolioUrl: creative.portfolioUrl ?? "",
-          videoUrl: creative.videoUrl ?? "",
-          audioUrl: creative.audioUrl ?? "",
+          socials: socialsFromLegacy(creative),
+          videoUrls: creative.videoUrls.length ? creative.videoUrls : [""],
+          audioUrls: creative.audioUrls.length ? creative.audioUrls : [""],
           avatarKey: creative.avatarKey ?? "",
           workPhotoKeys: creative.workPhotoKeys,
           openToPaidWork: creative.openToPaidWork,

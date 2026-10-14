@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventModerationNote } from "@/components/event-moderation-note";
+import { CreativeSocialLinks } from "@/components/creative-social-links";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import {
   EventListingCard,
@@ -15,16 +16,7 @@ import { Notice } from "@/components/ui/notice";
 import { Page, PageTitle } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
-import {
-  resolveAudioEmbed,
-  resolveVideoEmbed,
-} from "@/lib/creative-media";
-import {
-  cityLabels,
-  formatInstagramHandle,
-  instagramProfileHref,
-  lineupRoleLabels,
-} from "@/lib/labels";
+import { cityLabels, lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
 import { isProfileReadyForPublic } from "@/lib/profile-visibility";
@@ -97,13 +89,6 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const moderationNote = showModerationNote
     ? await getCreativeModerationNote(creative.id)
     : null;
-  const video = creative.videoUrl
-    ? resolveVideoEmbed(creative.videoUrl)
-    : null;
-  const audio = creative.audioUrl
-    ? resolveAudioEmbed(creative.audioUrl)
-    : null;
-
   return (
     <Page>
       {!isApproved ? (
@@ -165,48 +150,11 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
             </p>
           ) : null}
 
-          <div className="flex flex-wrap gap-4 text-sm">
-            {creative.instagramHandle ? (
-              <a
-                href={instagramProfileHref(creative.instagramHandle)}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 transition-colors hover:text-primary"
-              >
-                {formatInstagramHandle(creative.instagramHandle)}
-              </a>
-            ) : null}
-            {creative.portfolioUrl ? (
-              <a
-                href={creative.portfolioUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 transition-colors hover:text-primary"
-              >
-                Portfolio
-              </a>
-            ) : null}
-            {video ? (
-              <a
-                href={video.href}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 transition-colors hover:text-primary"
-              >
-                {video.label}
-              </a>
-            ) : null}
-            {audio ? (
-              <a
-                href={audio.href}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 transition-colors hover:text-primary"
-              >
-                {audio.label}
-              </a>
-            ) : null}
-          </div>
+          <CreativeSocialLinks
+            socials={creative.socials}
+            instagramHandle={creative.instagramHandle}
+            portfolioUrl={creative.portfolioUrl}
+          />
         </div>
 
         <section className="space-y-4">
@@ -234,8 +182,8 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
 
       <WorkPhotoGrid name={creative.name} keys={creative.workPhotoKeys} />
       <CreativeMediaEmbeds
-        videoUrl={creative.videoUrl}
-        audioUrl={creative.audioUrl}
+        videoUrls={creative.videoUrls}
+        audioUrls={creative.audioUrls}
       />
     </Page>
   );

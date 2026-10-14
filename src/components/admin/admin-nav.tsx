@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const adminLinks = [
   { href: "/admin/submissions", label: "Moderation" },
   { href: "/admin/overflow", label: "Overflow" },
+  { href: "/admin/analytics", label: "Analytics" },
 ] as const;
 
 export function AdminNav({ canManageTeam }: { canManageTeam: boolean }) {

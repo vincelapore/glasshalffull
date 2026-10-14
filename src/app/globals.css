@@ -933,7 +933,53 @@
   }
 }
 
+/* Business card mock — 3D flip + liquid fill pulse */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.business-card-stage {
+  animation: business-card-in 520ms var(--ease-out) both;
+}
+
+.business-card-liquid {
+  transform-origin: center bottom;
+  animation: business-card-liquid 3.6s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes business-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes business-card-liquid {
+  from {
+    opacity: 0.88;
+    transform: scaleY(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .business-card-stage,
+  .business-card-liquid {
+    animation: none;
+  }
+
   .poster-hover,
   .poster-avatar,
   .poster-face,

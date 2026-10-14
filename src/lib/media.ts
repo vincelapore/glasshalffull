@@ -17,12 +17,13 @@ export const FLYER_MAX_BYTES = 1280 * 1024;
 
 /**
  * Overflow posters. One WebP in the flyers prefix.
+ * Higher edge/quality than flyers — these are the hero visual.
  * The byte cap stops a phone original from being stored.
  */
-export const OVERFLOW_MAX_EDGE = 2048;
-export const OVERFLOW_MIN_EDGE = 1600;
-export const OVERFLOW_MAX_BYTES = 1280 * 1024;
-export const OVERFLOW_QUALITY = 0.84;
+export const OVERFLOW_MAX_EDGE = 2560;
+export const OVERFLOW_MIN_EDGE = 1920;
+export const OVERFLOW_MAX_BYTES = 2048 * 1024;
+export const OVERFLOW_QUALITY = 0.92;
 
 /** Profile work examples: one WebP each, never a second rendition. */
 export const MAX_WORK_PHOTOS = 6;

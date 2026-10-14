@@ -63,7 +63,7 @@ const OUTPUT: Record<
     maxEdge: OVERFLOW_MAX_EDGE,
     minEdge: OVERFLOW_MIN_EDGE,
     quality: OVERFLOW_QUALITY,
-    minQuality: 0.75,
+    minQuality: 0.82,
   },
 };
 

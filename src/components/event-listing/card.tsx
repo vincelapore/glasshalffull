@@ -25,6 +25,10 @@ type EventListingCardProps = {
   organisers?: EventListingOrganiser[];
   /** Extra line under the venue, e.g. this creative's role. */
   note?: string;
+  /** Absolute flyer URL override (e.g. example showcase). */
+  flyerSrc?: string | null;
+  /** Link target override (e.g. example showcase). */
+  href?: string;
   className?: string;
 };
 
@@ -32,11 +36,13 @@ export function EventListingCard({
   event,
   organisers = [],
   note,
+  flyerSrc,
+  href: hrefOverride,
   className,
 }: EventListingCardProps) {
   const when = eventRelativeLabel(event.dateTime);
 
-  const href = eventPath(event.slug);
+  const href = hrefOverride ?? eventPath(event.slug);
 
   return (
     <article
@@ -49,7 +55,7 @@ export function EventListingCard({
         <div className="overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-black/10 dark:ring-white/15">
           <div className="poster-hover">
             <ExternalImage
-              src={mediaUrl(event.flyerKey)}
+              src={flyerSrc ?? mediaUrl(event.flyerKey)}
               alt=""
               className="aspect-[8/5] w-full object-cover"
               fallback={<div className="aspect-[8/5] w-full bg-neutral-900" />}
