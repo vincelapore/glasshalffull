@@ -453,13 +453,15 @@ export function MobileNavQuery({
   const hits = searchHits(query);
   const listOpen = active && query.trim().length > 0;
 
-  useEffect(() => {
-    if (active) {
-      const frame = requestAnimationFrame(() => inputRef.current?.focus());
-      return () => cancelAnimationFrame(frame);
+  useLayoutEffect(() => {
+    if (!active) {
+      setQuery("");
+      setActiveHit(0);
+      return;
     }
-    setQuery("");
-    setActiveHit(0);
+    const input = inputRef.current;
+    if (!input || document.activeElement === input) return;
+    input.focus({ preventScroll: true });
   }, [active]);
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 
 import {
   MobileNavQuery,
@@ -312,13 +313,32 @@ export function MobileNavSearch() {
     };
   }, [open, desktop]);
 
+  function focusSearchInput() {
+    const input = panelRef.current?.querySelector<HTMLInputElement>(
+      "input:not([type='hidden'])",
+    );
+    if (!input) return false;
+    input.focus({ preventScroll: true });
+    return document.activeElement === input;
+  }
+
   function toggle() {
-    if (!open) {
-      openedAt.current = Date.now();
-      setOpenWidth(measureOpenWidth());
-      window.dispatchEvent(new Event(mobileNavEvents.closeMenu));
+    if (open) {
+      setOpen(false);
+      return;
     }
-    setOpen((value) => !value);
+
+    openedAt.current = Date.now();
+    setOpenWidth(measureOpenWidth());
+    window.dispatchEvent(new Event(mobileNavEvents.closeMenu));
+    // Sync commit so the panel is no longer inert before we focus — required
+    // for the mobile keyboard to open from this tap.
+    flushSync(() => setOpen(true));
+    if (!focusSearchInput()) {
+      requestAnimationFrame(() => {
+        focusSearchInput();
+      });
+    }
   }
 
   const closedWidth =
