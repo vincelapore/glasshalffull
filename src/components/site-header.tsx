@@ -6,6 +6,7 @@ import { CityPicker } from "@/components/city-picker";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileNavSearch } from "@/components/mobile-nav-search";
 import { ProfileMenu } from "@/components/profile-menu";
+import { SessionRefresh } from "@/components/session-refresh";
 import { publicNavLinks } from "@/components/site-nav";
 import { pageWidths } from "@/components/ui/page";
 import { getSessionUser, getStaffRole } from "@/lib/admin";
@@ -27,6 +28,7 @@ export async function SiteHeader() {
       data-site-header
       className="pointer-events-none fixed inset-x-0 top-3 z-50 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] data-hidden:-translate-y-[calc(100%+1rem)] motion-reduce:transition-none"
     >
+      {user ? <SessionRefresh /> : null}
       <div
         className={`mx-auto flex h-14 ${pageWidths.wide} items-center gap-4 px-4 sm:px-6`}
       >

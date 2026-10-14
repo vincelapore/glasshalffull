@@ -32,8 +32,14 @@ export function isAdminConfigured() {
 }
 
 export async function getSessionUser() {
-  const { data: session } = await auth.getSession();
-  return session?.user ?? null;
+  try {
+    const { data: session } = await auth.getSession();
+    return session?.user ?? null;
+  } catch (error) {
+    // Never take down a page render for an auth blip (see lib/auth/server.ts).
+    console.error("getSessionUser", error);
+    return null;
+  }
 }
 
 export async function syncStaff() {
