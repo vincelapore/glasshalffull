@@ -17,6 +17,7 @@ import {
   SectionHeader,
   TextLink,
 } from "@/components/ui/page";
+import { WorkMosaic } from "@/components/work-mosaic";
 import {
   formatEventListingDate,
   parseCityFilter,
@@ -30,6 +31,7 @@ import {
   getOverflowEpisodeBySlug,
   getOverflowEpisodes,
   getUpcomingApprovedEvents,
+  getWorkMosaicItems,
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -95,11 +97,12 @@ export default async function HomePage({
   const activeCity = parseCityFilter(city);
   const episodeSlug = episode?.trim() || null;
 
-  const [upcomingEvents, approvedCreatives, overflowEpisodes] =
+  const [upcomingEvents, approvedCreatives, overflowEpisodes, mosaicItems] =
     await Promise.all([
       getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
       getApprovedCreatives(),
       getOverflowEpisodes(activeCity),
+      getWorkMosaicItems(activeCity),
     ]);
 
   const openEpisode = episodeSlug
@@ -169,6 +172,8 @@ export default async function HomePage({
           </EmptyState>
         </section>
       )}
+
+      {mosaicItems.length > 0 ? <WorkMosaic items={mosaicItems} /> : null}
 
       <section className="space-y-5">
         <SectionHeader

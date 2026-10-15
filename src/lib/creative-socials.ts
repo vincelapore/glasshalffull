@@ -240,3 +240,47 @@ export function socialsFromLegacy(input: {
   }
   return legacy;
 }
+
+/** Direct “reach me” channels — booking / DM / portfolio. */
+export const reachSocialProviders = ["instagram", "website"] as const satisfies readonly SocialProvider[];
+
+/** Follow / listen / watch profile links (not a single track embed). */
+export const listenWatchSocialProviders = [
+  "youtube",
+  "vimeo",
+  "spotify",
+  "apple_music",
+  "soundcloud",
+  "bandcamp",
+] as const satisfies readonly SocialProvider[];
+
+export type ReachSocialProvider = (typeof reachSocialProviders)[number];
+
+const reachPriority: readonly ReachSocialProvider[] = ["instagram", "website"];
+
+export function isReachSocialProvider(
+  provider: SocialProvider
+): provider is ReachSocialProvider {
+  return (reachSocialProviders as readonly string[]).includes(provider);
+}
+
+export function groupCreativeSocials(socials: readonly CreativeSocial[]) {
+  const reach: CreativeSocial[] = [];
+  const listenWatch: CreativeSocial[] = [];
+  for (const social of socials) {
+    if (isReachSocialProvider(social.provider)) reach.push(social);
+    else listenWatch.push(social);
+  }
+  return { reach, listenWatch };
+}
+
+/** Best outbound contact: Instagram, then website. */
+export function primaryContactSocial(
+  socials: readonly CreativeSocial[]
+): CreativeSocial | null {
+  for (const provider of reachPriority) {
+    const match = socials.find((social) => social.provider === provider);
+    if (match) return match;
+  }
+  return null;
+}

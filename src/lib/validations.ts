@@ -200,9 +200,10 @@ export const eventSubmissionSchema = z.object({
   dateTime: z
     .string()
     .min(1, "Date and time are required")
-    .refine((value) => !Number.isNaN(Date.parse(value)), {
-      message: "Enter a valid date and time",
-    }),
+    .regex(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
+      "Enter a valid date and time"
+    ),
   city: z.enum(cities, {
     errorMap: () => ({ message: "Pick a city" }),
   }),

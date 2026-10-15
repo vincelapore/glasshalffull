@@ -16,6 +16,7 @@ import {
   type CreativeSocial,
   type SocialProvider,
 } from "@/lib/creative-socials";
+import { withOutboundUtm } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 
 function SocialIconLink({
@@ -93,7 +94,10 @@ export function CreativeSocialLinks({
       {links.map((social) => (
         <SocialIconLink
           key={social.provider}
-          href={social.url}
+          href={withOutboundUtm(social.url, {
+            campaign: "artist_profile",
+            content: social.provider,
+          })}
           label={socialProviderLabels[social.provider]}
         >
           {socialIcon(social.provider)}

@@ -5,8 +5,16 @@ import { revalidatePath } from "next/cache";
 
 import { getSessionUser, isAdminAuthenticated } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
-import { composeModerationNote, emptyToNull } from "@/lib/labels";
+import {
+  composeModerationNote,
+  emptyToNull,
+  fromDateTimeLocalValue,
+} from "@/lib/labels";
 import { flyerKeyPattern } from "@/lib/media";
+import {
+  recordModerationActivity,
+  type ModerationAction,
+} from "@/lib/moderation-activity";
 import { creativePath, eventPath } from "@/lib/paths";
 import { deleteMediaObjects } from "@/lib/r2";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
@@ -33,6 +41,13 @@ import { db } from "@/db";
 import { creatives, eventLineup, events } from "@/db/schema";
 import { getCreativeByUserId } from "@/lib/queries";
 import { releaseWorkPhotoKeys, resolveWorkPhotoKeys } from "@/lib/work-photos";
+
+function statusChangeAction(
+  status: "approved" | "rejected" | "pending"
+): ModerationAction {
+  if (status === "pending") return "returned_to_pending";
+  return status;
+}
 
 export type ActionResult =
   | { success: true; id: string; message: string }
@@ -102,6 +117,13 @@ export async function saveMyProfileAction(
         .where(eq(creatives.id, existing[0].id))
         .returning({ id: creatives.id, slug: creatives.slug });
 
+      await recordModerationActivity({
+        subjectType: "creative",
+        subjectId: updated.id,
+        action: "edited",
+        actor: user,
+      });
+
       revalidateCreativePaths(updated.slug);
       revalidatePath("/account");
       await releaseWorkPhotoKeys(workPhotos.removed);
@@ -121,6 +143,14 @@ export async function saveMyProfileAction(
         ...profileValues,
       })
       .returning({ id: creatives.id, slug: creatives.slug });
+
+    await recordModerationActivity({
+      subjectType: "creative",
+      subjectId: created.id,
+      action: "submitted",
+      actor: user,
+      metadata: { toStatus: "approved" },
+    });
 
     revalidateCreativePaths(created.slug);
     revalidatePath("/account");
@@ -172,7 +202,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
         submittedByUserId: user.id,
         title: data.title,
         slug: await uniqueEventSlug(data.title),
-        dateTime: new Date(data.dateTime),
+        dateTime: fromDateTimeLocalValue(data.dateTime),
         city: data.city,
         location: data.location,
         categories: data.categories,
@@ -188,6 +218,14 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
       eventId: created.id,
       creativeId: profile.id,
       role: "organiser",
+    });
+
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: created.id,
+      action: "submitted",
+      actor: user,
+      metadata: { toStatus: "pending" },
     });
 
     revalidatePath("/admin/submissions");
@@ -321,6 +359,14 @@ export async function createAdminCreativeAction(
       })
       .returning({ id: creatives.id, slug: creatives.slug });
 
+    await recordModerationActivity({
+      subjectType: "creative",
+      subjectId: created.id,
+      action: "published",
+      actor,
+      metadata: { toStatus: "approved" },
+    });
+
     revalidateCreativePaths(created.slug);
     return {
       success: true,
@@ -360,7 +406,7 @@ export async function createAdminEventAction(
         submittedByUserId: user.id,
         title: data.title,
         slug: await uniqueEventSlug(data.title),
-        dateTime: new Date(data.dateTime),
+        dateTime: fromDateTimeLocalValue(data.dateTime),
         city: data.city,
         location: data.location,
         categories: data.categories,
@@ -371,6 +417,14 @@ export async function createAdminEventAction(
         status: "approved",
       })
       .returning({ id: events.id, slug: events.slug });
+
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: created.id,
+      action: "published",
+      actor: user,
+      metadata: { toStatus: "approved" },
+    });
 
     revalidateEventPaths(created.slug);
     return {
@@ -439,7 +493,8 @@ export async function updateCreativeStatusAction(
   status: "approved" | "rejected" | "pending",
   rejection?: unknown
 ): Promise<ActionResult> {
-  if (!(await isAdminAuthenticated())) {
+  const actor = await getSessionUser();
+  if (!actor || !(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
@@ -463,6 +518,16 @@ export async function updateCreativeStatusAction(
   }
 
   try {
+    const [existing] = await db
+      .select({ status: creatives.status })
+      .from(creatives)
+      .where(eq(creatives.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Creative not found." };
+    }
+
     const [updated] = await db
       .update(creatives)
       .set({
@@ -475,6 +540,18 @@ export async function updateCreativeStatusAction(
     if (!updated) {
       return { success: false, message: "Creative not found." };
     }
+
+    await recordModerationActivity({
+      subjectType: "creative",
+      subjectId: updated.id,
+      action: statusChangeAction(status),
+      actor,
+      metadata: {
+        fromStatus: existing.status,
+        toStatus: status,
+        ...(moderationNote ? { note: moderationNote } : {}),
+      },
+    });
 
     revalidatePath("/admin/submissions");
     revalidatePath("/creatives");
@@ -497,7 +574,8 @@ export async function updateEventStatusAction(
   status: "approved" | "rejected" | "pending",
   rejection?: unknown
 ): Promise<ActionResult> {
-  if (!(await isAdminAuthenticated())) {
+  const actor = await getSessionUser();
+  if (!actor || !(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
@@ -521,6 +599,16 @@ export async function updateEventStatusAction(
   }
 
   try {
+    const [existing] = await db
+      .select({ status: events.status })
+      .from(events)
+      .where(eq(events.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Event not found." };
+    }
+
     const [updated] = await db
       .update(events)
       .set({
@@ -533,6 +621,18 @@ export async function updateEventStatusAction(
     if (!updated) {
       return { success: false, message: "Event not found." };
     }
+
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: updated.id,
+      action: statusChangeAction(status),
+      actor,
+      metadata: {
+        fromStatus: existing.status,
+        toStatus: status,
+        ...(moderationNote ? { note: moderationNote } : {}),
+      },
+    });
 
     revalidateEventPaths(updated.slug);
 
@@ -609,6 +709,13 @@ export async function updateCreativeAction(
       return { success: false, message: "Creative not found." };
     }
 
+    await recordModerationActivity({
+      subjectType: "creative",
+      subjectId: updated.id,
+      action: "edited",
+      actor,
+    });
+
     revalidateCreativePaths(updated.slug);
     await releaseWorkPhotoKeys(workPhotos.removed);
 
@@ -658,7 +765,7 @@ async function writeEventDetails(
     .set({
       title: data.title,
       slug: await uniqueEventSlug(data.title, id),
-      dateTime: new Date(data.dateTime),
+      dateTime: fromDateTimeLocalValue(data.dateTime),
       city: data.city,
       location: data.location,
       categories: data.categories,
@@ -692,7 +799,8 @@ export async function updateEventAction(
   id: string,
   input: unknown
 ): Promise<ActionResult> {
-  if (!(await isAdminAuthenticated())) {
+  const actor = await getSessionUser();
+  if (!actor || !(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
@@ -705,6 +813,13 @@ export async function updateEventAction(
     if (!updated) {
       return { success: false, message: "Event not found." };
     }
+
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: updated.id,
+      action: "edited",
+      actor,
+    });
 
     revalidateEventPaths(updated.slug);
 
@@ -759,6 +874,26 @@ export async function updateMyEventAction(
       return { success: false, message: "Event not found." };
     }
 
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: updated.id,
+      action: "edited",
+      actor: user,
+    });
+
+    if (existing.status === "rejected") {
+      await recordModerationActivity({
+        subjectType: "event",
+        subjectId: updated.id,
+        action: "returned_to_pending",
+        actor: user,
+        metadata: {
+          fromStatus: "rejected",
+          toStatus: "pending",
+        },
+      });
+    }
+
     revalidateEventPaths(updated.slug);
     const profile = await getCreativeByUserId(user.id);
     if (profile) {
@@ -780,7 +915,8 @@ export async function updateMyEventAction(
 }
 
 export async function deleteCreativeAction(id: string): Promise<ActionResult> {
-  if (!(await isAdminAuthenticated())) {
+  const actor = await getSessionUser();
+  if (!actor || !(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
@@ -798,6 +934,13 @@ export async function deleteCreativeAction(id: string): Promise<ActionResult> {
       return { success: false, message: "Creative not found." };
     }
 
+    await recordModerationActivity({
+      subjectType: "creative",
+      subjectId: deleted.id,
+      action: "deleted",
+      actor,
+    });
+
     revalidateCreativePaths(deleted.slug);
     await releaseWorkPhotoKeys(deleted.workPhotoKeys);
 
@@ -813,7 +956,8 @@ export async function deleteCreativeAction(id: string): Promise<ActionResult> {
 }
 
 export async function deleteEventAction(id: string): Promise<ActionResult> {
-  if (!(await isAdminAuthenticated())) {
+  const actor = await getSessionUser();
+  if (!actor || !(await isAdminAuthenticated())) {
     return { success: false, message: "Unauthorized" };
   }
 
@@ -826,6 +970,13 @@ export async function deleteEventAction(id: string): Promise<ActionResult> {
     if (!deleted) {
       return { success: false, message: "Event not found." };
     }
+
+    await recordModerationActivity({
+      subjectType: "event",
+      subjectId: deleted.id,
+      action: "deleted",
+      actor,
+    });
 
     revalidateEventPaths(deleted.slug);
 

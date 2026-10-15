@@ -361,7 +361,7 @@ export function eventRelativeLabel(value: Date | string, now: Date = new Date())
 export function toDateTimeLocalValue(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value;
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Australia/Brisbane",
+    timeZone: BRISBANE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -375,6 +375,23 @@ export function toDateTimeLocalValue(value: Date | string) {
 
   const hour = get("hour") === "24" ? "00" : get("hour");
   return `${get("year")}-${get("month")}-${get("day")}T${hour}:${get("minute")}`;
+}
+
+/**
+ * Parse a `<input type="datetime-local" />` value as Brisbane wall time.
+ * Bare `new Date("YYYY-MM-DDTHH:mm")` is UTC on the server (Vercel), which
+ * shifts events +10h when displayed in Australia/Brisbane.
+ * Brisbane has no DST, so +10:00 is always correct.
+ */
+export function fromDateTimeLocalValue(value: string) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
+  if (!match) return new Date(NaN);
+
+  const [, year, month, day, hour, minute, second = "00"] = match;
+  return new Date(
+    `${year}-${month}-${day}T${hour}:${minute}:${second}+10:00`
+  );
 }
 
 export function emptyToNull(value?: string | null) {

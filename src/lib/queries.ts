@@ -105,6 +105,71 @@ export async function getApprovedCreatives(limit?: number) {
   return query;
 }
 
+export type WorkMosaicItem = {
+  photoKey: string;
+  slug: string;
+  name: string;
+  city: (typeof creatives.$inferSelect)["city"];
+  disciplines: (typeof creatives.$inferSelect)["disciplines"];
+  avatarKey: string | null;
+};
+
+const WORK_MOSAIC_POOL_CAP = 72;
+
+function shuffleInPlace<T>(items: T[]) {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = items[i]!;
+    items[i] = items[j]!;
+    items[j] = tmp;
+  }
+  return items;
+}
+
+/**
+ * Flat pool of work photos from discoverable creatives for the home mosaic.
+ * Shuffled per request; capped so the home payload stays small.
+ */
+export async function getWorkMosaicItems(
+  city: CityFilter = "all",
+  limit = WORK_MOSAIC_POOL_CAP,
+): Promise<WorkMosaicItem[]> {
+  const conditions = [eq(creatives.status, "approved"), isDiscoverable()];
+  if (city !== "all") {
+    conditions.push(eq(creatives.city, city));
+  }
+
+  const rows = await db
+    .select({
+      slug: creatives.slug,
+      name: creatives.name,
+      city: creatives.city,
+      disciplines: creatives.disciplines,
+      avatarKey: creatives.avatarKey,
+      workPhotoKeys: creatives.workPhotoKeys,
+    })
+    .from(creatives)
+    .where(and(...conditions));
+
+  const pool: WorkMosaicItem[] = [];
+  for (const row of rows) {
+    for (const photoKey of row.workPhotoKeys) {
+      if (!photoKey) continue;
+      pool.push({
+        photoKey,
+        slug: row.slug,
+        name: row.name,
+        city: row.city,
+        disciplines: row.disciplines,
+        avatarKey: row.avatarKey,
+      });
+    }
+  }
+
+  shuffleInPlace(pool);
+  return pool.slice(0, Math.max(0, limit));
+}
+
 export async function getEventById(id: string) {
   const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
   return event ?? null;

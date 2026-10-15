@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ModerationActivityLog } from "@/components/admin/moderation-activity-log";
 import { EventOrganisersPanel } from "@/components/event-organisers-panel";
 import { EventSubmissionForm } from "@/components/forms/event-submission-form";
 import { Button } from "@/components/ui/button";
 import { Page, PageHeader, SectionHeader } from "@/components/ui/page";
-import { requireAdmin } from "@/lib/admin";
+import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { toDateTimeLocalValue } from "@/lib/labels";
+import { getModerationActivity } from "@/lib/moderation-activity";
 import { getEventById, getEventOrganisers } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -21,7 +23,7 @@ export default async function EditEventPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const user = await requireAdmin();
 
   const { id } = await params;
   const event = await getEventById(id);
@@ -30,7 +32,13 @@ export default async function EditEventPage({
     notFound();
   }
 
-  const organisers = await getEventOrganisers(event.id);
+  const showActivity = await isOwnerEmail(user.email);
+  const [organisers, activity] = await Promise.all([
+    getEventOrganisers(event.id),
+    showActivity
+      ? getModerationActivity("event", event.id)
+      : Promise.resolve([]),
+  ]);
 
   return (
     <Page width="narrow">
@@ -78,6 +86,9 @@ export default async function EditEventPage({
           }))}
         />
       </section>
+      {showActivity ? (
+        <ModerationActivityLog entries={activity} viewerEmail={user.email} />
+      ) : null}
     </Page>
   );
 }

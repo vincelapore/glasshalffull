@@ -7,6 +7,7 @@ import { HideHeaderOnFooter } from "@/components/hide-header-on-footer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { publicSiteOrigin } from "@/lib/urls";
 
 import "./globals.css";
 
@@ -23,6 +24,7 @@ const syneMono = Syne_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(publicSiteOrigin()),
   title: {
     default: "Glass Half Full",
     template: "%s · Glass Half Full",

@@ -2,8 +2,9 @@
 
 import { Popover } from "@base-ui/react/popover";
 import { Check, Share } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
+import { absoluteSiteUrl } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 
 export function EventShareButton({
@@ -18,9 +19,15 @@ export function EventShareButton({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [canNativeShare, setCanNativeShare] = useState(false);
 
-  function absoluteUrl() {
-    return new URL(path, window.location.origin).href;
+  useEffect(() => {
+    setCanNativeShare(typeof navigator.share === "function");
+  }, []);
+
+  function shareUrl() {
+    // Always the public site — not localhost / preview — so shared links work for others.
+    return absoluteSiteUrl(path);
   }
 
   function onOpenChange(next: boolean) {
@@ -32,31 +39,60 @@ export function EventShareButton({
   }
 
   async function copyUrl() {
+    const url = shareUrl();
     try {
-      await navigator.clipboard.writeText(absoluteUrl());
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setHint(null);
       return true;
     } catch {
+      // Fallback for browsers that block clipboard without a visible selection.
+      try {
+        const input = document.createElement("textarea");
+        input.value = url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(input);
+        if (ok) {
+          setCopied(true);
+          setHint(null);
+          return true;
+        }
+      } catch {
+        // ignore
+      }
       setHint("couldn’t copy that link");
       return false;
     }
   }
 
-  async function onInstagram() {
-    const copiedLink = await copyUrl();
-    if (copiedLink) setHint("link copied. paste it in instagram.");
-    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  async function onNativeShare() {
+    const url = shareUrl();
+    if (typeof navigator.share !== "function") return;
+    try {
+      await navigator.share({ title, url, text: title });
+      setOpen(false);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setHint("couldn’t open the share sheet");
+    }
   }
 
-  function onNetwork(kind: "facebook" | "messenger" | "whatsapp") {
-    const href = networkHref(kind, absoluteUrl(), title);
-    if (href.startsWith("fb-messenger:")) {
-      window.location.assign(href);
-    } else {
-      window.open(href, "_blank", "noopener,noreferrer");
-    }
+  function openShare(href: string) {
+    // Keep this synchronous so popup blockers don’t swallow the tab.
+    window.open(href, "_blank", "noopener,noreferrer");
     setOpen(false);
+  }
+
+  async function onPastePlatform(platform: "instagram" | "messenger") {
+    const ok = await copyUrl();
+    if (ok) {
+      setHint(`link copied — paste it in ${platform}`);
+    }
   }
 
   return (
@@ -89,20 +125,60 @@ export function EventShareButton({
             <div className="flex flex-col">
               <ShareAction
                 icon={copied ? <Check className="size-4" strokeWidth={2.25} /> : <CopyIcon />}
-                label={copied ? "copied" : "copy url"}
+                label={copied ? "copied" : "copy link"}
                 onClick={() => void copyUrl()}
               />
+              {canNativeShare ? (
+                <ShareAction
+                  icon={<Share className="size-4" strokeWidth={1.75} />}
+                  label="more…"
+                  onClick={() => void onNativeShare()}
+                />
+              ) : null}
               <div className="mx-2 my-1 h-px bg-foreground/10" />
-              <ShareAction icon={<InstagramIcon />} label="instagram" onClick={() => void onInstagram()} />
-              <ShareAction icon={<FacebookIcon />} label="facebook" onClick={() => onNetwork("facebook")} />
-              <ShareAction icon={<MessengerIcon />} label="messenger" onClick={() => onNetwork("messenger")} />
-              <ShareAction icon={<WhatsAppIcon />} label="whatsapp" onClick={() => onNetwork("whatsapp")} />
+              <ShareAction
+                icon={<WhatsAppIcon />}
+                label="whatsapp"
+                onClick={() => {
+                  const url = shareUrl();
+                  openShare(
+                    `https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`,
+                  );
+                }}
+              />
+              <ShareAction
+                icon={<FacebookIcon />}
+                label="facebook"
+                onClick={() => {
+                  const url = shareUrl();
+                  openShare(
+                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+                  );
+                }}
+              />
+              <ShareAction
+                icon={<MessengerIcon />}
+                label="messenger"
+                onClick={() => void onPastePlatform("messenger")}
+              />
+              <ShareAction
+                icon={<InstagramIcon />}
+                label="instagram"
+                onClick={() => void onPastePlatform("instagram")}
+              />
             </div>
             {hint ? (
-              <p className="px-2 pt-1 pb-1.5 font-mono text-[11px] text-muted-foreground lowercase" role="status">
+              <p
+                className="px-2 pt-1 pb-1.5 font-mono text-[11px] text-muted-foreground lowercase"
+                role="status"
+              >
                 {hint}
               </p>
-            ) : null}
+            ) : (
+              <p className="px-2 pt-1 pb-1.5 font-mono text-[10px] text-muted-foreground lowercase">
+                ig &amp; messenger need a paste
+              </p>
+            )}
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>
@@ -129,28 +205,6 @@ function ShareAction({
       <span className="font-mono text-[13px] lowercase">{label}</span>
     </button>
   );
-}
-
-function networkHref(
-  kind: "facebook" | "messenger" | "whatsapp",
-  url: string,
-  title: string,
-) {
-  const encoded = encodeURIComponent(url);
-
-  if (kind === "facebook") {
-    return `https://www.facebook.com/sharer/sharer.php?u=${encoded}`;
-  }
-
-  if (kind === "whatsapp") {
-    return `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`;
-  }
-
-  if (window.matchMedia("(pointer: coarse)").matches) {
-    return `fb-messenger://share/?link=${encoded}`;
-  }
-
-  return `https://www.facebook.com/share_as_message/?link=${encoded}`;
 }
 
 function IconFrame({ children }: { children: ReactNode }) {

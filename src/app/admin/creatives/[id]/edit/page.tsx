@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ModerationActivityLog } from "@/components/admin/moderation-activity-log";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { InviteEmailForm } from "@/components/invite-email-form";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageHeader } from "@/components/ui/page";
-import { requireAdmin } from "@/lib/admin";
+import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { socialsFromLegacy } from "@/lib/creative-socials";
+import { getModerationActivity } from "@/lib/moderation-activity";
 import { getCreativeById } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -22,7 +24,7 @@ export default async function EditCreativePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const user = await requireAdmin();
 
   const { id } = await params;
   const creative = await getCreativeById(id);
@@ -30,6 +32,11 @@ export default async function EditCreativePage({
   if (!creative) {
     notFound();
   }
+
+  const showActivity = await isOwnerEmail(user.email);
+  const activity = showActivity
+    ? await getModerationActivity("creative", creative.id)
+    : [];
 
   return (
     <Page width="narrow">
@@ -78,6 +85,9 @@ export default async function EditCreativePage({
           buildingPortfolio: creative.buildingPortfolio,
         }}
       />
+      {showActivity ? (
+        <ModerationActivityLog entries={activity} viewerEmail={user.email} />
+      ) : null}
     </Page>
   );
 }

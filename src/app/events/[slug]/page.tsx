@@ -27,7 +27,33 @@ export async function generateMetadata({
 }: EventPageProps): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventByParam(slug);
-  return { title: event?.title ?? "Event" };
+  if (!event) return { title: "Event" };
+
+  const title = event.title;
+  const description =
+    event.description?.trim().slice(0, 160) ||
+    `${formatDateTime(event.dateTime)} · ${cityLabels[event.city]} · ${event.location}`;
+  const flyer = mediaUrl(event.flyerKey);
+  const path = eventPath(event.slug);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title,
+      description,
+      url: path,
+      type: "website",
+      images: flyer ? [{ url: flyer, alt: title }] : undefined,
+    },
+    twitter: {
+      card: flyer ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: flyer ? [flyer] : undefined,
+    },
+  };
 }
 
 export default async function EventDetailPage({ params }: EventPageProps) {

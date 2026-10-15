@@ -860,6 +860,14 @@
     }
   }
 
+  /* Home work mosaic: expand-from-cell + neighbor push. */
+  .work-mosaic-tile {
+    transition:
+      transform 480ms var(--ease-out),
+      opacity 480ms var(--ease-out),
+      box-shadow 480ms var(--ease-out);
+  }
+
   /* Listing posters: image zoom, profile avatar, organiser fan. */
   .poster-hover,
   .poster-avatar {
@@ -978,6 +986,10 @@
   .business-card-stage,
   .business-card-liquid {
     animation: none;
+  }
+
+  .work-mosaic-tile {
+    transition: none;
   }
 
   .poster-hover,

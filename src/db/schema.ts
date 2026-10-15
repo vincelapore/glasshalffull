@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -19,6 +20,27 @@ export const submissionStatusEnum = pgEnum("submission_status", [
   "approved",
   "rejected",
 ]);
+
+export const moderationSubjectEnum = pgEnum("moderation_subject", [
+  "event",
+  "creative",
+]);
+
+export const moderationActionEnum = pgEnum("moderation_action", [
+  "submitted",
+  "published",
+  "approved",
+  "rejected",
+  "returned_to_pending",
+  "edited",
+  "deleted",
+]);
+
+export type ModerationActivityMetadata = {
+  fromStatus?: "pending" | "approved" | "rejected";
+  toStatus?: "pending" | "approved" | "rejected";
+  note?: string | null;
+};
 
 export const disciplineEnum = pgEnum("discipline", [
   "music",
@@ -181,6 +203,36 @@ export const events = pgTable("events", {
 });
 
 /**
+ * Append-only moderation history for events and creatives.
+ * No FK on subjectId so rows survive deletes.
+ */
+export const moderationActivity = pgTable(
+  "moderation_activity",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    subjectType: moderationSubjectEnum("subject_type").notNull(),
+    subjectId: uuid("subject_id").notNull(),
+    action: moderationActionEnum("action").notNull(),
+    actorUserId: text("actor_user_id"),
+    actorEmail: text("actor_email"),
+    metadata: jsonb("metadata")
+      .$type<ModerationActivityMetadata>()
+      .notNull()
+      .default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("moderation_activity_subject_created_idx").on(
+      table.subjectType,
+      table.subjectId,
+      table.createdAt
+    ),
+  ]
+);
+
+/**
  * Site staff. Owners manage who is an admin. Admins moderate submissions only.
  */
 export const admins = pgTable("admins", {
@@ -311,6 +363,8 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type EventLineup = typeof eventLineup.$inferSelect;
 export type NewEventLineup = typeof eventLineup.$inferInsert;
+export type ModerationActivity = typeof moderationActivity.$inferSelect;
+export type NewModerationActivity = typeof moderationActivity.$inferInsert;
 export type Admin = typeof admins.$inferSelect;
 export type NewAdmin = typeof admins.$inferInsert;
 export type AccountSettings = typeof accountSettings.$inferSelect;
