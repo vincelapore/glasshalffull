@@ -91,7 +91,7 @@ export function EventShareButton({
   async function onPastePlatform(platform: "instagram" | "messenger") {
     const ok = await copyUrl();
     if (ok) {
-      setHint(`link copied — paste it in ${platform}`);
+      setHint(`link copied. Paste it in ${platform}`);
     }
   }
 

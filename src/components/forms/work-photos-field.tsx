@@ -164,7 +164,7 @@ export function WorkPhotosField({
           attention ? "text-destructive/90" : "text-muted-foreground"
         )}
       >
-        {description ?? `Up to ${MAX_WORK_PHOTOS} photos.`}
+        {description ?? `Up to ${MAX_WORK_PHOTOS}`}
       </p>
       <input
         id="workPhotos"

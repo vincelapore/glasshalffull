@@ -8,6 +8,7 @@ import { InviteEmailForm } from "@/components/invite-email-form";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageHeader } from "@/components/ui/page";
+import { getAccountsByIds } from "@/lib/accounts";
 import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { socialsFromLegacy } from "@/lib/creative-socials";
 import { getModerationActivity } from "@/lib/moderation-activity";
@@ -36,6 +37,9 @@ export default async function EditCreativePage({
   const showActivity = await isOwnerEmail(user.email);
   const activity = showActivity
     ? await getModerationActivity("creative", creative.id)
+    : [];
+  const [linkedAccount] = creative.userId
+    ? await getAccountsByIds([creative.userId])
     : [];
 
   return (
@@ -66,6 +70,7 @@ export default async function EditCreativePage({
       <CreativeSubmissionForm
         mode="admin"
         creativeId={creative.id}
+        accountEmail={linkedAccount?.email}
         defaultValues={{
           name: creative.name,
           disciplines: creative.disciplines,
@@ -76,6 +81,8 @@ export default async function EditCreativePage({
           pronouns: creative.pronouns ?? "",
           bio: creative.bio ?? "",
           socials: socialsFromLegacy(creative),
+          publicEmailMode: creative.publicEmailMode,
+          publicEmail: creative.publicEmail ?? "",
           videoUrls: creative.videoUrls.length ? creative.videoUrls : [""],
           audioUrls: creative.audioUrls.length ? creative.audioUrls : [""],
           avatarKey: creative.avatarKey ?? "",

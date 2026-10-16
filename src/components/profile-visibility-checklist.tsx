@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Circle } from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
 
 import { Notice } from "@/components/ui/notice";
 import {
@@ -40,9 +40,7 @@ export function ProfileDirectoryEssentials({
           {!ready ? (
             <AlertCircle className="size-4 shrink-0" aria-hidden />
           ) : null}
-          {ready
-            ? "Directory essentials complete"
-            : "Finish these to go public"}
+          {ready ? "Ready for the directory" : "Needed to go public"}
         </p>
         <p
           className={cn(
@@ -50,23 +48,16 @@ export function ProfileDirectoryEssentials({
             ready ? "text-muted-foreground" : "font-medium text-destructive"
           )}
         >
-          {ready ? "Ready to appear" : `${doneCount} of ${checklist.length} done`}
+          {doneCount}/{checklist.length}
         </p>
       </div>
-      <p
-        className={cn(
-          "mt-1 text-sm",
-          ready ? "text-muted-foreground" : "text-destructive/90"
-        )}
-      >
-        {ready
-          ? "You’ll appear in the directory once approved and set to Public."
-          : missing.length === 1
-            ? `Still needed: ${missing[0].label.toLowerCase()}.`
-            : "Your profile stays hidden until bio, profile picture, and a work photo are in place."}
-      </p>
+      {!ready && missing.length === 1 ? (
+        <p className="mt-1 text-sm text-destructive/90">
+          Still need {missing[0].label.toLowerCase()}.
+        </p>
+      ) : null}
 
-      <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {checklist.map((item) => (
           <li
             key={item.id}
@@ -129,10 +120,8 @@ export function ProfileEssentialsAttention({
     <Notice variant="destructive" className={cn("flex gap-2.5", className)}>
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div>
-        <p className="font-medium">Your profile isn’t public yet</p>
-        <p className="mt-1 text-destructive/90">
-          Add {list} below so people can find you in the directory.
-        </p>
+        <p className="font-medium">Not public yet</p>
+        <p className="mt-1 text-destructive/90">Add {list} below.</p>
       </div>
     </Notice>
   );

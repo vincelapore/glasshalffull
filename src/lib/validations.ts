@@ -6,6 +6,7 @@ import {
   MAX_CREATIVE_AUDIO_URLS,
   MAX_CREATIVE_VIDEO_URLS,
 } from "@/lib/creative-media";
+import { publicEmailModes } from "@/lib/creative-contact";
 import {
   isSocialProfileUrl,
   MAX_CREATIVE_SOCIALS,
@@ -132,68 +133,91 @@ const audioUrlEntry = z
     message: "Use a Spotify, Apple Music, SoundCloud, or Bandcamp link",
   });
 
-export const creativeSubmissionSchema = z.object({
-  name: z.string().trim().min(2, "Name is required").max(120),
-  disciplines: z
-    .array(z.enum(disciplines))
-    .min(1, "Pick at least one discipline"),
-  roles: z.array(z.enum(creativeRoles)),
-  specialty: z.union([z.literal(""), z.string().trim().max(60)]),
-  isQueer: z.boolean(),
-  city: z.union([z.literal(""), z.enum(cities)]),
-  pronouns: z.union([z.literal(""), z.string().trim().max(80)]),
-  bio: z.union([z.literal(""), z.string().trim().max(2000)]),
-  socials: z
-    .array(
-      z
-        .object({
-          provider: z.enum(socialProviders),
-          url: z.string().trim().min(1, "Add a link"),
-        })
-        .superRefine((value, ctx) => {
-          if (!isSocialProfileUrl(value.provider as SocialProvider, value.url)) {
+export const creativeSubmissionSchema = z
+  .object({
+    name: z.string().trim().min(2, "Name is required").max(120),
+    disciplines: z
+      .array(z.enum(disciplines))
+      .min(1, "Pick at least one discipline"),
+    roles: z.array(z.enum(creativeRoles)),
+    specialty: z.union([z.literal(""), z.string().trim().max(60)]),
+    isQueer: z.boolean(),
+    city: z.union([z.literal(""), z.enum(cities)]),
+    pronouns: z.union([z.literal(""), z.string().trim().max(80)]),
+    bio: z.union([z.literal(""), z.string().trim().max(2000)]),
+    socials: z
+      .array(
+        z
+          .object({
+            provider: z.enum(socialProviders),
+            url: z.string().trim().min(1, "Add a link"),
+          })
+          .superRefine((value, ctx) => {
+            if (
+              !isSocialProfileUrl(value.provider as SocialProvider, value.url)
+            ) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Enter a valid ${socialProviderLabels[value.provider]} profile link`,
+                path: ["url"],
+              });
+            }
+          })
+      )
+      .max(
+        MAX_CREATIVE_SOCIALS,
+        `You can add up to ${MAX_CREATIVE_SOCIALS} socials`
+      )
+      .superRefine((socials, ctx) => {
+        const seen = new Set<string>();
+        for (const [index, social] of socials.entries()) {
+          if (seen.has(social.provider)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Enter a valid ${socialProviderLabels[value.provider]} profile link`,
-              path: ["url"],
+              message: "That account is already added",
+              path: [index, "provider"],
             });
           }
-        })
-    )
-    .max(
-      MAX_CREATIVE_SOCIALS,
-      `You can add up to ${MAX_CREATIVE_SOCIALS} socials`
-    )
-    .superRefine((socials, ctx) => {
-      const seen = new Set<string>();
-      for (const [index, social] of socials.entries()) {
-        if (seen.has(social.provider)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "That account is already added",
-            path: [index, "provider"],
-          });
+          seen.add(social.provider);
         }
-        seen.add(social.provider);
-      }
-    }),
-  videoUrls: z
-    .array(videoUrlEntry)
-    .max(MAX_CREATIVE_VIDEO_URLS, `You can add up to ${MAX_CREATIVE_VIDEO_URLS} videos`),
-  audioUrls: z
-    .array(audioUrlEntry)
-    .max(MAX_CREATIVE_AUDIO_URLS, `You can add up to ${MAX_CREATIVE_AUDIO_URLS} listen links`),
-  avatarKey: z.union([
-    z.literal(""),
-    z.string().regex(avatarKeyPattern, "Upload a valid photo"),
-  ]),
-  workPhotoKeys: z
-    .array(z.string().regex(workKeyPattern, "Upload a valid photo"))
-    .max(MAX_WORK_PHOTOS, "You can add up to 6 photos"),
-  openToPaidWork: z.boolean(),
-  openToTrade: z.boolean(),
-  buildingPortfolio: z.boolean(),
-});
+      }),
+    publicEmailMode: z.enum(publicEmailModes),
+    publicEmail: z.union([
+      z.literal(""),
+      z.string().trim().email("Enter a valid email").max(200),
+    ]),
+    videoUrls: z
+      .array(videoUrlEntry)
+      .max(
+        MAX_CREATIVE_VIDEO_URLS,
+        `You can add up to ${MAX_CREATIVE_VIDEO_URLS} videos`
+      ),
+    audioUrls: z
+      .array(audioUrlEntry)
+      .max(
+        MAX_CREATIVE_AUDIO_URLS,
+        `You can add up to ${MAX_CREATIVE_AUDIO_URLS} listen links`
+      ),
+    avatarKey: z.union([
+      z.literal(""),
+      z.string().regex(avatarKeyPattern, "Upload a valid photo"),
+    ]),
+    workPhotoKeys: z
+      .array(z.string().regex(workKeyPattern, "Upload a valid photo"))
+      .max(MAX_WORK_PHOTOS, "You can add up to 6 photos"),
+    openToPaidWork: z.boolean(),
+    openToTrade: z.boolean(),
+    buildingPortfolio: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.publicEmailMode === "custom" && !data.publicEmail.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter the email to show on your profile",
+        path: ["publicEmail"],
+      });
+    }
+  });
 
 export const eventSubmissionSchema = z.object({
   title: z.string().trim().min(2, "Name is required").max(160),

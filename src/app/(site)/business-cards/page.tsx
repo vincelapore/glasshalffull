@@ -9,7 +9,7 @@ import { Eyebrow, Page, PageHeader } from "@/components/ui/page";
 export const metadata: Metadata = {
   title: "Business cards",
   description:
-    "Print mock for Glass Half Full business cards — dark stock, liquid amber, BioRhyme + Syne Mono.",
+    "Print mock for Glass Half Full business cards: dark stock, liquid amber, BioRhyme + Syne Mono.",
   robots: { index: false, follow: false },
 };
 

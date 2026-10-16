@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronUp, Pause, Play, X } from "lucide-react";
+import { ChevronUp, Mail, Pause, Play, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -21,9 +21,9 @@ import {
   type AudioEmbed,
   type VideoEmbed,
 } from "@/lib/creative-media";
+import { resolvePrimaryContact } from "@/lib/creative-contact";
 import {
   groupCreativeSocials,
-  primaryContactSocial,
   socialProviderLabels,
   type CreativeSocial,
   type SocialProvider,
@@ -36,8 +36,15 @@ type DockMode = "idle" | "audio" | "video" | "links";
 function ProviderGlyph({
   provider,
 }: {
-  provider: AudioEmbed["provider"] | VideoEmbed["provider"] | SocialProvider;
+  provider:
+    | AudioEmbed["provider"]
+    | VideoEmbed["provider"]
+    | SocialProvider
+    | "email";
 }) {
+  if (provider === "email") {
+    return <Mail className="size-4" strokeWidth={1.75} />;
+  }
   switch (provider) {
     case "website":
       return <GlobeIcon className="size-4" />;
@@ -82,6 +89,23 @@ function SocialRow({ social }: { social: CreativeSocial }) {
   );
 }
 
+function EmailRow({ email }: { email: string }) {
+  return (
+    <a
+      href={`mailto:${email}`}
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+    >
+      <span className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
+        <ProviderGlyph provider="email" />
+      </span>
+      <span className="min-w-0 flex-1 truncate font-medium">{email}</span>
+      <span className="text-muted-foreground" aria-hidden>
+        →
+      </span>
+    </a>
+  );
+}
+
 function LinkGroup({
   title,
   children,
@@ -105,12 +129,14 @@ export function CreativeMediaDock({
   videos,
   audios,
   socials = [],
+  contactEmail,
 }: {
   name: string;
   avatarSrc?: string | null;
   videos: readonly VideoEmbed[];
   audios: readonly AudioEmbed[];
   socials?: readonly CreativeSocial[];
+  contactEmail?: string | null;
 }) {
   const titleId = useId();
   const linksId = useId();
@@ -120,12 +146,16 @@ export function CreativeMediaDock({
   );
 
   const links = [...socials];
-  const primary = primaryContactSocial(links);
+  const email = contactEmail?.trim().toLowerCase() || null;
+  const primary = resolvePrimaryContact(links, email);
   const { reach, listenWatch } = groupCreativeSocials(links);
-  const otherLinks = primary
-    ? links.filter((social) => social.provider !== primary.provider)
-    : links;
-  const hasLinks = links.length > 0;
+  const otherLinks =
+    primary?.type === "social"
+      ? links.filter((social) => social.provider !== primary.provider)
+      : links;
+  const hasEmail = Boolean(email);
+  const hasLinks = links.length > 0 || hasEmail;
+  const hasReachPanel = reach.length > 0 || hasEmail;
   const hasMedia = Boolean(playableVideos[0] || playableAudios[0]);
 
   const [mode, setMode] = useState<DockMode>("idle");
@@ -197,9 +227,65 @@ export function CreativeMediaDock({
     if (linksExpanded) return "Links & contact";
     if (activeAudio) return "Play while you browse";
     if (activeVideo) return "Watch a video";
-    if (primary) return socialProviderLabels[primary.provider];
+    if (primary?.type === "social") {
+      return socialProviderLabels[primary.provider];
+    }
+    if (primary?.type === "email") return "Email";
     return "Links & contact";
   })();
+
+  const primaryButton = (placement: "dock" | "video") => {
+    if (!primary) return null;
+    const isEmail = primary.type === "email";
+    const href = isEmail
+      ? primary.href
+      : withOutboundUtm(primary.href, {
+          campaign: "artist_profile",
+          content: `${primary.provider}_${placement}`,
+        });
+    const glyph =
+      primary.type === "email" ? "email" : primary.provider;
+    if (placement === "video") {
+      return (
+        <Button
+          render={
+            <a
+              href={href}
+              {...(isEmail
+                ? {}
+                : { target: "_blank", rel: "noreferrer" })}
+            />
+          }
+          size="sm"
+          variant="secondary"
+          className="gap-1.5 bg-white/15 px-3 text-white hover:bg-white/25"
+        >
+          <ProviderGlyph provider={glyph} />
+          {primary.label}
+        </Button>
+      );
+    }
+    return (
+      <Button
+        render={
+          <a
+            href={href}
+            {...(isEmail
+              ? {}
+              : { target: "_blank", rel: "noreferrer" })}
+          />
+        }
+        size="sm"
+        className="size-8 gap-0 px-0 sm:h-7 sm:w-auto sm:gap-1.5 sm:px-2.5"
+        aria-label={
+          isEmail ? `Email ${primary.email}` : `Open ${primary.label}`
+        }
+      >
+        <ProviderGlyph provider={glyph} />
+        <span className="hidden sm:inline">{primary.label}</span>
+      </Button>
+    );
+  };
 
   const videoDialog =
     videoExpanded && activeVideo?.embedSrc ? (
@@ -219,26 +305,7 @@ export function CreativeMediaDock({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {primary ? (
-              <Button
-                render={
-                  <a
-                    href={withOutboundUtm(primary.url, {
-                      campaign: "artist_profile",
-                      content: `${primary.provider}_video`,
-                    })}
-                    target="_blank"
-                    rel="noreferrer"
-                  />
-                }
-                size="sm"
-                variant="secondary"
-                className="gap-1.5 bg-white/15 px-3 text-white hover:bg-white/25"
-              >
-                <ProviderGlyph provider={primary.provider} />
-                {socialProviderLabels[primary.provider]}
-              </Button>
-            ) : null}
+            {primaryButton("video")}
             {playableVideos.length > 1 ? (
               <div className="flex gap-1">
                 {playableVideos.map((video, index) => (
@@ -381,11 +448,12 @@ export function CreativeMediaDock({
               id={linksId}
               className="max-h-[min(50dvh,22rem)] space-y-4 overflow-y-auto border-b border-border/70 px-2 pt-3 pb-2"
             >
-              {reach.length > 0 ? (
+              {hasReachPanel ? (
                 <LinkGroup title="Reach me">
                   {reach.map((social) => (
                     <SocialRow key={social.provider} social={social} />
                   ))}
+                  {email ? <EmailRow email={email} /> : null}
                 </LinkGroup>
               ) : null}
               {listenWatch.length > 0 ? (
@@ -455,30 +523,12 @@ export function CreativeMediaDock({
                 </Button>
               ) : null}
 
-              {primary ? (
-                <Button
-                  render={
-                    <a
-                      href={withOutboundUtm(primary.url, {
-                        campaign: "artist_profile",
-                        content: `${primary.provider}_dock`,
-                      })}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                  size="sm"
-                  className="size-8 gap-0 px-0 sm:h-7 sm:w-auto sm:gap-1.5 sm:px-2.5"
-                  aria-label={`Open ${socialProviderLabels[primary.provider]}`}
-                >
-                  <ProviderGlyph provider={primary.provider} />
-                  <span className="hidden sm:inline">
-                    {socialProviderLabels[primary.provider]}
-                  </span>
-                </Button>
-              ) : null}
+              {primaryButton("dock")}
 
-              {otherLinks.length > 0 || (!primary && hasLinks) ? (
+              {otherLinks.length > 0 ||
+              (primary?.type === "social" && hasEmail) ||
+              (!primary && hasLinks) ||
+              (primary?.type === "email" && links.length > 0) ? (
                 <Button
                   type="button"
                   size="icon"

@@ -22,7 +22,9 @@ type MediaUrlsFieldProps<T extends FieldValues> = {
   name: FieldPath<T>;
   label: string;
   placeholder: string;
-  help: string;
+  /** Optional hint under the label. Prefer short placeholders when possible. */
+  help?: string;
+  hint?: string;
   max: number;
   errors?: Array<{ message?: string } | undefined> | undefined;
   rootError?: string;
@@ -36,6 +38,7 @@ export function MediaUrlsField<T extends FieldValues>({
   label,
   placeholder,
   help,
+  hint,
   max,
   errors,
   rootError,
@@ -55,9 +58,11 @@ export function MediaUrlsField<T extends FieldValues>({
     <Field>
       <div className="flex items-baseline justify-between gap-2">
         <Label>{label}</Label>
-        <span className="text-xs text-muted-foreground">Up to {max}</span>
+        <span className="text-xs text-muted-foreground">
+          {hint ?? `Up to ${max}`}
+        </span>
       </div>
-      <p className="text-sm text-muted-foreground">{help}</p>
+      {help ? <p className="text-sm text-muted-foreground">{help}</p> : null}
       <div className="space-y-2">
         {values.map((_, index) => (
           <div key={`${String(name)}-${index}`} className="flex gap-2">

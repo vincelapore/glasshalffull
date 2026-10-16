@@ -201,7 +201,7 @@ function WorkMosaicTile({
         onHoverPause(false);
         setScaled(false);
       }}
-      aria-label={`${item.name} — view profile`}
+      aria-label={`${item.name}: view profile`}
       style={motionStyle}
       className={cn(
         "relative block aspect-square overflow-hidden bg-muted",

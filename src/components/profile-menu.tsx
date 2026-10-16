@@ -114,7 +114,7 @@ export function ProfileMenu({
         disabled
         aria-label={
           needsEssentials
-            ? "Account menu — profile needs attention"
+            ? "Account menu: profile needs attention"
             : "Account menu"
         }
         className={cn(
@@ -135,7 +135,7 @@ export function ProfileMenu({
         closeDelay={120}
         aria-label={
           needsEssentials
-            ? `Account menu for ${displayName} — profile needs attention`
+            ? `Account menu for ${displayName}: profile needs attention`
             : `Account menu for ${displayName}`
         }
         className={cn(

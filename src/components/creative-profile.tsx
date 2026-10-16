@@ -16,8 +16,8 @@ import {
   type VideoEmbed,
 } from "@/lib/creative-media";
 import type { Creative } from "@/db/schema";
+import { resolvePrimaryContact } from "@/lib/creative-contact";
 import {
-  primaryContactSocial,
   socialsFromLegacy,
   type CreativeSocial,
 } from "@/lib/creative-socials";
@@ -44,6 +44,7 @@ export function CreativeProfile({
   socials,
   instagramHandle,
   portfolioUrl,
+  contactEmail,
   workPhotoKeys,
   workPhotoSrcs,
   videoUrls,
@@ -56,6 +57,8 @@ export function CreativeProfile({
   socials?: readonly CreativeSocial[] | null;
   instagramHandle?: string | null;
   portfolioUrl?: string | null;
+  /** Opted-in public contact email (already resolved). */
+  contactEmail?: string | null;
   workPhotoKeys?: readonly string[];
   workPhotoSrcs?: readonly string[];
   videoUrls?: readonly string[] | null;
@@ -68,7 +71,7 @@ export function CreativeProfile({
     instagramHandle,
     portfolioUrl,
   });
-  const primary = primaryContactSocial(links);
+  const primary = resolvePrimaryContact(links, contactEmail);
   const videos = (videoUrls ?? [])
     .map((value) => resolveVideoEmbed(value))
     .filter((value): value is VideoEmbed => Boolean(value));
@@ -76,7 +79,11 @@ export function CreativeProfile({
     .map((value) => resolveAudioEmbed(value))
     .filter((value): value is AudioEmbed => Boolean(value));
 
-  const showDock = videos.length > 0 || audios.length > 0 || links.length > 0;
+  const showDock =
+    videos.length > 0 ||
+    audios.length > 0 ||
+    links.length > 0 ||
+    Boolean(contactEmail);
 
   return (
     <Page>
@@ -119,7 +126,11 @@ export function CreativeProfile({
             {creative.bio ? <CreativeBio bio={creative.bio} /> : null}
 
             {/* Quiet desktop fallback — primary contact lives in the sticky dock */}
-            <CreativeSocialLinks socials={links} className="hidden sm:flex" />
+            <CreativeSocialLinks
+              socials={links}
+              email={contactEmail}
+              className="hidden sm:flex"
+            />
           </header>
 
           <div className="mt-10 space-y-12">
@@ -127,8 +138,12 @@ export function CreativeProfile({
               name={creative.name}
               keys={workPhotoKeys}
               srcs={workPhotoSrcs}
-              contactHref={primary?.url}
-              contactProvider={primary?.provider}
+              contactHref={primary?.href}
+              contactLabel={primary?.label}
+              contactKind={primary?.type ?? null}
+              contactProvider={
+                primary?.type === "social" ? primary.provider : null
+              }
             />
 
             {upcoming}
@@ -145,6 +160,7 @@ export function CreativeProfile({
           videos={videos}
           audios={audios}
           socials={links}
+          contactEmail={contactEmail}
         />
       </div>
     </Page>

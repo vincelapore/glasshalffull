@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Mail, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import {
@@ -28,7 +28,16 @@ import {
 import { withOutboundUtm } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 
-function ContactGlyph({ provider }: { provider: SocialProvider }) {
+function ContactGlyph({
+  kind,
+  provider,
+}: {
+  kind: "social" | "email";
+  provider?: SocialProvider | null;
+}) {
+  if (kind === "email") {
+    return <Mail className="size-4" strokeWidth={1.75} />;
+  }
   switch (provider) {
     case "website":
       return <GlobeIcon className="size-4" />;
@@ -46,6 +55,8 @@ function ContactGlyph({ provider }: { provider: SocialProvider }) {
       return <SoundCloudIcon className="size-4" />;
     case "bandcamp":
       return <BandcampIcon className="size-4" />;
+    default:
+      return null;
   }
 }
 
@@ -55,12 +66,16 @@ export function WorkPhotoGrid({
   /** Absolute image URLs (e.g. example showcase). Prefer `keys` for real profiles. */
   srcs,
   contactHref,
+  contactLabel,
+  contactKind,
   contactProvider,
 }: {
   name: string;
   keys?: readonly string[];
   srcs?: readonly string[];
   contactHref?: string | null;
+  contactLabel?: string | null;
+  contactKind?: "social" | "email" | null;
   contactProvider?: SocialProvider | null;
 }) {
   const photos = srcs?.length
@@ -100,30 +115,40 @@ export function WorkPhotoGrid({
   const open = index !== null;
   const current = index !== null ? photos[index] : null;
   const featured = photos.length >= 3;
-  const contactLabel = contactProvider
-    ? socialProviderLabels[contactProvider]
-    : null;
+  const resolvedLabel =
+    contactLabel ??
+    (contactKind === "email"
+      ? "Email"
+      : contactProvider
+        ? socialProviderLabels[contactProvider]
+        : null);
 
   let contactControl: ReactNode = null;
-  if (contactHref && contactProvider && contactLabel) {
+  if (contactHref && contactKind && resolvedLabel) {
+    const isEmail = contactKind === "email";
     contactControl = (
       <Button
         render={
           <a
-            href={withOutboundUtm(contactHref, {
-              campaign: "artist_profile",
-              content: `${contactProvider}_lightbox`,
-            })}
-            target="_blank"
-            rel="noreferrer"
+            href={
+              isEmail
+                ? contactHref
+                : withOutboundUtm(contactHref, {
+                    campaign: "artist_profile",
+                    content: `${contactProvider ?? "contact"}_lightbox`,
+                  })
+            }
+            {...(isEmail
+              ? {}
+              : { target: "_blank", rel: "noreferrer" })}
           />
         }
         size="sm"
         variant="secondary"
         className="gap-1.5 bg-white/15 px-3 text-white hover:bg-white/25"
       >
-        <ContactGlyph provider={contactProvider} />
-        {contactLabel}
+        <ContactGlyph kind={contactKind} provider={contactProvider} />
+        {resolvedLabel}
       </Button>
     );
   }

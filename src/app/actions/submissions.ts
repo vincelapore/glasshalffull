@@ -103,7 +103,9 @@ export async function saveMyProfileAction(
     }
 
     const profileValues = {
-      ...creativeProfileValues(data, workPhotos.keys),
+      ...creativeProfileValues(data, workPhotos.keys, {
+        allowAccountEmail: true,
+      }),
       status: "approved" as const,
     };
 
@@ -249,8 +251,20 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
   }
 }
 
-function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: string[]) {
+function creativeProfileValues(
+  data: CreativeSubmissionInput,
+  workPhotoKeys: string[],
+  options?: { allowAccountEmail?: boolean }
+) {
   const socials = normalizeSocials(data.socials);
+  const publicEmailMode =
+    data.publicEmailMode === "account" && !options?.allowAccountEmail
+      ? "hidden"
+      : data.publicEmailMode;
+  const publicEmail =
+    publicEmailMode === "custom"
+      ? emptyToNull(data.publicEmail.toLowerCase())
+      : null;
   return {
     name: data.name,
     disciplines: data.disciplines,
@@ -264,6 +278,8 @@ function creativeProfileValues(data: CreativeSubmissionInput, workPhotoKeys: str
     // Keep legacy columns in sync for older list/query surfaces.
     instagramHandle: instagramHandleFromSocials(socials),
     portfolioUrl: websiteFromSocials(socials),
+    publicEmailMode,
+    publicEmail,
     videoUrls: normalizeMediaUrlList(
       data.videoUrls,
       "video",
@@ -353,7 +369,9 @@ export async function createAdminCreativeAction(
       .values({
         userId: null,
         slug: await uniqueCreativeSlug(data.name),
-        ...creativeProfileValues(data, workPhotos.keys),
+        ...creativeProfileValues(data, workPhotos.keys, {
+          allowAccountEmail: false,
+        }),
         inviteEmail: invite.email,
         status: "approved",
       })
@@ -687,6 +705,15 @@ export async function updateCreativeAction(
   }
 
   try {
+    const [existing] = await db
+      .select({ userId: creatives.userId })
+      .from(creatives)
+      .where(eq(creatives.id, id))
+      .limit(1);
+    if (!existing) {
+      return { success: false, message: "Creative not found." };
+    }
+
     const workPhotos = await resolveWorkPhotoKeys({
       creativeId: id,
       nextKeys: data.workPhotoKeys,
@@ -699,7 +726,9 @@ export async function updateCreativeAction(
     const [updated] = await db
       .update(creatives)
       .set({
-        ...creativeProfileValues(data, workPhotos.keys),
+        ...creativeProfileValues(data, workPhotos.keys, {
+          allowAccountEmail: Boolean(existing.userId),
+        }),
         slug: await uniqueCreativeSlug(data.name, id),
       })
       .where(eq(creatives.id, id))

@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
@@ -22,17 +23,20 @@ import { cn } from "@/lib/utils";
 function SocialIconLink({
   href,
   label,
+  external = true,
   children,
 }: {
   href: string;
   label: string;
+  external?: boolean;
   children: ReactNode;
 }) {
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noreferrer"
+      {...(external
+        ? { target: "_blank", rel: "noreferrer" }
+        : {})}
       aria-label={label}
       title={label}
       className={cn(
@@ -70,6 +74,7 @@ function socialIcon(provider: SocialProvider) {
 
 export function CreativeSocialLinks({
   socials,
+  email,
   /** @deprecated use socials */
   instagramHandle,
   /** @deprecated use socials */
@@ -77,6 +82,7 @@ export function CreativeSocialLinks({
   className,
 }: {
   socials?: readonly CreativeSocial[] | null;
+  email?: string | null;
   instagramHandle?: string | null;
   portfolioUrl?: string | null;
   className?: string;
@@ -86,8 +92,9 @@ export function CreativeSocialLinks({
     instagramHandle,
     portfolioUrl,
   });
+  const contactEmail = email?.trim().toLowerCase() ?? "";
 
-  if (links.length === 0) return null;
+  if (links.length === 0 && !contactEmail) return null;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
@@ -103,6 +110,15 @@ export function CreativeSocialLinks({
           {socialIcon(social.provider)}
         </SocialIconLink>
       ))}
+      {contactEmail ? (
+        <SocialIconLink
+          href={`mailto:${contactEmail}`}
+          label={`Email ${contactEmail}`}
+          external={false}
+        >
+          <Mail className="size-5" strokeWidth={1.75} />
+        </SocialIconLink>
+      ) : null}
     </div>
   );
 }

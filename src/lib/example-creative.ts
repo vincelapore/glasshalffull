@@ -24,6 +24,7 @@ export const exampleCreative = {
     { provider: "soundcloud" as const, url: "https://soundcloud.com/forss" },
     { provider: "youtube" as const, url: "https://www.youtube.com/@YouTube" },
   ],
+  contactEmail: "bookings@example.com",
   openToPaidWork: true,
   openToTrade: true,
   buildingPortfolio: false,

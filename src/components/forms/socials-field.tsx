@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   normalizeSocial,
+  socialDisplayHandle,
   socialProviderHints,
   socialProviderLabels,
   socialProviderPlaceholders,
@@ -138,33 +139,48 @@ export function SocialsField<T extends FieldValues>({
     <Field>
       <div className="flex items-baseline justify-between gap-2">
         <Label>Socials</Label>
-        <span className="text-xs text-muted-foreground">Profile accounts</span>
+        <span className="text-xs text-muted-foreground">Links</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {socials.map((social) => (
-          <div
-            key={social.provider}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 pl-2.5 pr-1 py-1"
-          >
-            <SocialGlyph provider={social.provider} className="size-4" />
-            <span className="max-w-[9rem] truncate text-xs font-medium">
-              {socialProviderLabels[social.provider]}
-            </span>
-            <button
-              type="button"
-              aria-label={`Remove ${socialProviderLabels[social.provider]}`}
-              className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-              onClick={() =>
-                update(
-                  socials.filter((item) => item.provider !== social.provider),
-                )
-              }
+        {socials.map((social) => {
+          const handle = socialDisplayHandle(social);
+
+          return (
+            <div
+              key={social.provider}
+              className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-border bg-muted/40 pr-1"
             >
-              <X className="size-3.5" />
-            </button>
-          </div>
-        ))}
+              <a
+                href={social.url}
+                target="_blank"
+                rel="noreferrer"
+                title={social.url}
+                className="inline-flex min-w-0 items-center gap-1.5 rounded-full py-1 pl-2.5 pr-1 text-foreground transition-colors hover:text-foreground/80"
+              >
+                <SocialGlyph
+                  provider={social.provider}
+                  className="size-4 shrink-0"
+                />
+                <span className="max-w-[12rem] truncate text-xs font-medium">
+                  {handle}
+                </span>
+              </a>
+              <button
+                type="button"
+                aria-label={`Remove ${handle}`}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                onClick={() =>
+                  update(
+                    socials.filter((item) => item.provider !== social.provider),
+                  )
+                }
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          );
+        })}
 
         {available.length > 0 ? (
           <Button

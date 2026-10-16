@@ -8,12 +8,16 @@ import {
   eventListingGridClassName,
 } from "@/components/event-listing";
 import { Notice } from "@/components/ui/notice";
-import { getAccountVisibility } from "@/lib/accounts";
+import { getAccountVisibility, getAccountsByIds } from "@/lib/accounts";
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
+import { resolveDisplayedContactEmail } from "@/lib/creative-contact";
 import { lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
-import { isProfileReadyForPublic } from "@/lib/profile-visibility";
+import {
+  isProfileReadyForPublic,
+  type ProfileVisibilityFields,
+} from "@/lib/profile-visibility";
 import {
   getCreativeByParam,
   getCreativeModerationNote,
@@ -25,12 +29,9 @@ type CreativePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-async function canViewCreativeProfile(creative: {
-  userId: string | null;
-  bio: string | null;
-  avatarKey: string | null;
-  workPhotoKeys: string[];
-}) {
+async function canViewCreativeProfile(
+  creative: ProfileVisibilityFields & { userId: string | null }
+) {
   const accountPublic = creative.userId
     ? await getAccountVisibility(creative.userId)
     : true;
@@ -83,6 +84,15 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   const moderationNote = showModerationNote
     ? await getCreativeModerationNote(creative.id)
     : null;
+  const [linkedAccount] =
+    creative.publicEmailMode === "account" && creative.userId
+      ? await getAccountsByIds([creative.userId])
+      : [];
+  const contactEmail = resolveDisplayedContactEmail(
+    creative.publicEmailMode,
+    creative.publicEmail,
+    linkedAccount?.email
+  );
 
   return (
     <CreativeProfile
@@ -91,6 +101,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
       socials={creative.socials}
       instagramHandle={creative.instagramHandle}
       portfolioUrl={creative.portfolioUrl}
+      contactEmail={contactEmail}
       workPhotoKeys={creative.workPhotoKeys}
       videoUrls={creative.videoUrls}
       audioUrls={creative.audioUrls}
@@ -98,8 +109,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
         <>
           {!isApproved ? (
             <Notice className="mb-6">
-              This profile is <strong>{creative.status}</strong> and not listed
-              publicly yet.
+              This profile isn’t listed publicly.
             </Notice>
           ) : optedPrivate ? (
             <Notice className="mb-6">
@@ -107,8 +117,8 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
             </Notice>
           ) : incomplete ? (
             <Notice className="mb-6">
-              This profile isn’t public yet. Add a bio, a profile picture, and at
-              least one work photo to appear in the directory.
+              This profile isn’t public yet. Finish the directory essentials to
+              appear.
             </Notice>
           ) : null}
           {showModerationNote ? (

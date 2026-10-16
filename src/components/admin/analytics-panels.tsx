@@ -231,7 +231,7 @@ function RankedRows({
                 <span className="flex min-w-0 items-center gap-2 truncate">
                   {leading?.(row.key)}
                   <span className="truncate">
-                    {formatKey ? formatKey(row.key) : row.key || "—"}
+                    {formatKey ? formatKey(row.key) : row.key || "-"}
                   </span>
                 </span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">

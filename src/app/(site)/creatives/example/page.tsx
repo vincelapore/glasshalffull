@@ -24,12 +24,13 @@ export default function ExampleCreativePage() {
       creative={creative}
       avatarSrc={creative.avatarSrc}
       socials={creative.socials}
+      contactEmail={creative.contactEmail}
       workPhotoSrcs={creative.workPhotoSrcs}
       videoUrls={creative.videoUrls}
       audioUrls={creative.audioUrls}
       notices={
         <Notice className="mb-6">
-          Example profile — fully filled so you can judge layout and media
+          Example profile, fully filled so you can judge layout and media
           players. Not a real account and not listed in the directory.
         </Notice>
       }

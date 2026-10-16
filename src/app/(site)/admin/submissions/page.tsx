@@ -7,8 +7,15 @@ import {
   CreativeSubmissionCard,
   EventSubmissionCard,
 } from "@/components/admin/submission-cards";
-import { EmptyState, Page, PageHeader } from "@/components/ui/page";
+import { FilterChip } from "@/components/ui/filter-chip";
+import {
+  ChipRow,
+  EmptyState,
+  Page,
+  PageHeader,
+} from "@/components/ui/page";
 import { requireAdmin } from "@/lib/admin";
+import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { countPendingSubmissions, getSubmissions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { submissionStatuses } from "@/lib/validations";
@@ -21,6 +28,7 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
   status?: string;
+  type?: string;
 }>;
 
 const queues = [
@@ -31,8 +39,28 @@ const queues = [
 
 type QueueStatus = (typeof queues)[number]["status"];
 
+const typeFilters = [
+  { type: "all", label: "All" },
+  { type: "creatives", label: "Creatives" },
+  { type: "events", label: "Events" },
+] as const;
+
+type TypeFilter = (typeof typeFilters)[number]["type"];
+
 function isQueueStatus(value: string | undefined): value is QueueStatus {
   return !!value && queues.some((queue) => queue.status === value);
+}
+
+function isTypeFilter(value: string | undefined): value is TypeFilter {
+  return !!value && typeFilters.some((filter) => filter.type === value);
+}
+
+function queueHref(status: QueueStatus, type: TypeFilter = "all") {
+  const params = new URLSearchParams();
+  if (status !== "pending") params.set("status", status);
+  if (status === "approved" && type !== "all") params.set("type", type);
+  const qs = params.toString();
+  return qs ? `/admin/submissions?${qs}` : "/admin/submissions";
 }
 
 const emptyCopy: Record<QueueStatus, string> = {
@@ -52,11 +80,13 @@ export default async function AdminSubmissionsPage({
   const status: QueueStatus = isQueueStatus(params.status)
     ? params.status
     : "pending";
+  const type: TypeFilter =
+    status === "approved" && isTypeFilter(params.type) ? params.type : "all";
 
   const [{ events, creatives }, pendingCount] = await Promise.all([
     getSubmissions({
       status: status as (typeof submissionStatuses)[number],
-      type: "all",
+      type,
     }),
     countPendingSubmissions(),
   ]);
@@ -72,10 +102,25 @@ export default async function AdminSubmissionsPage({
       createdAt: creative.createdAt,
       creative,
     })),
-  ].sort(
-    (a, b) =>
+  ].sort((a, b) => {
+    if (status === "approved") {
+      const aIncomplete =
+        a.kind === "creative" && !isProfileReadyForPublic(a.creative);
+      const bIncomplete =
+        b.kind === "creative" && !isProfileReadyForPublic(b.creative);
+      if (aIncomplete !== bIncomplete) return aIncomplete ? -1 : 1;
+    }
+
+    return (
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+    );
+  });
+
+  const incompleteApprovedCount =
+    status === "approved"
+      ? creatives.filter((creative) => !isProfileReadyForPublic(creative))
+          .length
+      : 0;
 
   return (
     <Page width="narrow">
@@ -89,7 +134,7 @@ export default async function AdminSubmissionsPage({
       <AdminFind>
         <nav
           aria-label="Queue"
-          className="mb-8 flex gap-6 overflow-x-auto border-b border-border"
+          className="mb-6 flex gap-6 overflow-x-auto border-b border-border"
         >
           {queues.map((queue) => {
             const active = status === queue.status;
@@ -97,11 +142,7 @@ export default async function AdminSubmissionsPage({
             return (
               <Link
                 key={queue.status}
-                href={
-                  queue.status === "pending"
-                    ? "/admin/submissions"
-                    : `/admin/submissions?status=${queue.status}`
-                }
+                href={queueHref(queue.status)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "-mb-px shrink-0 whitespace-nowrap border-b-2 pb-2.5 text-sm transition-colors",
@@ -121,8 +162,39 @@ export default async function AdminSubmissionsPage({
           })}
         </nav>
 
+        {status === "approved" ? (
+          <div className="mb-8 space-y-3">
+            <ChipRow aria-label="Type">
+              {typeFilters.map((filter) => (
+                <FilterChip
+                  key={filter.type}
+                  href={queueHref("approved", filter.type)}
+                  active={type === filter.type}
+                  size="sm"
+                  tone="subtle"
+                >
+                  {filter.label}
+                </FilterChip>
+              ))}
+            </ChipRow>
+            {incompleteApprovedCount > 0 && type !== "events" ? (
+              <p className="text-sm text-muted-foreground">
+                {incompleteApprovedCount} creative
+                {incompleteApprovedCount === 1 ? "" : "s"} still missing
+                directory essentials, shown first.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {items.length === 0 ? (
-          <EmptyState>{emptyCopy[status]}</EmptyState>
+          <EmptyState>
+            {status === "approved" && type !== "all"
+              ? type === "creatives"
+                ? "No approved creatives yet."
+                : "No approved events yet."
+              : emptyCopy[status]}
+          </EmptyState>
         ) : (
           <div className="grid gap-4">
             {items.map((item) =>

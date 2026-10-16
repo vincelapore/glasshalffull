@@ -13,6 +13,7 @@ import {
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { MediaUrlsField } from "@/components/forms/media-urls-field";
+import { PublicEmailField } from "@/components/forms/public-email-field";
 import { SocialsField } from "@/components/forms/socials-field";
 import {
   uploadWorkSlots,
@@ -27,6 +28,7 @@ import { Field, FieldError, Fieldset } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Notice } from "@/components/ui/notice";
+import { OptionPill } from "@/components/ui/option-pill";
 import { Textarea } from "@/components/ui/textarea";
 import {
   MAX_CREATIVE_AUDIO_URLS,
@@ -46,7 +48,6 @@ import {
   isProfileReadyForPublic,
 } from "@/lib/profile-visibility";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
-import { cn } from "@/lib/utils";
 import {
   cities,
   creativeRoles,
@@ -67,6 +68,8 @@ const emptyProfileValues: CreativeSubmissionInput = {
   pronouns: "",
   bio: "",
   socials: [],
+  publicEmailMode: "hidden",
+  publicEmail: "",
   videoUrls: [""],
   audioUrls: [""],
   avatarKey: "",
@@ -80,11 +83,14 @@ type CreativeSubmissionFormProps =
   | {
       mode: "profile";
       defaultValues?: CreativeSubmissionInput;
+      accountEmail: string;
     }
   | {
       mode: "admin";
       creativeId: string;
       defaultValues: CreativeSubmissionInput;
+      /** Login email when the profile is claimed. Enables “use account email”. */
+      accountEmail?: string | null;
     }
   | {
       mode: "admin-create";
@@ -93,7 +99,24 @@ type CreativeSubmissionFormProps =
 export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   const mode = props.mode;
   const creativeId = mode === "admin" ? props.creativeId : null;
-  const defaults = mode === "admin-create" ? undefined : props.defaultValues;
+  const accountEmail =
+    mode === "profile"
+      ? props.accountEmail
+      : mode === "admin"
+        ? props.accountEmail
+        : null;
+  const rawDefaults = mode === "admin-create" ? undefined : props.defaultValues;
+  const defaults: CreativeSubmissionInput | undefined = rawDefaults
+    ? {
+        ...emptyProfileValues,
+        ...rawDefaults,
+        publicEmailMode:
+          rawDefaults.publicEmailMode === "account" && !accountEmail?.trim()
+            ? "hidden"
+            : (rawDefaults.publicEmailMode ?? "hidden"),
+        publicEmail: rawDefaults.publicEmail ?? "",
+      }
+    : undefined;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -184,6 +207,15 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
     control: form.control,
     name: "avatarKey",
   });
+  const watchedSocials = useWatch({ control: form.control, name: "socials" });
+  const watchedPublicEmailMode = useWatch({
+    control: form.control,
+    name: "publicEmailMode",
+  });
+  const watchedPublicEmail = useWatch({
+    control: form.control,
+    name: "publicEmail",
+  });
   const essentialsProfile =
     mode === "profile"
       ? {
@@ -192,6 +224,10 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           workPhotoKeys: workSlots.map((slot) =>
             slot.source === "stored" ? slot.key : slot.id
           ),
+          socials: watchedSocials ?? [],
+          publicEmailMode: watchedPublicEmailMode ?? "hidden",
+          publicEmail: watchedPublicEmail ?? "",
+          hasAccountEmail: Boolean(accountEmail?.trim()),
         }
       : null;
   const essentialsReady = essentialsProfile
@@ -208,6 +244,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
   );
   const needsWorkPhoto = essentialsChecklist?.some(
     (item) => item.id === "workPhoto" && !item.done
+  );
+  const needsContact = essentialsChecklist?.some(
+    (item) => item.id === "contact" && !item.done
   );
 
   return (
@@ -227,15 +266,11 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
             onChange={(event) => setInviteEmail(event.target.value)}
             placeholder="name@example.com"
           />
-          <p className="text-sm text-muted-foreground">
-            They claim this profile by signing up or signing in with this
-            email.
-          </p>
         </Field>
       ) : null}
 
       <Field>
-        <Label htmlFor="name">Name / moniker</Label>
+        <Label htmlFor="name">Name</Label>
         <Input
           id="name"
           {...form.register("name")}
@@ -251,48 +286,44 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           const { selected, custom } = parsePronounSelection(field.value);
 
           return (
-            <Fieldset legend="Pronouns (optional)">
-              <div className="grid gap-2 sm:grid-cols-3">
+            <Field>
+              <Label>Pronouns (optional)</Label>
+              <div className="flex flex-wrap gap-1.5">
                 {pronounPresets.map((preset) => {
                   const checked = selected.includes(preset);
-
                   return (
-                    <Choice key={preset}>
-                      <ChoiceControl
-                        checked={checked}
-                        onChange={(event) => {
-                          const nextSelected = event.target.checked
-                            ? [...selected, preset]
-                            : selected.filter((value) => value !== preset);
-                          field.onChange(
-                            serializePronounSelection(nextSelected, custom)
-                          );
-                        }}
-                        onBlur={field.onBlur}
-                      />
-                      <span className="text-sm">{preset}</span>
-                    </Choice>
+                    <OptionPill
+                      key={preset}
+                      active={checked}
+                      onClick={() => {
+                        const nextSelected = checked
+                          ? selected.filter((value) => value !== preset)
+                          : [...selected, preset];
+                        field.onChange(
+                          serializePronounSelection(nextSelected, custom)
+                        );
+                      }}
+                    >
+                      {preset}
+                    </OptionPill>
                   );
                 })}
               </div>
-              <Field>
-                <Label htmlFor="pronouns-custom">Self-describe</Label>
-                <Input
-                  id="pronouns-custom"
-                  placeholder="e.g. xe/xem, she/they"
-                  autoComplete="off"
-                  value={custom}
-                  onChange={(event) => {
-                    field.onChange(
-                      serializePronounSelection(selected, event.target.value)
-                    );
-                  }}
-                  onBlur={field.onBlur}
-                  aria-invalid={Boolean(fieldState.error)}
-                />
-              </Field>
+              <Input
+                id="pronouns-custom"
+                placeholder="Or self-describe"
+                autoComplete="off"
+                value={custom}
+                onChange={(event) => {
+                  field.onChange(
+                    serializePronounSelection(selected, event.target.value)
+                  );
+                }}
+                onBlur={field.onBlur}
+                aria-invalid={Boolean(fieldState.error)}
+              />
               <FieldError>{fieldState.error?.message}</FieldError>
-            </Fieldset>
+            </Field>
           );
         }}
       />
@@ -301,36 +332,27 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         control={form.control}
         name="city"
         render={({ field, fieldState }) => (
-          <Fieldset legend="City (optional)">
-            <div className="grid gap-2 sm:grid-cols-3">
-              <Choice>
-                <ChoiceControl
-                  type="radio"
-                  name={field.name}
-                  value=""
-                  checked={field.value === ""}
-                  onChange={() => field.onChange("")}
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                />
-                <span className="text-sm">Not specified</span>
-              </Choice>
+          <Field>
+            <Label>City (optional)</Label>
+            <div className="flex flex-wrap gap-1.5">
+              <OptionPill
+                active={field.value === ""}
+                onClick={() => field.onChange("")}
+              >
+                None
+              </OptionPill>
               {cities.map((city) => (
-                <Choice key={city}>
-                  <ChoiceControl
-                    type="radio"
-                    name={field.name}
-                    value={city}
-                    checked={field.value === city}
-                    onChange={() => field.onChange(city)}
-                    onBlur={field.onBlur}
-                  />
-                  <span className="text-sm">{cityLabels[city]}</span>
-                </Choice>
+                <OptionPill
+                  key={city}
+                  active={field.value === city}
+                  onClick={() => field.onChange(city)}
+                >
+                  {cityLabels[city]}
+                </OptionPill>
               ))}
             </div>
             <FieldError>{fieldState.error?.message}</FieldError>
-          </Fieldset>
+          </Field>
         )}
       />
 
@@ -372,7 +394,8 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         control={form.control}
         name="roles"
         render={({ field, fieldState }) => (
-          <Fieldset legend="Role (optional)">
+          <Field>
+            <Label>Role (optional)</Label>
             <div className="grid gap-2 sm:grid-cols-2">
               {creativeRoles.map((role) => {
                 const checked = field.value?.includes(role) ?? false;
@@ -396,7 +419,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
               })}
             </div>
             <FieldError>{fieldState.error?.message}</FieldError>
-          </Fieldset>
+          </Field>
         )}
       />
 
@@ -416,15 +439,14 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         control={form.control}
         name="isQueer"
         render={({ field }) => (
-          <Choice>
-            <ChoiceControl
-              checked={field.value}
-              onChange={(event) => field.onChange(event.target.checked)}
-              onBlur={field.onBlur}
-              ref={field.ref}
-            />
-            <span className="text-sm">Queer community</span>
-          </Choice>
+          <div className="flex flex-wrap gap-1.5">
+            <OptionPill
+              active={field.value}
+              onClick={() => field.onChange(!field.value)}
+            >
+              Queer community
+            </OptionPill>
+          </div>
         )}
       />
 
@@ -439,80 +461,79 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           htmlFor="bio"
           className={needsBio ? "text-destructive" : undefined}
         >
-          {needsBio ? (
-            <span className="inline-flex items-center gap-1.5">
-              Bio
-              <span
-                className="flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold leading-none text-white"
-                aria-hidden
-              >
-                !
-              </span>
-            </span>
-          ) : (
-            "Bio"
-          )}
+          Bio
         </Label>
-        {mode === "profile" ? (
-          <p
-            className={cn(
-              "text-sm",
-              needsBio ? "text-destructive/90" : "text-muted-foreground"
-            )}
-          >
-            Needed to appear in the directory.
-          </p>
-        ) : null}
         <Textarea
           id="bio"
-          rows={5}
-          placeholder="Who you are, what you make, where people find you."
+          rows={4}
+          placeholder="Who you are and what you make."
           aria-invalid={needsBio || Boolean(form.formState.errors.bio)}
           {...form.register("bio")}
         />
         <FieldError>{form.formState.errors.bio?.message}</FieldError>
       </Field>
 
-      <Fieldset legend="Open to">
-        <div className="space-y-2">
-          {workOpportunityTags.map((tag) => {
-            const fieldName =
-              tag === "paid_work"
-                ? "openToPaidWork"
-                : tag === "trade"
-                  ? "openToTrade"
-                  : "buildingPortfolio";
+      <div className="space-y-4">
+        <Controller
+          control={form.control}
+          name="avatarKey"
+          render={({ field, fieldState }) => (
+            <PhotoUploadField
+              id="avatarKey"
+              label="Profile picture"
+              storedKey={field.value}
+              file={pendingPhoto}
+              onFileChange={setPendingPhoto}
+              error={fieldState.error?.message}
+              disabled={pending}
+              attention={Boolean(needsAvatar)}
+              crop
+            />
+          )}
+        />
 
-            return (
-              <Controller
-                key={tag}
-                control={form.control}
-                name={fieldName}
-                render={({ field }) => (
-                  <Choice>
-                    <ChoiceControl
-                      checked={field.value}
-                      onChange={(event) => field.onChange(event.target.checked)}
-                    />
-                    <span className="text-sm">{workOpportunityTagLabels[tag]}</span>
-                  </Choice>
-                )}
-              />
-            );
-          })}
-        </div>
-      </Fieldset>
+        <WorkPhotosField
+          slots={workSlots}
+          onChange={setWorkSlots}
+          description={
+            mode === "profile" ? undefined : `Up to ${MAX_WORK_PHOTOS}`
+          }
+          error={form.formState.errors.workPhotoKeys?.message}
+          disabled={pending}
+          attention={Boolean(needsWorkPhoto)}
+        />
+      </div>
 
-      <SocialsField
-        control={form.control}
-        setValue={form.setValue}
-        name="socials"
-        errorMessage={
-          typeof form.formState.errors.socials?.message === "string"
-            ? form.formState.errors.socials.message
-            : undefined
+      <div
+        className={
+          needsContact
+            ? "space-y-4 rounded-xl border border-destructive/40 bg-destructive/8 p-3"
+            : "space-y-4"
         }
-      />
+      >
+        {needsContact ? (
+          <p className="text-sm font-medium text-destructive">
+            Add Instagram, a website, or email.
+          </p>
+        ) : null}
+        <SocialsField
+          control={form.control}
+          setValue={form.setValue}
+          name="socials"
+          errorMessage={
+            typeof form.formState.errors.socials?.message === "string"
+              ? form.formState.errors.socials.message
+              : undefined
+          }
+        />
+        <PublicEmailField
+          control={form.control}
+          register={form.register}
+          setValue={form.setValue}
+          accountEmail={accountEmail}
+          errors={form.formState.errors}
+        />
+      </div>
 
       <div className="space-y-4">
         <MediaUrlsField
@@ -522,7 +543,7 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           name="videoUrls"
           label="Videos"
           placeholder="youtube.com/… or vimeo.com/…"
-          help="YouTube or Vimeo links play on your public profile."
+          hint={`Up to ${MAX_CREATIVE_VIDEO_URLS}`}
           max={MAX_CREATIVE_VIDEO_URLS}
           errors={
             form.formState.errors.videoUrls as
@@ -541,8 +562,8 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
           setValue={form.setValue}
           name="audioUrls"
           label="Listen"
-          placeholder="spotify.com/…, music.apple.com/…, soundcloud.com/…, or bandcamp.com/…"
-          help="Spotify, Apple Music, and SoundCloud embed players. Bandcamp opens in a listen card."
+          placeholder="Spotify, Apple Music, SoundCloud, or Bandcamp"
+          hint={`Up to ${MAX_CREATIVE_AUDIO_URLS}`}
           max={MAX_CREATIVE_AUDIO_URLS}
           errors={
             form.formState.errors.audioUrls as
@@ -557,41 +578,35 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         />
       </div>
 
-      <Controller
-        control={form.control}
-        name="avatarKey"
-        render={({ field, fieldState }) => (
-          <PhotoUploadField
-            id="avatarKey"
-            label="Profile Picture"
-            description={
-              mode === "profile"
-                ? "Needed to appear in the directory."
-                : undefined
-            }
-            storedKey={field.value}
-            file={pendingPhoto}
-            onFileChange={setPendingPhoto}
-            error={fieldState.error?.message}
-            disabled={pending}
-            attention={Boolean(needsAvatar)}
-            crop
-          />
-        )}
-      />
+      <Field>
+        <Label>Open to</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {workOpportunityTags.map((tag) => {
+            const fieldName =
+              tag === "paid_work"
+                ? "openToPaidWork"
+                : tag === "trade"
+                  ? "openToTrade"
+                  : "buildingPortfolio";
 
-      <WorkPhotosField
-        slots={workSlots}
-        onChange={setWorkSlots}
-        description={
-          mode === "profile"
-            ? `At least one photo is needed to appear in the directory. Up to ${MAX_WORK_PHOTOS} photos.`
-            : undefined
-        }
-        error={form.formState.errors.workPhotoKeys?.message}
-        disabled={pending}
-        attention={Boolean(needsWorkPhoto)}
-      />
+            return (
+              <Controller
+                key={tag}
+                control={form.control}
+                name={fieldName}
+                render={({ field }) => (
+                  <OptionPill
+                    active={field.value}
+                    onClick={() => field.onChange(!field.value)}
+                  >
+                    {workOpportunityTagLabels[tag]}
+                  </OptionPill>
+                )}
+              />
+            );
+          })}
+        </div>
+      </Field>
 
       {formError ? <Notice variant="destructive">{formError}</Notice> : null}
 
@@ -599,12 +614,9 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         {savedMessage ? (
           essentialsProfile ? (
             <Notice>
-              <p className="font-medium">Profile saved.</p>
-              <p className="mt-1 text-muted-foreground">
-                {essentialsReady
-                  ? "Essentials are done. You’ll appear in the directory once approved and set to Public."
-                  : "Finish the essentials above to appear in the directory."}
-              </p>
+              {essentialsReady
+                ? "Saved. You’re live if set to Public."
+                : "Saved. Finish the essentials above to appear in the directory."}
             </Notice>
           ) : (
             <Notice variant="muted">{savedMessage}</Notice>

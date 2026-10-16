@@ -5,14 +5,12 @@ import { AccountShell } from "@/components/account-shell";
 import { AccountVisibilityToggle } from "@/components/account-visibility";
 import { CreativeSubmissionForm } from "@/components/forms/creative-submission-form";
 import { EventModerationNote } from "@/components/event-moderation-note";
-import { ProfileEssentialsAttention } from "@/components/profile-visibility-checklist";
 import { Notice } from "@/components/ui/notice";
 import { SectionHeader, TextLink } from "@/components/ui/page";
 import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
 import { socialsFromLegacy } from "@/lib/creative-socials";
-import { statusLabels } from "@/lib/labels";
 import { creativePath } from "@/lib/paths";
 import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { getCreativeByUserId } from "@/lib/queries";
@@ -38,25 +36,10 @@ export default async function AccountPage() {
   const canViewPublicPage =
     profile?.status === "approved" && profileReady && isPublic;
 
-  const essentialsProfile = profile
-    ? {
-        bio: profile.bio,
-        avatarKey: profile.avatarKey,
-        workPhotoKeys: profile.workPhotoKeys,
-      }
-    : { bio: null, avatarKey: null, workPhotoKeys: [] };
-
   return (
     <AccountShell user={user}>
-      <ProfileEssentialsAttention
-        profile={essentialsProfile}
-        className="mb-8"
-      />
-      <section className="mb-10 space-y-4">
-        <SectionHeader
-          title="Visibility"
-          description="Public only lists you once your profile is approved and the essentials below are done."
-        />
+      <section className="mb-10 space-y-3">
+        <SectionHeader title="Visibility" />
         <AccountVisibilityToggle
           isPublic={isPublic}
           profileReady={profileReady}
@@ -65,32 +48,18 @@ export default async function AccountPage() {
       <section className="space-y-4">
         <SectionHeader
           title="Profile"
-          description={
-            profileReady
-              ? "Directory essentials are listed at the top of the form."
-              : "Finish the essentials marked below — bio, profile picture, and a work photo — before you can appear publicly."
-          }
           action={
             profile ? (
               <p className="text-sm text-muted-foreground">
-                {statusLabels[profile.status]}
                 {canViewPublicPage ? (
-                  <>
-                    {" "}
-                    ·{" "}
-                    <TextLink href={creativePath(profile.slug)} variant="hover">
-                      View public page
-                    </TextLink>
-                  </>
-                ) : profile.status === "approved" ? (
-                  <>
-                    {" "}
-                    ·{" "}
-                    <TextLink href={creativePath(profile.slug)} variant="hover">
-                      Preview page
-                    </TextLink>
-                  </>
-                ) : null}
+                  <TextLink href={creativePath(profile.slug)} variant="hover">
+                    View public page
+                  </TextLink>
+                ) : (
+                  <TextLink href={creativePath(profile.slug)} variant="hover">
+                    Preview
+                  </TextLink>
+                )}
               </p>
             ) : null
           }
@@ -104,6 +73,7 @@ export default async function AccountPage() {
         {profile ? <EventModerationNote note={profile.moderationNote} /> : null}
         <CreativeSubmissionForm
           mode="profile"
+          accountEmail={user.email}
           defaultValues={
             profile
               ? {
@@ -116,6 +86,8 @@ export default async function AccountPage() {
                   pronouns: profile.pronouns ?? "",
                   bio: profile.bio ?? "",
                   socials: socialsFromLegacy(profile),
+                  publicEmailMode: profile.publicEmailMode,
+                  publicEmail: profile.publicEmail ?? "",
                   videoUrls: profile.videoUrls.length
                     ? profile.videoUrls
                     : [""],

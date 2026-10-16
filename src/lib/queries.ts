@@ -73,14 +73,33 @@ const creativeCardColumns = {
 
 /**
  * Approved profiles that belong in the public directory.
- * Needs bio, avatar, and a work photo; account-owned profiles also respect
- * the private visibility toggle.
+ * Needs bio, avatar, a work photo, and a reach contact (Instagram, website,
+ * or opted-in public email). Account-owned profiles also respect the private
+ * visibility toggle.
  */
 function isDiscoverable() {
   return sql`
     coalesce(nullif(btrim(${creatives.bio}), ''), null) is not null
     and coalesce(nullif(btrim(${creatives.avatarKey}), ''), null) is not null
     and cardinality(${creatives.workPhotoKeys}) >= 1
+    and (
+      exists (
+        select 1
+        from jsonb_array_elements(coalesce(${creatives.socials}, '[]'::jsonb))
+          as social(value)
+        where social.value->>'provider' in ('instagram', 'website')
+      )
+      or coalesce(nullif(btrim(${creatives.instagramHandle}), ''), null) is not null
+      or coalesce(nullif(btrim(${creatives.portfolioUrl}), ''), null) is not null
+      or (
+        ${creatives.publicEmailMode} = 'custom'
+        and coalesce(nullif(btrim(${creatives.publicEmail}), ''), null) is not null
+      )
+      or (
+        ${creatives.publicEmailMode} = 'account'
+        and ${creatives.userId} is not null
+      )
+    )
     and (
       ${creatives.userId} is null or not exists (
         select 1 from account_settings

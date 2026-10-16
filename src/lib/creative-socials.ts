@@ -46,9 +46,9 @@ export const socialProviderPlaceholders: Record<SocialProvider, string> = {
 export const socialProviderHints: Record<SocialProvider, string> = {
   website: "Any personal site or portfolio.",
   instagram: "Your Instagram profile.",
-  youtube: "Your YouTube channel — not a single video.",
+  youtube: "Your YouTube channel, not a single video.",
   vimeo: "Your Vimeo profile or channel.",
-  spotify: "Your Spotify artist or user profile — not a track.",
+  spotify: "Your Spotify artist or user profile, not a track.",
   apple_music: "Your Apple Music artist page.",
   soundcloud: "Your SoundCloud profile.",
   bandcamp: "Your Bandcamp page.",
@@ -191,6 +191,67 @@ export function normalizeSocial(
     provider,
     url: coerceWebsiteUrl(trimmed),
   };
+}
+
+/** Short handle / path shown next to the provider icon in editors. */
+export function socialDisplayHandle(social: CreativeSocial): string {
+  if (social.provider === "instagram") {
+    const handle = instagramHandleFromValue(social.url);
+    return handle ? `@${handle}` : socialProviderLabels.instagram;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(social.url);
+  } catch {
+    return socialProviderLabels[social.provider];
+  }
+
+  const host = rootHost(url.hostname);
+  const parts = url.pathname
+    .split("/")
+    .filter(Boolean)
+    .map((part) => {
+      try {
+        return decodeURIComponent(part);
+      } catch {
+        return part;
+      }
+    });
+
+  switch (social.provider) {
+    case "website":
+      return parts.length > 0 ? `${host}/${parts.join("/")}` : host;
+    case "youtube": {
+      if (parts[0]?.startsWith("@")) return parts[0];
+      if ((parts[0] === "c" || parts[0] === "user") && parts[1]) {
+        return parts[1];
+      }
+      if (parts[0] === "channel" && parts[1]) return parts[1];
+      return parts[0] ?? host;
+    }
+    case "vimeo":
+      return parts[0] ? `@${parts[0]}` : host;
+    case "spotify":
+      if ((parts[0] === "artist" || parts[0] === "user") && parts[1]) {
+        return parts[1];
+      }
+      return parts.at(-1) ?? host;
+    case "apple_music": {
+      const artistIdx = parts.indexOf("artist");
+      if (artistIdx >= 0 && parts[artistIdx + 1]) return parts[artistIdx + 1];
+      return parts.at(-1) ?? host;
+    }
+    case "soundcloud":
+      return parts[0] ? `@${parts[0]}` : host;
+    case "bandcamp":
+      if (host !== "bandcamp.com" && host.endsWith(".bandcamp.com")) {
+        return host.replace(/\.bandcamp\.com$/, "");
+      }
+      return parts[0] ?? host;
+    default:
+      return host;
+  }
 }
 
 export function normalizeSocials(

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { setAccountVisibilityAction } from "@/app/actions/visibility";
-import { Choice, ChoiceControl } from "@/components/ui/choice";
+import { OptionPill } from "@/components/ui/option-pill";
 
 export function AccountVisibilityToggle({
   isPublic,
@@ -31,39 +31,33 @@ export function AccountVisibilityToggle({
   }
 
   return (
-    <fieldset className="space-y-2" disabled={pending}>
-      <legend className="sr-only">Who can find you</legend>
-      <Choice>
-        <ChoiceControl
-          type="radio"
-          name="visibility"
-          checked={value}
-          onChange={() => choose(true)}
-        />
-        <span>
-          <span className="block text-sm font-medium">Public</span>
-          <span className="block text-xs text-muted-foreground">
-            {profileReady
-              ? "People can find you in the directory once your profile is approved."
-              : "You’ll appear in the directory once approved, after you add a bio, profile picture, and a work photo."}
-          </span>
-        </span>
-      </Choice>
-      <Choice>
-        <ChoiceControl
-          type="radio"
-          name="visibility"
-          checked={!value}
-          onChange={() => choose(false)}
-        />
-        <span>
-          <span className="block text-sm font-medium">Private</span>
-          <span className="block text-xs text-muted-foreground">
-            You stay out of the directory. Your profile page isn’t public.
-          </span>
-        </span>
-      </Choice>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Visibility">
+        <OptionPill
+          active={value}
+          onClick={() => {
+            if (!pending) choose(true);
+          }}
+        >
+          Public
+        </OptionPill>
+        <OptionPill
+          active={!value}
+          onClick={() => {
+            if (!pending) choose(false);
+          }}
+        >
+          Private
+        </OptionPill>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {value
+          ? profileReady
+            ? "You’re listed in the directory."
+            : "Listed once essentials are done."
+          : "Hidden from the directory and public profile."}
+      </p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-    </fieldset>
+    </div>
   );
 }

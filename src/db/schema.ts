@@ -113,6 +113,13 @@ export const overflowFeatureRoleEnum = pgEnum("overflow_feature_role", [
   "interviewee",
 ]);
 
+/** How (if at all) a creative’s public contact email is shown. */
+export const publicEmailModeEnum = pgEnum("public_email_mode", [
+  "hidden",
+  "account",
+  "custom",
+]);
+
 /** One public creative profile per Neon Auth account (unique userId). */
 export const creatives = pgTable(
   "creatives",
@@ -141,6 +148,15 @@ export const creatives = pgTable(
     instagramHandle: text("instagram_handle"),
     /** @deprecated Prefer socials[website]. Kept synced on save. */
     portfolioUrl: text("portfolio_url"),
+    /**
+     * Public contact email visibility. `account` shows the login email;
+     * `custom` shows `publicEmail`. Never confuse with inviteEmail.
+     */
+    publicEmailMode: publicEmailModeEnum("public_email_mode")
+      .notNull()
+      .default("hidden"),
+    /** Used when publicEmailMode is `custom`. Not the login or invite email. */
+    publicEmail: text("public_email"),
     /** YouTube / Vimeo links for featured videos (at most 3). */
     videoUrls: text("video_urls").array().notNull().default([]),
     /**
