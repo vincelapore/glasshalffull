@@ -3,9 +3,6 @@ import { BioRhyme, Syne_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-import { HideHeaderOnFooter } from "@/components/hide-header-on-footer";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { publicSiteOrigin } from "@/lib/urls";
 
@@ -33,10 +30,14 @@ export const metadata: Metadata = {
     "A discovery hub for Brisbane's creative scene: DJs, musicians, tattoo artists, visual art, fashion, and more.",
 };
 
-/** Header reads the Neon Auth session cookie on every page. */
+/** Header (site group) reads the Neon Auth session cookie on every page. */
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
@@ -50,10 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem={false}
           disableTransitionOnChange
         >
-          <SiteHeader />
-          <HideHeaderOnFooter />
-          <main className="flex-1 pt-[4.25rem]">{children}</main>
-          <SiteFooter />
+          {children}
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />

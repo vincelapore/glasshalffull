@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -14,18 +15,43 @@ import {
 import { Label } from "@/components/ui/label";
 import { Notice } from "@/components/ui/notice";
 import { authClient } from "@/lib/auth/client";
+import {
+  authErrorInfo,
+  type AuthErrorAction,
+  MIN_PASSWORD_LENGTH,
+  passwordTooShort,
+} from "@/lib/auth/errors";
 
 type AuthFormProps =
-  | { mode: "sign-in"; next?: string }
-  | { mode: "sign-up"; next?: never };
+  | { mode: "sign-in"; next?: string; notice?: string | null }
+  | { mode: "sign-up"; next?: never; notice?: never };
 
 type Step = "auth" | "verify";
 
 const OTP_LENGTH = 6;
 
-function isEmailNotVerifiedError(message?: string | null) {
-  if (!message) return false;
-  return /email not verified/i.test(message);
+function isEmailNotVerifiedError(error: unknown) {
+  const info = authErrorInfo(error);
+  return info.action === "resend" && /verify your email/i.test(info.message);
+}
+
+function beginVerify(
+  submittedEmail: string,
+  setEmail: (value: string) => void,
+  setOtp: (value: string) => void,
+  setInfo: (value: string | null) => void,
+  setStep: (value: Step) => void,
+  setError: (value: string | null) => void,
+  setErrorAction: (value: AuthErrorAction | null) => void
+) {
+  setEmail(submittedEmail);
+  setOtp("");
+  setError(null);
+  setErrorAction(null);
+  setInfo(
+    "Verify your email before signing in. Enter the code we sent, or request a new one."
+  );
+  setStep("verify");
 }
 
 export function AuthForm(props: AuthFormProps) {
@@ -33,15 +59,39 @@ export function AuthForm(props: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [errorAction, setErrorAction] = useState<AuthErrorAction | null>(null);
+  const [info, setInfo] = useState<string | null>(props.notice ?? null);
   const [pending, setPending] = useState(false);
 
   const redirectTo =
     props.mode === "sign-in" && props.next ? props.next : "/account";
 
+  function showMappedError(
+    err: unknown,
+    fallback: string,
+    submittedEmail?: string
+  ) {
+    if (submittedEmail && isEmailNotVerifiedError(err)) {
+      beginVerify(
+        submittedEmail,
+        setEmail,
+        setOtp,
+        setInfo,
+        setStep,
+        setError,
+        setErrorAction
+      );
+      return;
+    }
+    const mapped = authErrorInfo(err, fallback);
+    setError(mapped.message);
+    setErrorAction(mapped.action ?? null);
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setErrorAction(null);
     setInfo(null);
     setPending(true);
 
@@ -56,8 +106,10 @@ export function AuthForm(props: AuthFormProps) {
           setError("Name, email, and password are required.");
           return;
         }
-        if (password.length < 8) {
-          setError("Password must be at least 8 characters.");
+        if (passwordTooShort(password)) {
+          setError(
+            `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+          );
           return;
         }
 
@@ -68,7 +120,7 @@ export function AuthForm(props: AuthFormProps) {
         });
 
         if (signUpError) {
-          setError(signUpError.message || "Could not create your account.");
+          showMappedError(signUpError, "Could not create your account.");
           return;
         }
 
@@ -92,24 +144,26 @@ export function AuthForm(props: AuthFormProps) {
         });
 
         if (signInError) {
-          if (isEmailNotVerifiedError(signInError.message)) {
-            setEmail(submittedEmail);
-            setOtp("");
-            setInfo(
-              "Verify your email before signing in. Enter the code we sent, or request a new one."
-            );
-            setStep("verify");
-            return;
-          }
-          setError(signInError.message || "Could not sign in. Try again.");
+          showMappedError(
+            signInError,
+            "Could not sign in. Try again.",
+            submittedEmail
+          );
           return;
         }
       }
 
       window.location.assign(redirectTo);
     } catch (err) {
-      console.error("AuthForm", err);
-      setError("Something went wrong. Please try again.");
+      // Neon Auth throws AuthApiError (e.g. invalid_credentials) instead of
+      // always returning { error }. Map it; do not console.error (Next overlay).
+      showMappedError(
+        err,
+        props.mode === "sign-up"
+          ? "Could not create your account."
+          : "Could not sign in. Try again.",
+        submittedEmail
+      );
     } finally {
       setPending(false);
     }
@@ -122,6 +176,7 @@ export function AuthForm(props: AuthFormProps) {
     }
 
     setError(null);
+    setErrorAction(null);
     setInfo(null);
     setPending(true);
 
@@ -132,7 +187,7 @@ export function AuthForm(props: AuthFormProps) {
       });
 
       if (verifyError) {
-        setError(verifyError.message || "Could not verify that code.");
+        showMappedError(verifyError, "Could not verify that code.");
         setOtp("");
         return;
       }
@@ -147,8 +202,7 @@ export function AuthForm(props: AuthFormProps) {
       setStep("auth");
       setOtp("");
     } catch (err) {
-      console.error("AuthForm verify", err);
-      setError("Something went wrong. Please try again.");
+      showMappedError(err, "Could not verify that code.");
       setOtp("");
     } finally {
       setPending(false);
@@ -163,25 +217,27 @@ export function AuthForm(props: AuthFormProps) {
   async function onResend() {
     if (!email) return;
     setError(null);
+    setErrorAction(null);
     setInfo(null);
     setPending(true);
 
     try {
-      const { error: resendError } = await authClient.sendVerificationEmail({
-        email,
-        callbackURL: window.location.origin + "/account",
-      });
+      const { error: resendError } = await authClient.emailOtp.sendVerificationOtp(
+        {
+          email,
+          type: "email-verification",
+        }
+      );
 
       if (resendError) {
-        setError(resendError.message || "Could not resend the code.");
+        showMappedError(resendError, "Could not resend the code.");
         return;
       }
 
       setOtp("");
       setInfo("New verification code sent. Check your inbox.");
     } catch (err) {
-      console.error("AuthForm resend", err);
-      setError("Could not resend the code. Please try again.");
+      showMappedError(err, "Could not resend the code.");
     } finally {
       setPending(false);
     }
@@ -257,6 +313,7 @@ export function AuthForm(props: AuthFormProps) {
               setStep("auth");
               setOtp("");
               setError(null);
+              setErrorAction(null);
               setInfo(null);
             }}
             className="underline-offset-4 hover:underline"
@@ -297,22 +354,72 @@ export function AuthForm(props: AuthFormProps) {
         />
       </Field>
 
-      <Field>
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete={
-            props.mode === "sign-up" ? "new-password" : "current-password"
-          }
-          placeholder="At least 8 characters"
-          minLength={8}
-        />
-      </Field>
+      <PasswordField
+        name="password"
+        label="Password"
+        autoComplete={
+          props.mode === "sign-up" ? "new-password" : "current-password"
+        }
+        placeholder={
+          props.mode === "sign-up" ? undefined : "Your password"
+        }
+        minLength={props.mode === "sign-up" ? MIN_PASSWORD_LENGTH : undefined}
+        hint={
+          props.mode === "sign-up"
+            ? `At least ${MIN_PASSWORD_LENGTH} characters`
+            : undefined
+        }
+      />
 
-      {error ? <Notice variant="destructive">{error}</Notice> : null}
+      {props.mode === "sign-in" ? (
+        <p className="-mt-2 text-right text-sm">
+          <Link
+            href="/auth/forgot-password"
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </p>
+      ) : null}
+
+      {error ? (
+        <Notice variant="destructive">
+          <span>{error}</span>
+          {errorAction === "forgot-password" ? (
+            <>
+              {" "}
+              <Link
+                href="/auth/forgot-password"
+                className="underline underline-offset-4"
+              >
+                Reset password
+              </Link>
+            </>
+          ) : null}
+          {errorAction === "sign-in" ? (
+            <>
+              {" "}
+              <Link
+                href="/auth/sign-in"
+                className="underline underline-offset-4"
+              >
+                Sign in
+              </Link>
+            </>
+          ) : null}
+          {errorAction === "sign-up" ? (
+            <>
+              {" "}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
+                Create an account
+              </Link>
+            </>
+          ) : null}
+        </Notice>
+      ) : null}
       {info ? <Notice variant="muted">{info}</Notice> : null}
 
       <Button type="submit" disabled={pending} className="w-full">

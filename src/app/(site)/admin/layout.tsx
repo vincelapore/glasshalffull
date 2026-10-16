@@ -3,7 +3,9 @@ import { getStaffRole, requireAdmin } from "@/lib/admin";
 
 export default async function AdminLayout({
   children,
-}: LayoutProps<"/admin">) {
+}: {
+  children: React.ReactNode;
+}) {
   const user = await requireAdmin();
   const role = await getStaffRole(user.email);
 

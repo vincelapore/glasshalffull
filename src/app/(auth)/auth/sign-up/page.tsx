@@ -18,7 +18,7 @@ export default async function SignUpPage() {
   }
 
   return (
-    <Page width="auth" className="flex flex-col gap-6 py-16">
+    <Page width="auth" className="flex flex-col gap-6 py-0 sm:py-2">
       <PageHeader
         className="mb-0"
         title="Create account"

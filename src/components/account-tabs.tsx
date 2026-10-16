@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { href: "/account", label: "Profile" },
   { href: "/account/events", label: "Events" },
+  { href: "/account/security", label: "Security" },
 ] as const;
 
 function isTabActive(pathname: string, href: string) {
