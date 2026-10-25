@@ -3,6 +3,7 @@ import { BioRhyme, Syne_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { MetaPixel } from "@/components/meta-pixel";
 import { ThemeProvider } from "@/components/theme-provider";
 import { publicSiteOrigin } from "@/lib/urls";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />
+        <MetaPixel />
       </body>
     </html>
   );
