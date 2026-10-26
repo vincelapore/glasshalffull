@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/page";
 import { cityLabels, parseCityFilter, parseMusicGenre } from "@/lib/labels";
 import { eventsBrowsePath } from "@/lib/paths";
-import { getApprovedEvents, getOrganisersByEventIds } from "@/lib/queries";
+import { getOrganisersByEventIds, getUpcomingApprovedEvents } from "@/lib/queries";
 import { cities, eventCategories } from "@/lib/validations";
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ export default async function EventsPage({
   const activeGenre = activeCategory === "music" ? parsedGenre : null;
   const activeCity = parseCityFilter(city);
 
-  const allEvents = await getApprovedEvents();
+  const allEvents = await getUpcomingApprovedEvents();
   const events = allEvents.filter((event) => {
     if (activeCity !== "all" && event.city !== activeCity) {
       return false;

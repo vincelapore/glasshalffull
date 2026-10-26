@@ -8,8 +8,9 @@ import {
   eventListingGridClassName,
 } from "@/components/event-listing";
 import { Notice } from "@/components/ui/notice";
-import { getAccountVisibility, getAccountsByIds } from "@/lib/accounts";
+import { getPublicAccountContact, getPublicAccountVisibility } from "@/lib/accounts";
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
+import { hasAuthSessionCookie } from "@/lib/auth/session-cookie";
 import { resolveDisplayedContactEmail } from "@/lib/creative-contact";
 import { lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
@@ -30,12 +31,13 @@ type CreativePageProps = {
 };
 
 async function canViewCreativeProfile(
-  creative: ProfileVisibilityFields & { userId: string | null }
+  creative: ProfileVisibilityFields & { userId: string | null },
 ) {
   const accountPublic = creative.userId
-    ? await getAccountVisibility(creative.userId)
+    ? await getPublicAccountVisibility(creative.userId)
     : true;
   if (accountPublic && isProfileReadyForPublic(creative)) return true;
+  if (!(await hasAuthSessionCookie())) return false;
 
   const user = await getSessionUser();
   if (!user) return false;
@@ -54,7 +56,9 @@ export async function generateMetadata({
   return { title: creative.name };
 }
 
-export default async function CreativeDetailPage({ params }: CreativePageProps) {
+export default async function CreativeDetailPage({
+  params,
+}: CreativePageProps) {
   const { slug } = await params;
   const creative = await getCreativeByParam(slug);
 
@@ -63,7 +67,7 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
   }
 
   const optedPrivate = creative.userId
-    ? !(await getAccountVisibility(creative.userId))
+    ? !(await getPublicAccountVisibility(creative.userId))
     : false;
   const incomplete = !isProfileReadyForPublic(creative);
 
@@ -73,25 +77,25 @@ export default async function CreativeDetailPage({ params }: CreativePageProps) 
 
   const upcoming = await getCreativeUpcomingEvents(creative.id);
   const organisersByEvent = await getOrganisersByEventIds(
-    upcoming.map(({ event }) => event.id)
+    upcoming.map(({ event }) => event.id),
   );
   const isApproved = creative.status === "approved";
-  const viewer = await getSessionUser();
+  const viewer = (await hasAuthSessionCookie()) ? await getSessionUser() : null;
   const showModerationNote = Boolean(
     viewer &&
-      (viewer.id === creative.userId || (await isAdminEmail(viewer.email)))
+    (viewer.id === creative.userId || (await isAdminEmail(viewer.email))),
   );
   const moderationNote = showModerationNote
     ? await getCreativeModerationNote(creative.id)
     : null;
-  const [linkedAccount] =
+  const linkedAccount =
     creative.publicEmailMode === "account" && creative.userId
-      ? await getAccountsByIds([creative.userId])
-      : [];
+      ? await getPublicAccountContact(creative.userId)
+      : null;
   const contactEmail = resolveDisplayedContactEmail(
     creative.publicEmailMode,
     creative.publicEmail,
-    linkedAccount?.email
+    linkedAccount?.email,
   );
 
   return (

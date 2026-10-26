@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
+import { PhotoQualityNote } from "@/components/forms/photo-upload-field";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { MAX_WORK_PHOTOS, mediaUrl } from "@/lib/media";
@@ -247,6 +248,7 @@ export function WorkPhotosField({
         ) : null}
       </ul>
       <FieldError>{localError ?? error}</FieldError>
+      <PhotoQualityNote />
     </fieldset>
   );
 }

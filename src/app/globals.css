@@ -821,6 +821,24 @@
     and each track is 1fr so a full row always spans the width. Narrow
     screens stay two columns.
   */
+  /*
+    Home upcoming grid. Six cards fill one, two, or three columns.
+    The last two join once four columns fit (minmax 15rem, gap 1rem).
+  */
+  .home-upcoming-grid {
+    container-type: inline-size;
+  }
+
+  .home-upcoming-grid > :nth-child(n + 7) {
+    display: none;
+  }
+
+  @container (width >= 63rem) {
+    .home-upcoming-grid > :nth-child(n + 7) {
+      display: revert;
+    }
+  }
+
   .profile-listing {
     container-type: inline-size;
   }

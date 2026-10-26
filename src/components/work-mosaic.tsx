@@ -356,7 +356,7 @@ function WorkMosaicPopup({
               <Button
                 className="flex-1"
                 nativeButton={false}
-                render={<Link href={creativePath(item.slug)} />}
+                render={<Link href={creativePath(item.slug)} prefetch={false} />}
               >
                 View profile
               </Button>

@@ -31,9 +31,6 @@ export const metadata: Metadata = {
     "A discovery hub for Brisbane's creative scene: DJs, musicians, tattoo artists, visual art, fashion, and more.",
 };
 
-/** Header (site group) reads the Neon Auth session cookie on every page. */
-export const dynamic = "force-dynamic";
-
 export default function RootLayout({
   children,
 }: {

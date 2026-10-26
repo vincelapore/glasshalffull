@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { getSessionUser, isAdminEmail } from "@/lib/admin";
 import { creativePath, eventPath } from "@/lib/paths";
+import { publicTags, revalidatePublicTags } from "@/lib/public-cache";
 import { getCreativeByUserId, getEventOrganisers, searchCreativesByName } from "@/lib/queries";
 import { uniqueCreativeSlug } from "@/lib/slug";
 import { organiserStubSchema } from "@/lib/validations";
@@ -56,6 +57,7 @@ async function revalidateOrganiserChange(eventId: string, creativeSlug?: string)
   revalidatePath("/");
   if (event) revalidatePath(eventPath(event.slug));
   if (creativeSlug) revalidatePath(creativePath(creativeSlug));
+  revalidatePublicTags(publicTags.events, publicTags.creatives);
 }
 
 async function linkOrganiser(eventId: string, creativeId: string) {

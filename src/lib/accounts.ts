@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { accountSettings } from "@/db/schema";
+import { cachedPublic, publicTags } from "@/lib/public-cache";
 import { isUuid } from "@/lib/slug";
 
 export type AccountRecord = {
@@ -49,3 +50,28 @@ export async function getAccountVisibility(userId: string) {
 
   return row?.isPublic ?? true;
 }
+
+/** Same lookup, cached for public profile pages. */
+export async function getPublicAccountVisibility(userId: string) {
+  return cachedAccountVisibility(userId);
+}
+
+/** Account name and email shown on a public profile. */
+export async function getPublicAccountContact(userId: string) {
+  return cachedPublicAccountContact(userId);
+}
+
+const cachedAccountVisibility = cachedPublic(
+  async (userId: string) => getAccountVisibility(userId),
+  "account-visibility",
+  [publicTags.creatives],
+);
+
+const cachedPublicAccountContact = cachedPublic(
+  async (userId: string) => {
+    const [account] = await getAccountsByIds([userId]);
+    return account ?? null;
+  },
+  "public-account-contact",
+  [publicTags.creatives],
+);

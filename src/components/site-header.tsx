@@ -10,13 +10,14 @@ import { SessionRefresh } from "@/components/session-refresh";
 import { publicNavLinks } from "@/components/site-nav";
 import { pageWidths } from "@/components/ui/page";
 import { getSessionUser, getStaffRole } from "@/lib/admin";
+import { hasAuthSessionCookie } from "@/lib/auth/session-cookie";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
 import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { getCreativeByUserId } from "@/lib/queries";
 
 export async function SiteHeader() {
-  const user = await getSessionUser();
+  const user = (await hasAuthSessionCookie()) ? await getSessionUser() : null;
   const [profile, role] = user
     ? await Promise.all([
         getCreativeByUserId(user.id),

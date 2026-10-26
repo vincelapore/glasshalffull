@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, ilike, inArray, or, sql } from "drizzle-orm";
 
 import { db } from "@/db";
+import { cachedPublic, publicTags } from "@/lib/public-cache";
 import {
   creatives,
   eventLineup,
@@ -27,28 +28,40 @@ function omitInviteEmail<
   return rest;
 }
 
-export async function getApprovedEvents(limit?: number) {
-  const query = db
-    .select()
-    .from(events)
-    .where(eq(events.status, "approved"))
-    .orderBy(asc(events.dateTime));
-
-  if (limit) {
-    return query.limit(limit);
-  }
-
-  return query;
+/** Approved events that have not started yet. */
+export async function getUpcomingApprovedEvents(options?: {
+  limit?: number;
+  city?: Exclude<CityFilter, "all">;
+}) {
+  return cachedUpcomingApprovedEvents(options?.limit ?? 0, options?.city ?? "");
 }
 
-export async function getUpcomingApprovedEvents(limit = 6) {
-  return db
-    .select()
-    .from(events)
-    .where(and(eq(events.status, "approved"), gte(events.dateTime, new Date())))
-    .orderBy(asc(events.dateTime))
-    .limit(limit);
-}
+const cachedUpcomingApprovedEvents = cachedPublic(
+  async (limit: number, city: string) => {
+    const conditions = [
+      eq(events.status, "approved"),
+      gte(events.dateTime, new Date()),
+    ];
+
+    if (city) {
+      conditions.push(eq(events.city, city as Exclude<CityFilter, "all">));
+    }
+
+    const query = db
+      .select()
+      .from(events)
+      .where(and(...conditions))
+      .orderBy(asc(events.dateTime));
+
+    if (limit > 0) {
+      return query.limit(limit);
+    }
+
+    return query;
+  },
+  "upcoming-approved-events",
+  [publicTags.events],
+);
 
 /** Directory cards. Only the first work photo — listings never pull the full set. */
 const creativeCardColumns = {
@@ -111,18 +124,26 @@ function isDiscoverable() {
 }
 
 export async function getApprovedCreatives(limit?: number) {
-  const query = db
-    .select(creativeCardColumns)
-    .from(creatives)
-    .where(and(eq(creatives.status, "approved"), isDiscoverable()))
-    .orderBy(asc(creatives.name));
-
-  if (limit) {
-    return query.limit(limit);
-  }
-
-  return query;
+  return cachedApprovedCreatives(limit ?? 0);
 }
+
+const cachedApprovedCreatives = cachedPublic(
+  async (limit: number) => {
+    const query = db
+      .select(creativeCardColumns)
+      .from(creatives)
+      .where(and(eq(creatives.status, "approved"), isDiscoverable()))
+      .orderBy(asc(creatives.name));
+
+    if (limit > 0) {
+      return query.limit(limit);
+    }
+
+    return query;
+  },
+  "approved-creatives",
+  [publicTags.creatives],
+);
 
 export type WorkMosaicItem = {
   photoKey: string;
@@ -153,41 +174,49 @@ export async function getWorkMosaicItems(
   city: CityFilter = "all",
   limit = WORK_MOSAIC_POOL_CAP,
 ): Promise<WorkMosaicItem[]> {
-  const conditions = [eq(creatives.status, "approved"), isDiscoverable()];
-  if (city !== "all") {
-    conditions.push(eq(creatives.city, city));
-  }
-
-  const rows = await db
-    .select({
-      slug: creatives.slug,
-      name: creatives.name,
-      city: creatives.city,
-      disciplines: creatives.disciplines,
-      avatarKey: creatives.avatarKey,
-      workPhotoKeys: creatives.workPhotoKeys,
-    })
-    .from(creatives)
-    .where(and(...conditions));
-
-  const pool: WorkMosaicItem[] = [];
-  for (const row of rows) {
-    for (const photoKey of row.workPhotoKeys) {
-      if (!photoKey) continue;
-      pool.push({
-        photoKey,
-        slug: row.slug,
-        name: row.name,
-        city: row.city,
-        disciplines: row.disciplines,
-        avatarKey: row.avatarKey,
-      });
-    }
-  }
-
-  shuffleInPlace(pool);
-  return pool.slice(0, Math.max(0, limit));
+  return cachedWorkMosaicItems(city, limit);
 }
+
+const cachedWorkMosaicItems = cachedPublic(
+  async (city: CityFilter, limit: number): Promise<WorkMosaicItem[]> => {
+    const conditions = [eq(creatives.status, "approved"), isDiscoverable()];
+    if (city !== "all") {
+      conditions.push(eq(creatives.city, city));
+    }
+
+    const rows = await db
+      .select({
+        slug: creatives.slug,
+        name: creatives.name,
+        city: creatives.city,
+        disciplines: creatives.disciplines,
+        avatarKey: creatives.avatarKey,
+        workPhotoKeys: creatives.workPhotoKeys,
+      })
+      .from(creatives)
+      .where(and(...conditions));
+
+    const pool: WorkMosaicItem[] = [];
+    for (const row of rows) {
+      for (const photoKey of row.workPhotoKeys) {
+        if (!photoKey) continue;
+        pool.push({
+          photoKey,
+          slug: row.slug,
+          name: row.name,
+          city: row.city,
+          disciplines: row.disciplines,
+          avatarKey: row.avatarKey,
+        });
+      }
+    }
+
+    shuffleInPlace(pool);
+    return pool.slice(0, Math.max(0, limit));
+  },
+  "work-mosaic",
+  [publicTags.creatives],
+);
 
 export async function getEventById(id: string) {
   const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
@@ -222,11 +251,16 @@ export async function getCreativeBySlug(slug: string) {
 }
 
 export async function getEventByParam(param: string) {
-  return (
-    (await getEventBySlug(param)) ??
-    (isUuid(param) ? await getEventById(param) : null)
-  );
+  return cachedEventByParam(param);
 }
+
+const cachedEventByParam = cachedPublic(
+  async (param: string) =>
+    (await getEventBySlug(param)) ??
+    (isUuid(param) ? await getEventById(param) : null),
+  "event-by-param",
+  [publicTags.events],
+);
 
 async function getPublicCreativeById(id: string) {
   const [creative] = await db
@@ -238,41 +272,60 @@ async function getPublicCreativeById(id: string) {
 }
 
 export async function getCreativeByParam(param: string) {
-  return (
-    (await getCreativeBySlug(param)) ??
-    (isUuid(param) ? await getPublicCreativeById(param) : null)
-  );
+  return cachedCreativeByParam(param);
 }
+
+const cachedCreativeByParam = cachedPublic(
+  async (param: string) =>
+    (await getCreativeBySlug(param)) ??
+    (isUuid(param) ? await getPublicCreativeById(param) : null),
+  "creative-by-param",
+  [publicTags.creatives],
+);
 
 export async function getEventLineup(eventId: string) {
-  return db
-    .select({
-      role: eventLineup.role,
-      creative: publicCreativeColumns,
-    })
-    .from(eventLineup)
-    .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
-    .where(eq(eventLineup.eventId, eventId))
-    .orderBy(asc(creatives.name));
+  return cachedEventLineup(eventId);
 }
 
+const cachedEventLineup = cachedPublic(
+  async (eventId: string) =>
+    db
+      .select({
+        role: eventLineup.role,
+        creative: publicCreativeColumns,
+      })
+      .from(eventLineup)
+      .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
+      .where(eq(eventLineup.eventId, eventId))
+      .orderBy(asc(creatives.name)),
+  "event-lineup",
+  [publicTags.events, publicTags.creatives],
+);
+
 export async function getCreativeUpcomingEvents(creativeId: string) {
-  return db
-    .select({
-      role: eventLineup.role,
-      event: events,
-    })
-    .from(eventLineup)
-    .innerJoin(events, eq(eventLineup.eventId, events.id))
-    .where(
-      and(
-        eq(eventLineup.creativeId, creativeId),
-        eq(events.status, "approved"),
-        gte(events.dateTime, new Date())
-      )
-    )
-    .orderBy(asc(events.dateTime));
+  return cachedCreativeUpcomingEvents(creativeId);
 }
+
+const cachedCreativeUpcomingEvents = cachedPublic(
+  async (creativeId: string) =>
+    db
+      .select({
+        role: eventLineup.role,
+        event: events,
+      })
+      .from(eventLineup)
+      .innerJoin(events, eq(eventLineup.eventId, events.id))
+      .where(
+        and(
+          eq(eventLineup.creativeId, creativeId),
+          eq(events.status, "approved"),
+          gte(events.dateTime, new Date()),
+        ),
+      )
+      .orderBy(asc(events.dateTime)),
+  "creative-upcoming-events",
+  [publicTags.events, publicTags.creatives],
+);
 
 export async function getCreativeByUserId(userId: string) {
   const [creative] = await db
@@ -362,32 +415,14 @@ export async function searchCreativesByName(query: string, limit = 8) {
     .limit(limit);
 }
 
-export async function getOrganisersByEventIds(eventIds: string[]) {
-  const unique = [...new Set(eventIds)];
-  const grouped = new Map<
-    string,
-    { id: string; name: string; avatarKey: string | null }[]
-  >();
+type OrganiserCard = { id: string; name: string; avatarKey: string | null };
 
+export async function getOrganisersByEventIds(eventIds: string[]) {
+  const unique = [...new Set(eventIds)].sort();
+  const grouped = new Map<string, OrganiserCard[]>();
   if (unique.length === 0) return grouped;
 
-  const rows = await db
-    .select({
-      eventId: eventLineup.eventId,
-      id: creatives.id,
-      name: creatives.name,
-      avatarKey: creatives.avatarKey,
-    })
-    .from(eventLineup)
-    .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
-    .where(
-      and(
-        inArray(eventLineup.eventId, unique),
-        eq(eventLineup.role, "organiser")
-      )
-    )
-    .orderBy(asc(creatives.name));
-
+  const rows = await cachedOrganiserRows(unique.join(","));
   for (const row of rows) {
     const list = grouped.get(row.eventId) ?? [];
     list.push({ id: row.id, name: row.name, avatarKey: row.avatarKey });
@@ -396,6 +431,30 @@ export async function getOrganisersByEventIds(eventIds: string[]) {
 
   return grouped;
 }
+
+const cachedOrganiserRows = cachedPublic(
+  async (idsKey: string) => {
+    const unique = idsKey ? idsKey.split(",") : [];
+    return db
+      .select({
+        eventId: eventLineup.eventId,
+        id: creatives.id,
+        name: creatives.name,
+        avatarKey: creatives.avatarKey,
+      })
+      .from(eventLineup)
+      .innerJoin(creatives, eq(eventLineup.creativeId, creatives.id))
+      .where(
+        and(
+          inArray(eventLineup.eventId, unique),
+          eq(eventLineup.role, "organiser"),
+        ),
+      )
+      .orderBy(asc(creatives.name));
+  },
+  "organiser-rows",
+  [publicTags.events, publicTags.creatives],
+);
 
 export async function getEventOrganisers(eventId: string) {
   return db
@@ -564,25 +623,41 @@ async function hydrateOverflowEpisodes(
 }
 
 export async function getOverflowEpisodes(city: CityFilter) {
-  const rows = await db
-    .select()
-    .from(overflowEpisodes)
-    .where(city === "all" ? undefined : eq(overflowEpisodes.city, city))
-    .orderBy(desc(overflowEpisodes.number));
-
-  return hydrateOverflowEpisodes(rows);
+  return cachedOverflowEpisodes(city);
 }
+
+const cachedOverflowEpisodes = cachedPublic(
+  async (city: CityFilter) => {
+    const rows = await db
+      .select()
+      .from(overflowEpisodes)
+      .where(city === "all" ? undefined : eq(overflowEpisodes.city, city))
+      .orderBy(desc(overflowEpisodes.number));
+
+    return hydrateOverflowEpisodes(rows);
+  },
+  "overflow-episodes",
+  [publicTags.overflow],
+);
 
 export async function getOverflowEpisodeBySlug(slug: string) {
-  const rows = await db
-    .select()
-    .from(overflowEpisodes)
-    .where(eq(overflowEpisodes.slug, slug))
-    .limit(1);
-
-  const [episode] = await hydrateOverflowEpisodes(rows);
-  return episode ?? null;
+  return cachedOverflowEpisodeBySlug(slug);
 }
+
+const cachedOverflowEpisodeBySlug = cachedPublic(
+  async (slug: string) => {
+    const rows = await db
+      .select()
+      .from(overflowEpisodes)
+      .where(eq(overflowEpisodes.slug, slug))
+      .limit(1);
+
+    const [episode] = await hydrateOverflowEpisodes(rows);
+    return episode ?? null;
+  },
+  "overflow-episode-by-slug",
+  [publicTags.overflow],
+);
 
 export async function getOverflowEpisodeById(id: string) {
   const rows = await db

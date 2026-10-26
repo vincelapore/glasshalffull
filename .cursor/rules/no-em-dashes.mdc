@@ -1,0 +1,23 @@
+---
+description: Never use em dashes in user-facing copy
+alwaysApply: true
+---
+
+# No em dashes in copy
+
+Never use the em dash character (`—`, U+2014) in anything a person reads in the product or in AI replies to the user.
+
+**Covers:** UI labels, helper text, errors, toasts, empty states, aria-labels, metadata descriptions, emails, and chat responses.
+
+**Prefer instead:** a comma, a period and a new sentence, parentheses, or a colon.
+
+```text
+❌ Missing bio — won’t appear in the directory.
+✅ Missing bio. Won’t appear in the directory.
+✅ Missing bio, so it won’t appear in the directory.
+
+❌ Account menu — profile needs attention
+✅ Account menu: profile needs attention
+```
+
+Code comments and internal docs may keep em dashes. User-facing strings must not.

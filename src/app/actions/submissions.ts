@@ -16,6 +16,7 @@ import {
   type ModerationAction,
 } from "@/lib/moderation-activity";
 import { creativePath, eventPath } from "@/lib/paths";
+import { publicTags, revalidatePublicTags } from "@/lib/public-cache";
 import { deleteMediaObjects } from "@/lib/r2";
 import { uniqueCreativeSlug, uniqueEventSlug } from "@/lib/slug";
 import {
@@ -236,6 +237,7 @@ export async function submitEventAction(input: unknown): Promise<ActionResult> {
     revalidatePath(eventPath(created.slug));
     revalidatePath(creativePath(profile.slug));
     revalidatePath("/");
+    revalidatePublicTags(publicTags.events, publicTags.creatives);
 
     return {
       success: true,
@@ -575,6 +577,7 @@ export async function updateCreativeStatusAction(
     revalidatePath("/creatives");
     revalidatePath(creativePath(updated.slug));
     revalidatePath("/");
+    revalidatePublicTags(publicTags.creatives);
 
     return {
       success: true,
@@ -670,6 +673,7 @@ function revalidateCreativePaths(slug: string) {
   revalidatePath("/creatives");
   revalidatePath(creativePath(slug));
   revalidatePath("/");
+  revalidatePublicTags(publicTags.creatives);
 }
 
 function revalidateEventPaths(slug: string) {
@@ -678,6 +682,7 @@ function revalidateEventPaths(slug: string) {
   revalidatePath("/account/events");
   revalidatePath(eventPath(slug));
   revalidatePath("/");
+  revalidatePublicTags(publicTags.events);
 }
 
 export async function updateCreativeAction(

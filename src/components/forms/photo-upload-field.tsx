@@ -16,6 +16,15 @@ import {
 } from "@/lib/upload-photo";
 import { cn } from "@/lib/utils";
 
+export function PhotoQualityNote() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Photos are uploaded in lower quality to keep server costs low and GHF free
+      for the community.
+    </p>
+  );
+}
+
 type PhotoUploadFieldProps = {
   id: string;
   label: string;
@@ -215,6 +224,7 @@ export function PhotoUploadField({
         ) : null}
       </button>
       <FieldError>{localError ?? error}</FieldError>
+      {kind ? <PhotoQualityNote /> : null}
       {crops ? (
         <AvatarCropDialog
           open={cropOpen && Boolean(cropUrl)}

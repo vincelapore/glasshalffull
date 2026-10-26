@@ -106,6 +106,7 @@ function FeatureList({ people }: { people: OverflowFeatureView[] }) {
         <li key={person.creativeId}>
           <Link
             href={creativePath(person.slug)}
+            prefetch={false}
             className="flex items-center gap-3 rounded-lg transition-colors hover:bg-muted/40"
           >
             <ExternalImage
@@ -683,6 +684,7 @@ export function OverflowBanner({
                   <h2 className="text-sm font-medium">The night</h2>
                   <Link
                     href={eventPath(displayed.event.slug)}
+                    prefetch={false}
                     className="text-sm underline underline-offset-4"
                   >
                     {displayed.event.title}

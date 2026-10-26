@@ -34,7 +34,8 @@ import {
   getWorkMosaicItems,
 } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+/** Two full rows once the listing grid reaches four columns. */
+const HOME_UPCOMING_COUNT = 8;
 
 type SearchParams = Promise<{ city?: string; episode?: string }>;
 
@@ -58,6 +59,7 @@ function EventLead({
     <section className="grid items-center gap-6 md:grid-cols-2 md:gap-10">
       <Link
         href={eventPath(event.slug)}
+        prefetch={false}
         className="group block overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:ring-white/15"
       >
         <span className="poster-hover block">
@@ -82,7 +84,9 @@ function EventLead({
           {formatEventListingDate(event.dateTime)}
           {event.location ? ` · ${event.location}` : ""}
         </p>
-        <TextLink href={eventPath(event.slug)}>See the night</TextLink>
+        <TextLink href={eventPath(event.slug)} prefetch={false}>
+          See the night
+        </TextLink>
       </div>
     </section>
   );
@@ -99,7 +103,11 @@ export default async function HomePage({
 
   const [upcomingEvents, approvedCreatives, overflowEpisodes, mosaicItems] =
     await Promise.all([
-      getUpcomingApprovedEvents(activeCity === "all" ? 6 : 12),
+      getUpcomingApprovedEvents({
+        // One extra so the lead poster does not take a slot from the grid.
+        limit: HOME_UPCOMING_COUNT + 1,
+        city: activeCity === "all" ? undefined : activeCity,
+      }),
       getApprovedCreatives(),
       getOverflowEpisodes(activeCity),
       getWorkMosaicItems(activeCity),
@@ -110,16 +118,12 @@ export default async function HomePage({
       (await getOverflowEpisodeBySlug(episodeSlug)))
     : null;
 
-  const featuredEvents = (
-    activeCity === "all"
-      ? upcomingEvents
-      : upcomingEvents.filter((event) => event.city === activeCity)
-  ).slice(0, 6);
   const showOverflow = overflowEpisodes.length > 0 || openEpisode;
-  const leadEvent = showOverflow ? null : (featuredEvents[0] ?? null);
-  const weekEvents = leadEvent
-    ? featuredEvents.filter((event) => event.id !== leadEvent.id)
-    : featuredEvents;
+  const leadEvent = showOverflow ? null : (upcomingEvents[0] ?? null);
+  const weekEvents = (leadEvent ? upcomingEvents.slice(1) : upcomingEvents).slice(
+    0,
+    HOME_UPCOMING_COUNT,
+  );
   const organisersByEvent = await getOrganisersByEventIds(
     weekEvents.map((event) => event.id),
   );
@@ -150,7 +154,7 @@ export default async function HomePage({
               </TextLink>
             }
           />
-          <div className={eventListingGridClassName}>
+          <div className={`${eventListingGridClassName} home-upcoming-grid`}>
             {weekEvents.map((event) => (
               <EventListingCard
                 key={event.id}

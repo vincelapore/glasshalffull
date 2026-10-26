@@ -94,6 +94,7 @@ export function EventListingCard({
         <h3 className="text-base leading-tight font-normal tracking-tight">
           <Link
             href={href}
+            prefetch={false}
             className="outline-none after:absolute after:inset-0 after:z-10"
           >
             {event.title}

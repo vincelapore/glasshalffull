@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { accountSettings } from "@/db/schema";
 import { getSessionUser } from "@/lib/admin";
 import { creativePath } from "@/lib/paths";
+import { publicTags, revalidatePublicTags } from "@/lib/public-cache";
 import { getCreativeByUserId } from "@/lib/queries";
 
 export async function setAccountVisibilityAction(isPublic: boolean) {
@@ -27,6 +28,7 @@ export async function setAccountVisibilityAction(isPublic: boolean) {
   revalidatePath("/creatives");
   const profile = await getCreativeByUserId(user.id);
   if (profile) revalidatePath(creativePath(profile.slug));
+  revalidatePublicTags(publicTags.creatives);
 
   return { success: true as const };
 }

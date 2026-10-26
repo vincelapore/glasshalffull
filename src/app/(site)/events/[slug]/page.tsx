@@ -9,6 +9,7 @@ import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { EventModerationNote } from "@/components/event-moderation-note";
 import { ExternalImage } from "@/components/media/external-image";
+import { hasAuthSessionCookie } from "@/lib/auth/session-cookie";
 import { cityLabels, formatDateTime, lineupRoleLabels } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
@@ -72,6 +73,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
   const isPublic = event.status === "approved";
   const showModerationNote =
     Boolean(event.moderationNote?.trim()) &&
+    (await hasAuthSessionCookie()) &&
     (await canViewEventModerationNote(event));
 
   return (

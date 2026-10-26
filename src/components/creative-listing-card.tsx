@@ -37,6 +37,7 @@ export function CreativeListingCard({
   return (
     <Link
       href={creativePath(creative.slug)}
+      prefetch={false}
       className={cn(
         "group block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
         className,

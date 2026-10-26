@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { creatives, events, overflowEpisodes, overflowFeatures } from "@/db/schema";
 import { isAdminAuthenticated } from "@/lib/admin";
+import { publicTags, revalidatePublicTags } from "@/lib/public-cache";
 import { emptyToNull } from "@/lib/labels";
 import { flyerKeyPattern } from "@/lib/media";
 import {
@@ -110,6 +111,7 @@ async function replaceFeatures(episodeId: string, data: OverflowEpisodeInput) {
 function revalidateOverflow() {
   revalidatePath("/");
   revalidatePath("/admin/overflow");
+  revalidatePublicTags(publicTags.overflow);
 }
 
 async function removeCover(key: string | null | undefined) {
