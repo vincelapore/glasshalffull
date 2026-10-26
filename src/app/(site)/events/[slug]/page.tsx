@@ -5,12 +5,18 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Page, PageTitle } from "@/components/ui/page";
+import { PersonName } from "@/components/discipline-tag";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
 import { EventModerationNote } from "@/components/event-moderation-note";
 import { ExternalImage } from "@/components/media/external-image";
 import { hasAuthSessionCookie } from "@/lib/auth/session-cookie";
-import { cityLabels, formatDateTime, lineupRoleLabels } from "@/lib/labels";
+import {
+  cityLabels,
+  formatDateTime,
+  lineupRoleLabels,
+  resolveCardIcon,
+} from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import {
@@ -135,7 +141,12 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                         }
                       />
                       <div>
-                        <p className="font-medium">{creative.name}</p>
+                        <p className="font-medium">
+                          <PersonName
+                            name={creative.name}
+                            icon={resolveCardIcon(creative)}
+                          />
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {lineupRoleLabels[role]} ·{" "}
                           <CreativeCraftTags creative={creative} asText />

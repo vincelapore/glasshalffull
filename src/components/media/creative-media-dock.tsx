@@ -1,5 +1,6 @@
 "use client";
 
+import { PersonName } from "@/components/discipline-tag";
 import { ChevronUp, Mail, Pause, Play, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -22,6 +23,7 @@ import {
   type VideoEmbed,
 } from "@/lib/creative-media";
 import { resolvePrimaryContact } from "@/lib/creative-contact";
+import type { CardIcon } from "@/lib/labels";
 import {
   groupCreativeSocials,
   socialProviderLabels,
@@ -125,6 +127,7 @@ function LinkGroup({
 
 export function CreativeMediaDock({
   name,
+  icon = null,
   avatarSrc,
   videos,
   audios,
@@ -132,6 +135,7 @@ export function CreativeMediaDock({
   contactEmail,
 }: {
   name: string;
+  icon?: CardIcon | null;
   avatarSrc?: string | null;
   videos: readonly VideoEmbed[];
   audios: readonly AudioEmbed[];
@@ -297,8 +301,8 @@ export function CreativeMediaDock({
       >
         <div className="flex items-center justify-between gap-3 px-4 py-3 text-white">
           <div className="min-w-0">
-            <p id={titleId} className="truncate text-sm font-medium">
-              {name}
+            <p id={titleId} className="min-w-0 text-sm font-medium">
+              <PersonName name={name} icon={icon} truncate />
             </p>
             <p className="truncate text-xs text-white/60">
               {activeVideo.label}
@@ -478,7 +482,9 @@ export function CreativeMediaDock({
               }
             />
             <div className="min-w-0 flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium">{name}</p>
+              <p className="min-w-0 text-sm font-medium">
+                <PersonName name={name} icon={icon} truncate />
+              </p>
               <p className="truncate text-xs text-muted-foreground">
                 {statusLine}
               </p>

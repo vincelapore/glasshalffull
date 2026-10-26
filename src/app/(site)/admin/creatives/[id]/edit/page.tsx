@@ -11,6 +11,7 @@ import { Page, PageHeader } from "@/components/ui/page";
 import { getAccountsByIds } from "@/lib/accounts";
 import { isOwnerEmail, requireAdmin } from "@/lib/admin";
 import { socialsFromLegacy } from "@/lib/creative-socials";
+import { disciplinesWithIconFirst } from "@/lib/labels";
 import { getModerationActivity } from "@/lib/moderation-activity";
 import { getCreativeById } from "@/lib/queries";
 
@@ -73,7 +74,10 @@ export default async function EditCreativePage({
         accountEmail={linkedAccount?.email}
         defaultValues={{
           name: creative.name,
-          disciplines: creative.disciplines,
+          disciplines: disciplinesWithIconFirst(
+            creative.disciplines,
+            creative.cardDiscipline
+          ),
           roles: creative.roles,
           specialty: creative.specialty ?? "",
           isQueer: creative.isQueer,

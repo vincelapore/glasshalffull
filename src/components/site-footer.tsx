@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { FooterAcknowledgement } from "@/components/footer-acknowledgement";
 import { publicNavLinks } from "@/components/site-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { footerAcknowledgements } from "@/lib/acknowledgement";
 import { creativePath } from "@/lib/paths";
 
 const instagramHref = "https://instagram.com/glasshalffull_brisbane";
@@ -69,12 +72,15 @@ export function SiteFooter() {
             </p>
 
             <div className="ml-auto flex w-full max-w-xs flex-col gap-4 text-right">
-              <p className="text-xs leading-snug text-white/85">
-                Glass Half Full operates on the unceded lands of the Yugera and
-                Turrbal peoples of Meanjin, and the Wurundjeri and Boon Wurrung
-                peoples of the Kulin Nation in Naarm. We pay our respects to the
-                original owners of this land and their legacy.
-              </p>
+              <Suspense
+                fallback={
+                  <p className="text-xs leading-snug text-white/85">
+                    {footerAcknowledgements.meanjin}
+                  </p>
+                }
+              >
+                <FooterAcknowledgement />
+              </Suspense>
               <div className="text-[11px] text-white/70">
                 <p>© {year} Glass Half Full</p>
                 Design and build by{" "}

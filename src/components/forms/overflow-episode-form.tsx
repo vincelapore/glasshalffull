@@ -13,6 +13,7 @@ import {
   searchOverflowEventsAction,
   updateOverflowEpisodeAction,
 } from "@/app/actions/overflow";
+import { PersonName } from "@/components/discipline-tag";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { Button } from "@/components/ui/button";
 import { Choice, ChoiceControl } from "@/components/ui/choice";
@@ -24,10 +25,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   cityLabels,
   overflowFeatureRoleLabels,
+  resolveCardIcon,
 } from "@/lib/labels";
 import { compressAndUploadPhoto } from "@/lib/upload-photo";
 import {
   cities,
+  disciplines,
   overflowEpisodeSchema,
   overflowFeatureRoles,
   type OverflowEpisodeInput,
@@ -395,7 +398,13 @@ function CreativePicker({
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<
-    { id: string; name: string; city: string | null }[]
+    {
+      id: string;
+      name: string;
+      city: string | null;
+      disciplines: (typeof disciplines)[number][];
+      cardDiscipline: string | null;
+    }[]
   >([]);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -448,7 +457,10 @@ function CreativePicker({
                 className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted/40 disabled:opacity-50"
                 onClick={() => onAdd(creative.id, creative.name)}
               >
-                <span>{creative.name}</span>
+                <PersonName
+                  name={creative.name}
+                  icon={resolveCardIcon(creative)}
+                />
                 <span className="text-muted-foreground">
                   {takenIds.has(creative.id) ? "Added" : "Add"}
                 </span>

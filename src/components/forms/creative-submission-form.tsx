@@ -11,6 +11,7 @@ import {
   updateCreativeAction,
 } from "@/app/actions/submissions";
 import { discardUnusedWorkPhotosAction } from "@/app/actions/upload";
+import { DisciplinePicker } from "@/components/forms/discipline-picker";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
 import { MediaUrlsField } from "@/components/forms/media-urls-field";
 import { PublicEmailField } from "@/components/forms/public-email-field";
@@ -36,7 +37,6 @@ import {
 } from "@/lib/creative-media";
 import {
   cityLabels,
-  disciplineLabels,
   parsePronounSelection,
   roleLabels,
   serializePronounSelection,
@@ -52,7 +52,6 @@ import {
   cities,
   creativeRoles,
   creativeSubmissionSchema,
-  disciplines,
   pronounPresets,
   workOpportunityTags,
   type CreativeSubmissionInput,
@@ -131,7 +130,6 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
     resolver: zodResolver(creativeSubmissionSchema),
     defaultValues: defaults ?? emptyProfileValues,
   });
-
   const onSubmit = form.handleSubmit((values) => {
     setFormError(null);
     setSavedMessage(null);
@@ -361,30 +359,10 @@ export function CreativeSubmissionForm(props: CreativeSubmissionFormProps) {
         name="disciplines"
         render={({ field, fieldState }) => (
           <Fieldset legend="Discipline">
-            <div className="grid gap-2 sm:grid-cols-2">
-              {disciplines.map((discipline) => {
-                const checked = field.value?.includes(discipline) ?? false;
-
-                return (
-                  <Choice key={discipline}>
-                    <ChoiceControl
-                      checked={checked}
-                      onChange={(event) => {
-                        const next = event.target.checked
-                          ? [...(field.value ?? []), discipline]
-                          : (field.value ?? []).filter(
-                              (value) => value !== discipline
-                            );
-                        field.onChange(next);
-                      }}
-                    />
-                    <span className="text-sm">
-                      {disciplineLabels[discipline]}
-                    </span>
-                  </Choice>
-                );
-              })}
-            </div>
+            <DisciplinePicker
+              value={field.value ?? []}
+              onChange={field.onChange}
+            />
             <FieldError>{fieldState.error?.message}</FieldError>
           </Fieldset>
         )}

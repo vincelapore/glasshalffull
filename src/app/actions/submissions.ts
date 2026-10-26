@@ -270,6 +270,7 @@ function creativeProfileValues(
   return {
     name: data.name,
     disciplines: data.disciplines,
+    cardDiscipline: data.disciplines[0] ?? null,
     roles: data.roles,
     specialty: emptyToNull(data.specialty),
     isQueer: data.isQueer,

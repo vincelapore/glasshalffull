@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { PasswordField } from "@/components/auth/password-field";
+import {
+  ConfirmPasswordFields,
+  PasswordField,
+} from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -19,6 +22,7 @@ import {
   authErrorInfo,
   type AuthErrorAction,
   MIN_PASSWORD_LENGTH,
+  passwordsMatch,
   passwordTooShort,
 } from "@/lib/auth/errors";
 
@@ -59,6 +63,7 @@ export function AuthForm(props: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
   const [errorAction, setErrorAction] = useState<AuthErrorAction | null>(null);
   const [info, setInfo] = useState<string | null>(props.notice ?? null);
   const [pending, setPending] = useState(false);
@@ -91,6 +96,7 @@ export function AuthForm(props: AuthFormProps) {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setMatchError(null);
     setErrorAction(null);
     setInfo(null);
     setPending(true);
@@ -98,6 +104,7 @@ export function AuthForm(props: AuthFormProps) {
     const form = new FormData(event.currentTarget);
     const submittedEmail = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
+    const confirmPassword = String(form.get("confirmPassword") ?? "");
     const name = String(form.get("name") ?? "").trim();
 
     try {
@@ -110,6 +117,10 @@ export function AuthForm(props: AuthFormProps) {
           setError(
             `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
           );
+          return;
+        }
+        if (!passwordsMatch(password, confirmPassword)) {
+          setMatchError("Passwords do not match.");
           return;
         }
 
@@ -354,22 +365,22 @@ export function AuthForm(props: AuthFormProps) {
         />
       </Field>
 
-      <PasswordField
-        name="password"
-        label="Password"
-        autoComplete={
-          props.mode === "sign-up" ? "new-password" : "current-password"
-        }
-        placeholder={
-          props.mode === "sign-up" ? undefined : "Your password"
-        }
-        minLength={props.mode === "sign-up" ? MIN_PASSWORD_LENGTH : undefined}
-        hint={
-          props.mode === "sign-up"
-            ? `At least ${MIN_PASSWORD_LENGTH} characters`
-            : undefined
-        }
-      />
+      {props.mode === "sign-up" ? (
+        <ConfirmPasswordFields
+          passwordLabel="Password"
+          confirmLabel="Confirm password"
+          disabled={pending}
+          matchError={matchError}
+        />
+      ) : (
+        <PasswordField
+          name="password"
+          label="Password"
+          autoComplete="current-password"
+          placeholder="Your password"
+          disabled={pending}
+        />
+      )}
 
       {props.mode === "sign-in" ? (
         <p className="-mt-2 text-right text-sm">

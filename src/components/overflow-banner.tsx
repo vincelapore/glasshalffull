@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import { EventOrganiserFaces } from "@/components/event-listing/organiser-faces";
+import { PersonName } from "@/components/discipline-tag";
 import { ExternalImage } from "@/components/media/external-image";
 import {
   Dialog,
@@ -21,7 +22,12 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cityShortLabels, overflowFeatureGroups, type CityFilter } from "@/lib/labels";
+import {
+  cityShortLabels,
+  overflowFeatureGroups,
+  resolveCardIcon,
+  type CityFilter,
+} from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath, eventPath } from "@/lib/paths";
 import type { OverflowEpisodeView, OverflowFeatureView } from "@/lib/queries";
@@ -120,7 +126,9 @@ function FeatureList({ people }: { people: OverflowFeatureView[] }) {
               }
             />
             <span>
-              <span className="block text-sm font-medium">{person.name}</span>
+              <span className="block text-sm font-medium">
+                <PersonName name={person.name} icon={resolveCardIcon(person)} />
+              </span>
               {person.note ? (
                 <span className="block text-sm text-muted-foreground">
                   {person.note}

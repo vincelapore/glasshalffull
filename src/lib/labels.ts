@@ -73,14 +73,52 @@ export const roleLabels: Record<(typeof creativeRoles)[number], string> = {
 };
 
 /** First discipline that fits the card pill. */
-export function primaryDisciplineTag(
+export function primaryDiscipline(
   values: readonly (typeof disciplines)[number][] | null | undefined
 ) {
   for (const discipline of values ?? []) {
-    const tag = disciplineTagLabels[discipline];
-    if (tag) return tag;
+    if (disciplineTagLabels[discipline]) return discipline;
   }
   return null;
+}
+
+export const cardIcons = disciplines;
+
+export type CardIcon = (typeof cardIcons)[number];
+
+export function cardIconAriaLabel(icon: CardIcon) {
+  return disciplineLabels[icon];
+}
+
+export function isCardIcon(value: string | null | undefined): value is CardIcon {
+  return Boolean(value && (cardIcons as readonly string[]).includes(value));
+}
+
+/**
+ * Put the saved name icon first, so the editor order matches what is on the
+ * profile. `multidisciplinary` is no longer a choice.
+ */
+export function disciplinesWithIconFirst(
+  values: readonly (typeof disciplines)[number][],
+  cardDiscipline: string | null | undefined
+) {
+  if (!cardDiscipline || !isCardIcon(cardDiscipline)) return [...values];
+  if (!values.includes(cardDiscipline)) return [...values];
+  return [
+    cardDiscipline,
+    ...values.filter((value) => value !== cardDiscipline),
+  ];
+}
+
+/** Icon after a name. A saved discipline wins; otherwise the first one. */
+export function resolveCardIcon(creative: {
+  disciplines?: readonly (typeof disciplines)[number][] | null;
+  cardDiscipline?: string | null;
+}): CardIcon | null {
+  const values = creative.disciplines ?? [];
+  const chosen = creative.cardDiscipline;
+  if (chosen && isCardIcon(chosen) && values.includes(chosen)) return chosen;
+  return primaryDiscipline(values);
 }
 
 export const eventCategoryLabels: Record<(typeof eventCategories)[number], string> =
@@ -135,12 +173,16 @@ export function eventDisplayTags(
 export const cityLabels: Record<(typeof cities)[number], string> = {
   meanjin: "Brisbane / Meanjin",
   naarm: "Melbourne / Naarm",
+  tarntanya: "Adelaide / Tarntanya",
+  boorloo: "Perth / Boorloo",
 };
 
 /** Place name on a card or in search. Filters keep the longer `cityLabels`. */
 export const cityShortLabels: Record<(typeof cities)[number], string> = {
   meanjin: "Meanjin",
   naarm: "Naarm",
+  tarntanya: "Tarntanya",
+  boorloo: "Boorloo",
 };
 
 /** Role names on the admin form. */

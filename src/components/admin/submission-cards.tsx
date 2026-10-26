@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 
 import { DeleteSubmissionButton } from "@/components/admin/delete-submission-button";
 import { ModerationActions } from "@/components/admin/moderation-actions";
+import { PersonName } from "@/components/discipline-tag";
 import { CreativeCraftTags } from "@/components/creative-craft-tags";
 import { CreativeWorkTags } from "@/components/creative-work-tags";
 import { EventCategoryTags } from "@/components/event-category-tags";
@@ -21,6 +22,7 @@ import {
 import type { Creative, Event } from "@/db/schema";
 import {
   cityLabels,
+  resolveCardIcon,
   formatDateTime,
   formatInstagramHandle,
   instagramProfileHref,
@@ -98,7 +100,12 @@ export function EventSubmissionCard({
                       }
                     />
                     <div>
-                      <p className="text-sm font-medium">{creative.name}</p>
+                      <p className="text-sm font-medium">
+                        <PersonName
+                          name={creative.name}
+                          icon={resolveCardIcon(creative)}
+                        />
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {lineupRoleLabels.organiser}
                         {creative.status !== "approved"
@@ -178,7 +185,12 @@ export function CreativeSubmissionCard({ creative }: { creative: Creative }) {
               }
             />
             <div className="space-y-1">
-              <CardTitle>{creative.name}</CardTitle>
+              <CardTitle>
+                <PersonName
+                  name={creative.name}
+                  icon={resolveCardIcon(creative)}
+                />
+              </CardTitle>
               <CardDescription>
                 <CreativeCraftTags creative={creative} asText />
                 {creative.city ? ` · ${cityLabels[creative.city]}` : null}

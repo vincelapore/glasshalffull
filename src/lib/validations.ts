@@ -78,7 +78,7 @@ export const musicGenres = [
   "jazz",
 ] as const;
 
-export const cities = ["meanjin", "naarm"] as const;
+export const cities = ["meanjin", "naarm", "tarntanya", "boorloo"] as const;
 
 /**
  * Common pronoun sets (VA.gov / inclusive form guidance).

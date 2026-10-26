@@ -94,7 +94,12 @@ export const musicGenreEnum = pgEnum("music_genre", [
   "jazz",
 ]);
 
-export const cityEnum = pgEnum("city", ["meanjin", "naarm"]);
+export const cityEnum = pgEnum("city", [
+  "meanjin",
+  "naarm",
+  "tarntanya",
+  "boorloo",
+]);
 
 export const staffRoleEnum = pgEnum("staff_role", ["owner", "admin"]);
 
@@ -130,6 +135,11 @@ export const creatives = pgTable(
     slug: text("slug").notNull().unique(),
     name: text("name").notNull(),
     disciplines: disciplineEnum("disciplines").array().notNull().default([]),
+    /**
+     * Icon shown after the name. Mirrors the first discipline on save.
+     * Older rows may still point at another discipline in the list.
+     */
+    cardDiscipline: text("card_discipline"),
     roles: creativeRoleEnum("roles").array().notNull().default([]),
     specialty: text("specialty"),
     isQueer: boolean("is_queer").notNull().default(false),

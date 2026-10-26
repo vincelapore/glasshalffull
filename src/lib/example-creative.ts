@@ -10,6 +10,7 @@ export const exampleCreative = {
   disciplines: ["music", "performance"] as Array<
     "music" | "performance"
   >,
+  cardDiscipline: null,
   roles: ["dj", "musician", "producer"] as Array<
     "dj" | "musician" | "producer"
   >,

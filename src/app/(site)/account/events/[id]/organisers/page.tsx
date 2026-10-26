@@ -54,6 +54,8 @@ export default async function AccountEventOrganisersPage({
             name: creative.name,
             claimed: Boolean(creative.userId),
             inviteEmail: creative.inviteEmail,
+            disciplines: creative.disciplines,
+            cardDiscipline: creative.cardDiscipline,
           }))}
         />
       </section>

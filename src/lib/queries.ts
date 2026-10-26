@@ -69,6 +69,7 @@ const creativeCardColumns = {
   slug: creatives.slug,
   name: creatives.name,
   disciplines: creatives.disciplines,
+  cardDiscipline: creatives.cardDiscipline,
   roles: creatives.roles,
   specialty: creatives.specialty,
   isQueer: creatives.isQueer,
@@ -151,6 +152,7 @@ export type WorkMosaicItem = {
   name: string;
   city: (typeof creatives.$inferSelect)["city"];
   disciplines: (typeof creatives.$inferSelect)["disciplines"];
+  cardDiscipline: (typeof creatives.$inferSelect)["cardDiscipline"];
   avatarKey: string | null;
 };
 
@@ -190,6 +192,7 @@ const cachedWorkMosaicItems = cachedPublic(
         name: creatives.name,
         city: creatives.city,
         disciplines: creatives.disciplines,
+        cardDiscipline: creatives.cardDiscipline,
         avatarKey: creatives.avatarKey,
         workPhotoKeys: creatives.workPhotoKeys,
       })
@@ -206,6 +209,7 @@ const cachedWorkMosaicItems = cachedPublic(
           name: row.name,
           city: row.city,
           disciplines: row.disciplines,
+          cardDiscipline: row.cardDiscipline,
           avatarKey: row.avatarKey,
         });
       }
@@ -408,6 +412,8 @@ export async function searchCreativesByName(query: string, limit = 8) {
       id: creatives.id,
       name: creatives.name,
       city: creatives.city,
+      disciplines: creatives.disciplines,
+      cardDiscipline: creatives.cardDiscipline,
     })
     .from(creatives)
     .where(ilike(creatives.name, pattern))
@@ -549,6 +555,8 @@ export type OverflowFeatureView = {
   name: string;
   slug: string;
   avatarKey: string | null;
+  disciplines: (typeof creatives.$inferSelect)["disciplines"];
+  cardDiscipline: (typeof creatives.$inferSelect)["cardDiscipline"];
   role: (typeof overflowFeatureRoles)[number];
   note: string | null;
   sort: number;
@@ -580,6 +588,8 @@ async function hydrateOverflowEpisodes(
       name: creatives.name,
       slug: creatives.slug,
       avatarKey: creatives.avatarKey,
+      disciplines: creatives.disciplines,
+      cardDiscipline: creatives.cardDiscipline,
       role: overflowFeatures.role,
       note: overflowFeatures.note,
       sort: overflowFeatures.sort,

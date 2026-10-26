@@ -8,6 +8,7 @@ import { CreativeMediaDock } from "@/components/media/creative-media-dock";
 import { CreativeMediaEmbeds } from "@/components/media/creative-media-embeds";
 import { ExternalImage } from "@/components/media/external-image";
 import { WorkPhotoGrid } from "@/components/media/work-photo-grid";
+import { PersonName } from "@/components/discipline-tag";
 import { Page, PageTitle } from "@/components/ui/page";
 import {
   resolveAudioEmbed,
@@ -21,7 +22,7 @@ import {
   socialsFromLegacy,
   type CreativeSocial,
 } from "@/lib/creative-socials";
-import { cityLabels } from "@/lib/labels";
+import { cityLabels, resolveCardIcon } from "@/lib/labels";
 
 type CreativeProfileIdentity = Pick<
   Creative,
@@ -30,6 +31,7 @@ type CreativeProfileIdentity = Pick<
   | "city"
   | "bio"
   | "disciplines"
+  | "cardDiscipline"
   | "roles"
   | "specialty"
   | "isQueer"
@@ -50,6 +52,7 @@ export function CreativeProfile({
   videoUrls,
   audioUrls,
   notices,
+  callout,
   upcoming,
 }: {
   creative: CreativeProfileIdentity;
@@ -64,6 +67,7 @@ export function CreativeProfile({
   videoUrls?: readonly string[] | null;
   audioUrls?: readonly string[] | null;
   notices?: ReactNode;
+  callout?: ReactNode;
   upcoming?: ReactNode;
 }) {
   const links = socialsFromLegacy({
@@ -87,9 +91,10 @@ export function CreativeProfile({
 
   return (
     <Page>
-      <div className="grid">
+      <div className="grid grid-cols-[minmax(0,1fr)]">
         <div className="col-start-1 row-start-1 min-w-0">
           {notices}
+          {callout ? <div className="mb-10 max-w-2xl">{callout}</div> : null}
 
           <header className="space-y-5">
             <div className="flex items-start gap-4">
@@ -109,7 +114,10 @@ export function CreativeProfile({
                   <CreativeWorkTags creative={creative} />
                 </div>
                 <PageTitle className="break-words sm:text-4xl">
-                  {creative.name}
+                  <PersonName
+                    name={creative.name}
+                    icon={resolveCardIcon(creative)}
+                  />
                 </PageTitle>
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
                   {creative.pronouns ? <span>{creative.pronouns}</span> : null}
@@ -156,6 +164,7 @@ export function CreativeProfile({
 
         <CreativeMediaDock
           name={creative.name}
+          icon={resolveCardIcon(creative)}
           avatarSrc={avatarSrc}
           videos={videos}
           audios={audios}

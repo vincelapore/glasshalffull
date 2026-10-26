@@ -878,6 +878,92 @@
     }
   }
 
+  /*
+    Profile cards. The cover rests as a square. On hover it grows to the
+    full tile. 100cqw matches the in-flow square (the card's width).
+  */
+  .profile-card {
+    position: relative;
+    container-type: inline-size;
+    isolation: isolate;
+  }
+
+  .profile-card-photo {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 100cqw;
+    transition:
+      height 480ms var(--ease-out),
+      box-shadow 480ms var(--ease-out);
+  }
+
+  .profile-card-scrim {
+    position: absolute;
+    z-index: 1;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 70%;
+    pointer-events: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+    background: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.78) 0%,
+      rgb(0 0 0 / 0.5) 38%,
+      rgb(0 0 0 / 0.16) 68%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 420ms var(--ease-out) 40ms;
+  }
+
+  .profile-card-avatar {
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 6px 16px rgb(0 0 0 / 0);
+    transition: box-shadow 420ms var(--ease-out) 40ms;
+  }
+
+  .profile-card-name {
+    transition:
+      color 420ms var(--ease-out) 40ms,
+      text-shadow 420ms var(--ease-out) 40ms;
+  }
+
+  /* City and the hover label share one row, so hiding the city cannot shrink the card. */
+  .profile-card-foot {
+    display: grid;
+    margin-top: 0.125rem;
+    min-height: 1.25rem;
+  }
+
+  .profile-card-city,
+  .profile-card-cta {
+    grid-area: 1 / 1;
+    justify-self: center;
+    align-self: center;
+  }
+
+  .profile-card-city {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 320ms var(--ease-out) 20ms,
+      transform 320ms var(--ease-out) 20ms;
+  }
+
+  .profile-card-cta {
+    opacity: 0;
+    transform: translateY(0.3rem);
+    transition:
+      opacity 360ms var(--ease-out) 100ms,
+      transform 360ms var(--ease-out) 100ms,
+      color 360ms var(--ease-out) 100ms;
+  }
+
   /* Home work mosaic: expand-from-cell + neighbor push. */
   .work-mosaic-tile {
     transition:
@@ -886,9 +972,8 @@
       box-shadow 480ms var(--ease-out);
   }
 
-  /* Listing posters: image zoom, profile avatar, organiser fan. */
-  .poster-hover,
-  .poster-avatar {
+  /* Listing posters: image zoom and organiser fan. */
+  .poster-hover {
     transition: scale 200ms var(--ease-out);
   }
 
@@ -917,10 +1002,6 @@
     scale: 1.06;
   }
 
-  .group:hover .poster-avatar {
-    scale: 1.08;
-  }
-
   .group:hover .poster-face {
     translate: calc(var(--face) * 6px) 0;
   }
@@ -946,6 +1027,49 @@
 
   .group:hover .poster-meta {
     color: var(--foreground);
+  }
+
+  .profile-card {
+    cursor: pointer;
+  }
+
+  .profile-card:hover .profile-card-photo,
+  .profile-card:focus-visible .profile-card-photo {
+    height: 100%;
+    box-shadow: 0 14px 36px rgb(0 0 0 / 0.22);
+  }
+
+  .profile-card:hover .profile-card-scrim,
+  .profile-card:focus-visible .profile-card-scrim {
+    opacity: 1;
+  }
+
+  .profile-card:hover .profile-card-avatar,
+  .profile-card:focus-visible .profile-card-avatar {
+    box-shadow:
+      0 0 0 0 var(--background),
+      0 6px 16px rgb(0 0 0 / 0.4);
+  }
+
+  .profile-card:hover .profile-card-name,
+  .profile-card:focus-visible .profile-card-name {
+    color: #fff;
+    text-shadow:
+      0 1px 2px rgb(0 0 0 / 0.35),
+      0 6px 20px rgb(0 0 0 / 0.45);
+  }
+
+  .profile-card:hover .profile-card-city,
+  .profile-card:focus-visible .profile-card-city {
+    opacity: 0;
+    transform: translateY(-0.2rem);
+  }
+
+  .profile-card:hover .profile-card-cta,
+  .profile-card:focus-visible .profile-card-cta {
+    opacity: 1;
+    transform: translateY(0);
+    color: rgb(255 255 255 / 0.95);
   }
 
   .nav-search-anchor:not([data-open]):has(.nav-search-trigger:hover) {
@@ -978,6 +1102,15 @@
   animation: business-card-liquid 3.6s var(--ease-in-out) infinite alternate;
 }
 
+/* Work wall refresh. Duration matches REFRESH_FADE_MS in work-mosaic.tsx. */
+.work-wall-reveal {
+  animation: work-wall-reveal 480ms var(--ease-out) both;
+}
+
+.work-wall-conceal {
+  animation: work-wall-conceal 480ms var(--ease-out) both;
+}
+
 @keyframes business-card-in {
   from {
     opacity: 0;
@@ -986,6 +1119,26 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes work-wall-reveal {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes work-wall-conceal {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -1010,10 +1163,20 @@
     transition: none;
   }
 
+  .work-wall-reveal,
+  .work-wall-conceal {
+    animation: none;
+  }
+
   .poster-hover,
-  .poster-avatar,
   .poster-face,
-  .poster-share {
+  .poster-share,
+  .profile-card-photo,
+  .profile-card-scrim,
+  .profile-card-avatar,
+  .profile-card-name,
+  .profile-card-city,
+  .profile-card-cta {
     transition: none;
   }
 

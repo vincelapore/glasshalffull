@@ -11,7 +11,7 @@ import {
   type CSSProperties,
 } from "react";
 
-import { EventPosterTag } from "@/components/event-listing/poster-tag";
+import { PersonName } from "@/components/discipline-tag";
 import { ExternalImage } from "@/components/media/external-image";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { primaryDisciplineTag } from "@/lib/labels";
+import { resolveCardIcon } from "@/lib/labels";
 import { mediaUrl } from "@/lib/media";
 import { creativePath } from "@/lib/paths";
 import type { WorkMosaicItem } from "@/lib/queries";
@@ -31,6 +31,11 @@ const MAX_SLOTS = 48;
 /** Sparse: one random tile swaps occasionally. */
 const ROTATE_MS = 14000;
 const CROSSFADE_MS = 900;
+/** Keep in sync with `.work-wall-reveal` / `.work-wall-conceal` in globals.css. */
+const REFRESH_FADE_MS = 480;
+/** Ripple step. The wave starts beside the refresh control. */
+const REFRESH_STAGGER_MS = 40;
+const WAVE_TIMER = -1;
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -70,11 +75,7 @@ function mosaicGeometry(available: number) {
   return null;
 }
 
-function readColumnCount(colsAt: {
-  base: number;
-  sm: number;
-  lg: number;
-}) {
+function readColumnCount(colsAt: { base: number; sm: number; lg: number }) {
   if (window.matchMedia("(min-width: 1024px)").matches) return colsAt.lg;
   if (window.matchMedia("(min-width: 640px)").matches) return colsAt.sm;
   return colsAt.base;
@@ -87,6 +88,13 @@ function originFor(index: number, cols: number, total: number) {
   const x = col === 0 ? "0%" : col === cols - 1 ? "100%" : "50%";
   const y = row === 0 ? "0%" : row === rows - 1 ? "100%" : "50%";
   return `${x} ${y}`;
+}
+
+function waveDelay(index: number, cols: number, total: number) {
+  const rows = Math.ceil(total / cols);
+  const col = index % cols;
+  const row = Math.floor(index / cols);
+  return (cols - 1 - col + (rows - 1 - row)) * REFRESH_STAGGER_MS;
 }
 
 function shuffleCopy<T>(items: readonly T[]) {
@@ -145,14 +153,17 @@ type SlotState = {
   current: WorkMosaicItem;
   incoming: WorkMosaicItem | null;
   fading: boolean;
+  delayMs: number;
+  /** Nonzero while this tile is in a refresh wave. */
+  waveId: number;
 };
 
+function idleSlot(current: WorkMosaicItem): SlotState {
+  return { current, incoming: null, fading: false, delayMs: 0, waveId: 0 };
+}
+
 function toSlotStates(items: WorkMosaicItem[]): SlotState[] {
-  return items.map((current) => ({
-    current,
-    incoming: null,
-    fading: false,
-  }));
+  return items.map((current) => idleSlot(current));
 }
 
 function WorkMosaicTile({
@@ -170,6 +181,10 @@ function WorkMosaicTile({
 }) {
   const item = slot.incoming ?? slot.current;
   const [scaled, setScaled] = useState(false);
+  const ambientFade = slot.waveId === 0;
+  const waveStyle: CSSProperties | undefined = ambientFade
+    ? undefined
+    : { animationDelay: `${slot.delayMs}ms` };
 
   const expanded = scaled && allowScale;
 
@@ -211,25 +226,42 @@ function WorkMosaicTile({
           : "rounded-[2px] ring-black/8 dark:ring-white/10",
       )}
     >
-      <ExternalImage
-        src={mediaUrl(slot.current.photoKey)}
-        alt=""
-        className={cn(
-          "absolute inset-0 size-full object-cover transition-opacity duration-[900ms] ease-in-out",
-          slot.fading ? "opacity-0" : "opacity-100",
-        )}
-        fallback={<span className="absolute inset-0 bg-muted" />}
-      />
-      {slot.incoming ? (
+      <span
+        key={slot.current.photoKey}
+        className={cn("absolute inset-0", !ambientFade && "work-wall-conceal")}
+        style={waveStyle}
+      >
         <ExternalImage
-          src={mediaUrl(slot.incoming.photoKey)}
+          src={mediaUrl(slot.current.photoKey)}
           alt=""
           className={cn(
-            "absolute inset-0 size-full object-cover transition-opacity duration-[900ms] ease-in-out",
-            slot.fading ? "opacity-100" : "opacity-0",
+            "absolute inset-0 size-full object-cover",
+            ambientFade && "transition-opacity duration-[900ms] ease-in-out",
+            ambientFade && (slot.fading ? "opacity-0" : "opacity-100"),
           )}
           fallback={<span className="absolute inset-0 bg-muted" />}
         />
+      </span>
+      {slot.incoming ? (
+        <span
+          key={slot.incoming.photoKey}
+          className={cn(
+            "absolute inset-0",
+            ambientFade ? undefined : "work-wall-reveal opacity-0",
+          )}
+          style={waveStyle}
+        >
+          <ExternalImage
+            src={mediaUrl(slot.incoming.photoKey)}
+            alt=""
+            className={cn(
+              "absolute inset-0 size-full object-cover",
+              ambientFade && "transition-opacity duration-[900ms] ease-in-out",
+              ambientFade && (slot.fading ? "opacity-100" : "opacity-0"),
+            )}
+            fallback={<span className="absolute inset-0 bg-muted" />}
+          />
+        </span>
       ) : null}
     </button>
   );
@@ -286,7 +318,7 @@ function WorkMosaicPopup({
 
   if (!item) return null;
 
-  const tag = primaryDisciplineTag(item.disciplines);
+  const icon = resolveCardIcon(item);
   const initial = item.name.slice(0, 1).toUpperCase();
 
   return (
@@ -307,7 +339,7 @@ function WorkMosaicPopup({
               Profile card for {item.name}. Use arrow keys to browse.
             </DialogDescription>
 
-            <div className="relative pt-3">
+            <div className="relative">
               <div className="overflow-hidden rounded-lg bg-muted ring-1 ring-black/10 dark:ring-white/15">
                 <ExternalImage
                   src={mediaUrl(item.photoKey)}
@@ -316,12 +348,6 @@ function WorkMosaicPopup({
                   fallback={<div className="aspect-square w-full bg-muted" />}
                 />
               </div>
-
-              {tag ? (
-                <div className="absolute top-3 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                  <EventPosterTag tone="category">{tag}</EventPosterTag>
-                </div>
-              ) : null}
 
               <span className="absolute bottom-0 left-1/2 z-10 block size-14 -translate-x-1/2 translate-y-1/2 overflow-hidden rounded-full ring-2 ring-background sm:size-16">
                 <ExternalImage
@@ -338,8 +364,8 @@ function WorkMosaicPopup({
             </div>
 
             <div className="mt-9 text-center sm:mt-10">
-              <DialogTitle className="text-xl font-medium tracking-tight sm:text-2xl">
-                {item.name}
+              <DialogTitle className="text-center text-xl font-medium tracking-tight sm:text-2xl">
+                <PersonName name={item.name} icon={icon} />
               </DialogTitle>
             </div>
 
@@ -356,7 +382,9 @@ function WorkMosaicPopup({
               <Button
                 className="flex-1"
                 nativeButton={false}
-                render={<Link href={creativePath(item.slug)} prefetch={false} />}
+                render={
+                  <Link href={creativePath(item.slug)} prefetch={false} />
+                }
               >
                 View profile
               </Button>
@@ -415,7 +443,10 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
   const cursorRef = useRef(0);
   const hoveredSlots = useRef(new Set<number>());
   const fadeTimers = useRef(new Map<number, number>());
+  const fadeRafs = useRef(new Set<number>());
   const slotsRef = useRef<SlotState[]>([]);
+  const waveSeq = useRef(0);
+  const [refreshTurn, setRefreshTurn] = useState(0);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -515,15 +546,23 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
 
     const withIncoming = prev.map((slot, index) =>
       index === slotIndex
-        ? { current: slot.current, incoming: item, fading: false }
+        ? {
+            current: slot.current,
+            incoming: item,
+            fading: false,
+            delayMs: 0,
+            waveId: 0,
+          }
         : slot,
     );
     slotsRef.current = withIncoming;
     setSlots(withIncoming);
 
-    window.requestAnimationFrame(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      fadeRafs.current.delete(rafId);
       setSlots((current) => {
         if (!current[slotIndex]?.incoming) return current;
+        if (current[slotIndex]?.waveId) return current;
         const fading = current.map((slot, index) =>
           index === slotIndex ? { ...slot, fading: true } : slot,
         );
@@ -531,14 +570,13 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
         return fading;
       });
     });
+    fadeRafs.current.add(rafId);
 
     const commitId = window.setTimeout(() => {
       fadeTimers.current.delete(slotIndex);
       setSlots((current) => {
         const committed = current.map((slot, index) =>
-          index === slotIndex && slot.incoming
-            ? { current: slot.incoming, incoming: null, fading: false }
-            : slot,
+          index === slotIndex && slot.incoming ? idleSlot(slot.incoming) : slot,
         );
         slotsRef.current = committed;
         return committed;
@@ -554,10 +592,57 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
       window.clearTimeout(id);
     }
     fadeTimers.current.clear();
+    for (const id of fadeRafs.current) {
+      window.cancelAnimationFrame(id);
+    }
+    fadeRafs.current.clear();
     cursorRef.current = 0;
-    const next = toSlotStates(pickSlots(shuffleCopy(items), geometry.count));
-    slotsRef.current = next;
-    setSlots(next);
+
+    const nextItems = pickSlots(shuffleCopy(items), geometry.count);
+    if (reduceMotion || prefersReducedMotion()) {
+      const next = toSlotStates(nextItems);
+      slotsRef.current = next;
+      setSlots(next);
+      return;
+    }
+
+    setRefreshTurn((turn) => turn + 1);
+    const waveId = ++waveSeq.current;
+    const base = slotsRef.current.map((slot) => slot.incoming ?? slot.current);
+    let maxDelay = 0;
+    const primed = base.map((current, index) => {
+      const next = nextItems[index] ?? current;
+      if (next.photoKey === current.photoKey) return idleSlot(current);
+      const delayMs = waveDelay(index, cols, base.length);
+      if (delayMs > maxDelay) maxDelay = delayMs;
+      return {
+        current,
+        incoming: next,
+        fading: false,
+        delayMs,
+        waveId,
+      };
+    });
+    slotsRef.current = primed;
+    setSlots(primed);
+
+    const commitId = window.setTimeout(
+      () => {
+        fadeTimers.current.delete(WAVE_TIMER);
+        if (waveSeq.current !== waveId) return;
+        setSlots((current) => {
+          const committed = current.map((slot) =>
+            slot.waveId === waveId && slot.incoming
+              ? idleSlot(slot.incoming)
+              : slot,
+          );
+          slotsRef.current = committed;
+          return committed;
+        });
+      },
+      maxDelay + REFRESH_FADE_MS + 48,
+    );
+    fadeTimers.current.set(WAVE_TIMER, commitId);
   }
 
   useEffect(() => {
@@ -614,6 +699,10 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
         window.clearTimeout(id);
       }
       fadeTimers.current.clear();
+      for (const id of fadeRafs.current) {
+        window.cancelAnimationFrame(id);
+      }
+      fadeRafs.current.clear();
     };
   }, []);
 
@@ -636,7 +725,10 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
   if (!geometry || slots.length === 0) return null;
 
   return (
-    <section ref={rootRef} className="-my-2 overflow-visible py-2 sm:-my-4 sm:py-3">
+    <section
+      ref={rootRef}
+      className="-my-2 overflow-visible py-2 sm:-my-4 sm:py-3"
+    >
       <div className={cn("grid gap-0.5 sm:gap-1", geometry.colsClass)}>
         {slots.map((slot, index) => (
           <WorkMosaicTile
@@ -671,7 +763,18 @@ export function WorkMosaic({ items }: { items: WorkMosaicItem[] }) {
             "focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
           )}
         >
-          <RefreshCw className="size-3" aria-hidden />
+          <RefreshCw
+            className="size-3 motion-reduce:transition-none"
+            aria-hidden
+            style={
+              reduceMotion
+                ? undefined
+                : {
+                    transform: `rotate(${refreshTurn * 360}deg)`,
+                    transition: "transform 240ms var(--ease-out)",
+                  }
+            }
+          />
           Refresh
         </button>
       </div>

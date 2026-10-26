@@ -11,6 +11,7 @@ import { getAccountVisibility } from "@/lib/accounts";
 import { getSessionUser } from "@/lib/admin";
 import { claimInvitedProfile } from "@/lib/claim-profile";
 import { socialsFromLegacy } from "@/lib/creative-socials";
+import { disciplinesWithIconFirst } from "@/lib/labels";
 import { creativePath } from "@/lib/paths";
 import { isProfileReadyForPublic } from "@/lib/profile-visibility";
 import { getCreativeByUserId } from "@/lib/queries";
@@ -78,7 +79,10 @@ export default async function AccountPage() {
             profile
               ? {
                   name: profile.name,
-                  disciplines: profile.disciplines,
+                  disciplines: disciplinesWithIconFirst(
+                    profile.disciplines,
+                    profile.cardDiscipline
+                  ),
                   roles: profile.roles,
                   specialty: profile.specialty ?? "",
                   isQueer: profile.isQueer,

@@ -9,25 +9,30 @@ import {
   removeEventOrganiserAction,
   searchCreativesAction,
 } from "@/app/actions/organisers";
+import { PersonName } from "@/components/discipline-tag";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Notice } from "@/components/ui/notice";
-import { cityLabels } from "@/lib/labels";
-import type { cities } from "@/lib/validations";
+import { cityLabels, resolveCardIcon } from "@/lib/labels";
+import type { cities, disciplines } from "@/lib/validations";
 
 type Organiser = {
   id: string;
   name: string;
   claimed: boolean;
   inviteEmail: string | null;
+  disciplines: (typeof disciplines)[number][];
+  cardDiscipline: string | null;
 };
 
 type SearchHit = {
   id: string;
   name: string;
   city: (typeof cities)[number] | null;
+  disciplines: (typeof disciplines)[number][];
+  cardDiscipline: string | null;
 };
 
 export function EventOrganisersPanel({
@@ -117,7 +122,12 @@ export function EventOrganisersPanel({
               className="flex items-center justify-between gap-3 px-4 py-3"
             >
               <div>
-                <p className="font-medium">{organiser.name}</p>
+                <p className="font-medium">
+                  <PersonName
+                    name={organiser.name}
+                    icon={resolveCardIcon(organiser)}
+                  />
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {organiser.claimed
                     ? "Linked to an account"
@@ -167,7 +177,9 @@ export function EventOrganisersPanel({
                   className="flex items-center justify-between gap-3 px-4 py-3"
                 >
                   <div>
-                    <p className="font-medium">{hit.name}</p>
+                    <p className="font-medium">
+                      <PersonName name={hit.name} icon={resolveCardIcon(hit)} />
+                    </p>
                     {hit.city ? (
                       <p className="text-sm text-muted-foreground">
                         {cityLabels[hit.city]}
